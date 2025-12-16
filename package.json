@@ -1,22 +1,12 @@
 {
-  "name": "ecommerce-backend-carlitos",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "ecommerce",
+  "private": true,
+  "packageManager": "pnpm@latest",
   "scripts": {
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.25.0",
-  "dependencies": {
-    "express": "^5.2.1"
-  },
-  "devDependencies": {
-    "dotenv": "^17.2.3",
-    "nodemon": "^3.1.11"
+    "dev": "pnpm -r --parallel dev",
+    "dev:api": "pnpm --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
   }
 }
