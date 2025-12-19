@@ -4,7 +4,7 @@ const products = [
   { id: '3', name: 'Keyboard', priceUSD: 50, stock: 30, category: 'Electronics' }
 ];
 
-function listProducts() {
+function getProducts() {
   return Promise.resolve(products);
 }
 
@@ -16,4 +16,4 @@ function getProductById(id) {
   return Promise.resolve(product);
 }
 
-module.exports = { listProducts, getProductById };
+module.exports = { getProducts, getProductById };

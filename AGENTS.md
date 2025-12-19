@@ -36,8 +36,37 @@ If there is a conflict between:
 
 👉 **This file has priority.**
 
+## Project Domain Context
+
+This project is a **real-world, full-featured e-commerce application**.
+
+The application is expected to evolve to include:
+- Product catalog management
+- Shopping cart and checkout flows
+- User authentication and authorization
+- Order management
+- Payment integrations (e.g. Stripe or similar)
+- Inventory and stock control
+- Admin and customer roles
+- Internationalization and multi-currency support
+
+The project prioritizes:
+- Correctness over speed
+- Clean architecture over shortcuts
+- Test-driven development (TDD)
+- Long-term maintainability and scalability
+
+All architectural and implementation decisions should consider
+that this is **not a demo or tutorial project**, but a system intended
+to grow in features and complexity over time.
+
+- The backend is the source of truth for business rules and domain logic
+- Frontend must not duplicate or redefine core business rules
+- Future features should influence design decisions, but must not cause premature abstraction or over-engineering
+
 ### 1. Project Context
 #### Project Type
+- e-commerce project
 - Personal real project
 - Portfolio-oriented
 - Evolves toward professional-grade e-commerce system
@@ -103,6 +132,7 @@ src/
 ````
 
 #### Architecture Principles
+- routes → controllers → services
 - Controllers: HTTP only (req/res)
 - Services: Business logic
 - Routes: Wiring only
@@ -112,6 +142,9 @@ src/
 - No HTTP logic in services
 - Architecture must evolve toward Clean Architecture, but incrementally.
 - No big refactors without justification.
+- errors are propagated using next(err)
+- response formatting is centralized in utils/response
+- Business logic must remain isolated from delivery mechanisms (HTTP, UI)
 
 ### 5. Frontend Rules (apps/web)
 #### Stack
@@ -123,6 +156,32 @@ src/
 - **Scope Rule (Regla de Ámbito)**
 - Screaming Architecture (Organización basada en features o dominio)
 - Feature-based organization
+
+Organizamos el código siguiendo el mismo concepto de **scope** de JavaScript:
+
+```javascript
+// Global Scope - disponible en toda la app
+let globalVariable = 'Available everywhere';
+
+// Local Scope - solo disponible en su contexto
+function localContext() {
+  let localVariable = 'Available only here';
+}
+```
+
+**Aplicado a la arquitectura:**
+
+| Tipo | Ubicación | Visibilidad | Ejemplos |
+|------|-----------|-------------|----------|
+| **Global Scope** | `src/shared/` | Toda la app | Button, Modal, formatPrice, types |
+| **Local Scope** | `src/features/X/` | Solo en feature X | ProductCard, CartItem, CartService |
+
+**Beneficios:**
+- 🧩 **Modularidad**: Cada feature es independiente
+- ♻️ **Reuso eficiente**: Componentes globales sin redundancia
+- ⚡ **Lazy loading**: Features locales se cargan solo cuando se necesitan
+- 🔍 **Claridad**: Sabes dónde buscar cada cosa
+
 
 #### Principles
 - No giant components
@@ -149,7 +208,7 @@ src/
 
 **Rules:**
 - Tests first, then implementation
-- No business logic without tests
+- No business logic without unit tests
 - Coverage goal: 80%+
 - 100% coverage on critical logic
 

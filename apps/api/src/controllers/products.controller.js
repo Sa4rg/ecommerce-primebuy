@@ -3,10 +3,10 @@ const productsService = require('../services/products.service');
 
 async function listProducts(req, res, next) {
   try {
-    const products = await productsService.listProducts();
+    const products = await productsService.getProducts();
     success(res, products, 'Products retrieved successfully');
   } catch (error) {
-    next(error);
+    return next(error);
   }
 }
 
@@ -16,7 +16,7 @@ async function getProductById(req, res, next) {
     const product = await productsService.getProductById(id);
     success(res, product, 'Product retrieved successfully');
   } catch (error) {
-    next(error);
+    return next(error);
   }
 }
 

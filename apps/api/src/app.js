@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ ok: true, message: "API running ✅" });
+  res.json({ status: "ok" });
 });
 
 app.use('/api', require('./routes/index'));
