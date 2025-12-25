@@ -22,8 +22,24 @@ describe("getProducts", () => {
       expect(typeof product.priceUSD).toBe('number');
       expect(typeof product.stock).toBe('number');
       expect(typeof product.category).toBe('string');
+
+      expect(product).toHaveProperty("inStock");
+      expect(typeof product.inStock).toBe("boolean");
+
+      expect(product.priceUSD).toBeGreaterThan(0);
+      expect(product.stock).toBeGreaterThanOrEqual(0);
+
     });
   });
+
+  test("should set inStock to false when stock is 0", async () => {
+  const products = await getProducts();
+  const outOfStockProduct = products.find(p => p.stock === 0);
+
+  expect(outOfStockProduct).toBeDefined();
+  expect(outOfStockProduct.inStock).toBe(false);
+});
+
 });
 
 describe("getProductById", () => {
@@ -41,5 +57,13 @@ describe("getProductById", () => {
   await expect(getProductById("999")).rejects.toThrow("Product not found");
 
   await expect(getProductById("999")).rejects.toHaveProperty("statusCode", 404);
+  });
+
+  test("should return a product when it exists", async () => {
+    const product = await getProductById("1");
+    
+    expect(product).toHaveProperty("inStock");
+    expect(typeof product.inStock).toBe("boolean");
+    expect(product.inStock).toBe(true);
   });
 });
