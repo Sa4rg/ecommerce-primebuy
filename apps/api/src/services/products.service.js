@@ -80,4 +80,26 @@ async function createProduct(input) {
   return toProductReadModel(newProduct);
 }
 
-module.exports = { getProducts, getProductById, createProduct };
+async function updateProduct(id, input) {
+  const productIndex = products.findIndex(p => p.id === id);
+
+  if (productIndex === -1) {
+    throw new NotFoundError("Product not found");
+  }
+
+  validateCreateInput(input);
+
+  const updatedProduct = {
+    ...products[productIndex],
+    name: input.name.trim(),
+    priceUSD: input.priceUSD,
+    stock: input.stock,
+    category: input.category.trim(),
+  };
+
+  products[productIndex] = updatedProduct;
+
+  return toProductReadModel(updatedProduct);
+}
+
+module.exports = { getProducts, getProductById, createProduct, updateProduct };

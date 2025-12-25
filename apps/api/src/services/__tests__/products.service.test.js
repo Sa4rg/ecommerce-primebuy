@@ -105,3 +105,71 @@ describe("createProduct", () => {
   });
 
 });
+
+describe("updateProduct", () => {
+  test("should update a product when it exists and input is valid", async () => {
+    const input = {
+      name: "Laptop",
+      priceUSD: 1000,
+      stock: 5,
+      category: "Electronics",
+    };
+
+    const created = await productsService.createProduct(input);
+
+    const updateInput = {
+      name: "Gaming Laptop",
+      priceUSD: 1500,
+      stock: 0,
+      category: "Gaming",
+    };
+
+    const updated = await productsService.updateProduct(created.id, updateInput);
+
+    expect(updated.id).toBe(created.id);
+    expect(updated.name).toBe("Gaming Laptop");
+    expect(updated.priceUSD).toBe(1500);
+    expect(updated.stock).toBe(0);
+    expect(updated.category).toBe("Gaming");
+    expect(updated.inStock).toBe(false);
+    expect(updated).toHaveProperty("id");
+    expect(updated).toHaveProperty("name");
+    expect(updated).toHaveProperty("priceUSD");
+    expect(updated).toHaveProperty("stock");
+    expect(updated).toHaveProperty("category");
+    expect(updated).toHaveProperty("inStock");
+  });
+
+  test("should throw 404 when product does not exist", async () => {
+    const validInput = {
+      name: "Test Product",
+      priceUSD: 100,
+      stock: 10,
+      category: "Test",
+    };
+
+    await expect(productsService.updateProduct("999", validInput)).rejects.toHaveProperty("statusCode", 404);
+    await expect(productsService.updateProduct("999", validInput)).rejects.toThrow("Product not found");
+  });
+
+  test("should throw 400 when input is invalid", async () => {
+    const input = {
+      name: "Valid Product",
+      priceUSD: 200,
+      stock: 10,
+      category: "Valid",
+    };
+
+    const created = await productsService.createProduct(input);
+
+    const invalidInput = {
+      name: "Invalid Product",
+      priceUSD: 0,
+      stock: 10,
+      category: "Invalid",
+    };
+
+    await expect(productsService.updateProduct(created.id, invalidInput)).rejects.toHaveProperty("statusCode", 400);
+    await expect(productsService.updateProduct(created.id, invalidInput)).rejects.toThrow("Invalid product input");
+  });
+});
