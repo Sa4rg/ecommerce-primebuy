@@ -20,4 +20,15 @@ async function getProductById(req, res, next) {
   }
 }
 
-module.exports = { listProducts, getProductById };
+async function createProduct(req, res, next) {
+  try {
+    const created = await productsService.createProduct(req.body);
+    res.status(201);
+    success(res, created, "Product created successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+
+module.exports = { listProducts, getProductById, createProduct };
