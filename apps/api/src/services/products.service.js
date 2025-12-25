@@ -102,4 +102,16 @@ async function updateProduct(id, input) {
   return toProductReadModel(updatedProduct);
 }
 
-module.exports = { getProducts, getProductById, createProduct, updateProduct };
+async function deleteProduct(id) {
+  const productIndex = products.findIndex(p => p.id === id);
+
+  if (productIndex === -1) {
+    throw new NotFoundError("Product not found");
+  }
+
+  const deletedProduct = products.splice(productIndex, 1)[0];
+
+  return toProductReadModel(deletedProduct);
+}
+
+module.exports = { getProducts, getProductById, createProduct, updateProduct, deleteProduct };

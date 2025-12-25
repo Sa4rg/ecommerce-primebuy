@@ -40,4 +40,14 @@ async function updateProduct(req, res, next) {
   }
 }
 
-module.exports = { listProducts, getProductById, createProduct, updateProduct };
+async function deleteProduct(req, res, next) {
+  try {
+    const { id } = req.params;
+    const deleted = await productsService.deleteProduct(id);
+    success(res, deleted, "Product deleted successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { listProducts, getProductById, createProduct, updateProduct, deleteProduct };

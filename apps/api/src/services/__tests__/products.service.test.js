@@ -173,3 +173,33 @@ describe("updateProduct", () => {
     await expect(productsService.updateProduct(created.id, invalidInput)).rejects.toThrow("Invalid product input");
   });
 });
+
+describe("deleteProduct", () => {
+  test("should delete a product when it exists and return the deleted product", async () => {
+    const input = {
+      name: "Product to Delete",
+      priceUSD: 100,
+      stock: 10,
+      category: "Test",
+    };
+
+    const created = await productsService.createProduct(input);
+
+    const deleted = await productsService.deleteProduct(created.id);
+
+    expect(deleted.id).toBe(created.id);
+    expect(deleted.name).toBe("Product to Delete");
+    expect(deleted.priceUSD).toBe(100);
+    expect(deleted.stock).toBe(10);
+    expect(deleted.category).toBe("Test");
+    expect(deleted).toHaveProperty("inStock");
+    expect(typeof deleted.inStock).toBe("boolean");
+
+    await expect(productsService.getProductById(created.id)).rejects.toHaveProperty("statusCode", 404);
+  });
+
+  test("should throw 404 when product does not exist", async () => {
+    await expect(productsService.deleteProduct("999")).rejects.toHaveProperty("statusCode", 404);
+    await expect(productsService.deleteProduct("999")).rejects.toThrow("Product not found");
+  });
+});
