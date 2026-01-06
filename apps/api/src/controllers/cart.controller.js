@@ -15,10 +15,25 @@ async function getCart(req, res, next) {
   try {
     const { cartId } = req.params;
     const cart = await cartService.getCart(cartId);
+    res.status(200);
     success(res, cart, "Cart retrieved successfully");
   } catch (error) {
     return next(error);
   }
 }
 
-module.exports = { createCart, getCart };
+async function addItem(req, res, next) {
+  try {
+    const { cartId } = req.params;
+    const { productId, quantity } = req.body;
+
+    const cart = await cartService.addItem(cartId, productId, quantity);
+
+    res.status(200);
+    success(res, cart, "Item added to cart successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { createCart, getCart, addItem };

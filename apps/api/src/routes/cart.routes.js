@@ -5,4 +5,6 @@ const cartController = require("../controllers/cart.controller");
 router.post("/", cartController.createCart);
 router.get("/:cartId", cartController.getCart);
 
+router.post("/:cartId/items", cartController.addItem);
+
 module.exports = router;
