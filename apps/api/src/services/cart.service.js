@@ -75,7 +75,39 @@ function createCartService(deps = {}) {
     return cart;
   }
 
-  return { createCart, getCart, addItem };
+  async function updateItem(cartId, productId, quantity) {
+  // 1) Validate cart exists
+  const cart = cartsStore.get(cartId);
+  if (!cart) {
+    throw new AppError("Cart not found", 404);
+  }
+
+  // 2) Validate quantity
+  validateQuantity(quantity); 
+
+  // 3) Validate item exists in cart
+  const existingItem = cart.items.find((item) => item.productId === productId);
+  if (!existingItem) {
+    throw new AppError("Item not found in cart", 404);
+  }
+
+  // 4) Validate stock (need product stock from productsService)
+  const product = await productsService.getProductById(productId);
+    if (!product.inStock || product.stock <= 0 || quantity > product.stock) {
+      throw new AppError("Insufficient stock", 409);
+    }
+
+  // 5) Update item
+  existingItem.quantity = quantity;
+  existingItem.lineTotalUSD = existingItem.unitPriceUSD * quantity;
+
+  // 6) Recalculate summary
+  recalcSummary(cart);
+  return cart;
+}
+
+
+  return { createCart, getCart, addItem, updateItem };
 }
 
 // Default instance for the application (backward compatible)

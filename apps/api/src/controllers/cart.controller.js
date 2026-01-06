@@ -36,4 +36,18 @@ async function addItem(req, res, next) {
   }
 }
 
-module.exports = { createCart, getCart, addItem };
+async function updateItem(req, res, next) {
+  try {
+    const { cartId, productId } = req.params;
+    const { quantity } = req.body;
+
+    const cart = await cartService.updateItem(cartId, productId, quantity);
+
+    res.status(200);
+    success(res, cart, "Item updated in cart successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { createCart, getCart, addItem, updateItem };
