@@ -106,8 +106,25 @@ function createCartService(deps = {}) {
   return cart;
 }
 
+  async function removeItem(cartId, productId) {
+    if (!cartsStore.get(cartId)) {
+      throw new AppError("Cart not found", 404);
+    }
 
-  return { createCart, getCart, addItem, updateItem };
+    const cart = cartsStore.get(cartId);
+    const itemIndex = cart.items.findIndex((item) => item.productId === productId);
+
+    if (itemIndex === -1) {
+      throw new AppError("Item not found in cart", 404);
+    }
+
+    cart.items = cart.items.filter(i => i.productId !== productId);
+
+    recalcSummary(cart);
+    return cart;
+  }
+
+  return { createCart, getCart, addItem, updateItem, removeItem };
 }
 
 // Default instance for the application (backward compatible)

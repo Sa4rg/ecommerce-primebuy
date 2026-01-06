@@ -50,4 +50,17 @@ async function updateItem(req, res, next) {
   }
 }
 
-module.exports = { createCart, getCart, addItem, updateItem };
+async function removeItem(req, res, next) {
+  try {
+    const { cartId, productId } = req.params;
+
+    const cart = await cartService.removeItem(cartId, productId);
+
+    res.status(200);
+    success(res, cart, "Item removed from cart");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { createCart, getCart, addItem, updateItem, removeItem };
