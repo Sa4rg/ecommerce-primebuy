@@ -21,13 +21,19 @@ describe("GET /api/cart/:cartId", () => {
       expect.objectContaining({
         success: true,
         message: expect.any(String),
-        data: {
+        data: expect.objectContaining({
           cartId,
           items: [],
-          summary: { itemsCount: 0, subtotalUSD: 0 }
-        }
+          summary: { itemsCount: 0, subtotalUSD: 0 },
+        }),
       })
     );
+
+    expect(getResponse.body.data.metadata).toMatchObject({
+      market: "VE",
+      baseCurrency: "USD",
+    });
+
   });
 
   test("should return 404 when cartId does not exist", async () => {

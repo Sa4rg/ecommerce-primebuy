@@ -9,4 +9,6 @@ router.post("/:cartId/items", cartController.addItem);
 router.patch("/:cartId/items/:productId", cartController.updateItem);
 router.delete("/:cartId/items/:productId", cartController.removeItem);
 
+router.patch("/:cartId/metadata", cartController.updateMetadata);
+
 module.exports = router;

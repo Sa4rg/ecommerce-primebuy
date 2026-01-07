@@ -11,10 +11,33 @@ function createCartService(deps = {}) {
 
   async function createCart() {
     const cartId = idGenerator();
+    const now = new Date().toISOString();
     const cart = {
       cartId,
       items: [],
       summary: { itemsCount: 0, subtotalUSD: 0 },
+      metadata: {
+        market: "VE",
+        baseCurrency: "USD",
+        displayCurrency: "USD",
+        exchangeRate: {
+          provider: "BCV",
+          usdToVes: null,
+          asOf: null,
+        },
+        tax: {
+          priceIncludesVAT: true,
+          vatRate: 0.16,
+        },
+        customer: {
+          email: null,
+          name: null,
+          phone: null,
+        },
+        status: "active",
+        createdAt: now,
+        updatedAt: now,
+      },
     };
 
     cartsStore.set(cartId, cart);
@@ -37,6 +60,13 @@ function createCartService(deps = {}) {
   function recalcSummary(cart) {
     cart.summary.itemsCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
     cart.summary.subtotalUSD = cart.items.reduce((sum, item) => sum + item.lineTotalUSD, 0);
+  }
+
+  function nextUpdatedAt(previousUpdatedAt) {
+    const next = new Date().toISOString();
+    if (next !== previousUpdatedAt) return next;
+
+    return new Date(Date.parse(previousUpdatedAt) + 1).toISOString();
   }
 
   async function addItem(cartId, productId, quantity) {
@@ -76,55 +106,114 @@ function createCartService(deps = {}) {
   }
 
   async function updateItem(cartId, productId, quantity) {
-  // 1) Validate cart exists
-  const cart = cartsStore.get(cartId);
-  if (!cart) {
-    throw new AppError("Cart not found", 404);
-  }
+    const cart = cartsStore.get(cartId);
+    if (!cart) throw new AppError("Cart not found", 404);
 
-  // 2) Validate quantity
-  validateQuantity(quantity); 
+    validateQuantity(quantity);
 
-  // 3) Validate item exists in cart
-  const existingItem = cart.items.find((item) => item.productId === productId);
-  if (!existingItem) {
-    throw new AppError("Item not found in cart", 404);
-  }
+    const existingItem = cart.items.find((item) => item.productId === productId);
+    if (!existingItem) throw new AppError("Item not found in cart", 404);
 
-  // 4) Validate stock (need product stock from productsService)
-  const product = await productsService.getProductById(productId);
+    const product = await productsService.getProductById(productId);
     if (!product.inStock || product.stock <= 0 || quantity > product.stock) {
       throw new AppError("Insufficient stock", 409);
     }
 
-  // 5) Update item
-  existingItem.quantity = quantity;
-  existingItem.lineTotalUSD = existingItem.unitPriceUSD * quantity;
+    existingItem.quantity = quantity;
+    existingItem.lineTotalUSD = existingItem.unitPriceUSD * quantity;
 
-  // 6) Recalculate summary
-  recalcSummary(cart);
-  return cart;
+    recalcSummary(cart);
+    return cart;
 }
 
+
   async function removeItem(cartId, productId) {
-    if (!cartsStore.get(cartId)) {
-      throw new AppError("Cart not found", 404);
-    }
+   const cart = cartsStore.get(cartId);
+    if (!cart) throw new AppError("Cart not found", 404);
 
-    const cart = cartsStore.get(cartId);
-    const itemIndex = cart.items.findIndex((item) => item.productId === productId);
-
-    if (itemIndex === -1) {
-      throw new AppError("Item not found in cart", 404);
-    }
+    const exists = cart.items.some(i => i.productId === productId);
+    if (!exists) throw new AppError("Item not found in cart", 404);
 
     cart.items = cart.items.filter(i => i.productId !== productId);
 
     recalcSummary(cart);
     return cart;
+
   }
 
-  return { createCart, getCart, addItem, updateItem, removeItem };
+  function validateMetadataPatch(patch, currentMetadata) {
+    // Validate displayCurrency
+    if (patch.displayCurrency !== undefined) {
+      if (!["USD", "VES"].includes(patch.displayCurrency)) {
+        throw new AppError("Invalid cart metadata", 400);
+      }
+    }
+
+    // Determine effective displayCurrency
+    const effectiveDisplayCurrency = patch.displayCurrency ?? currentMetadata.displayCurrency;
+
+    // Validate exchangeRate if displayCurrency is VES
+    if (effectiveDisplayCurrency === "VES") {
+      const exchangeRate = { ...currentMetadata.exchangeRate, ...patch.exchangeRate };
+      if (!exchangeRate.usdToVes || exchangeRate.usdToVes <= 0 || !exchangeRate.asOf) {
+        throw new AppError("Invalid cart metadata", 400);
+      }
+    }
+
+    // Validate status
+    if (patch.status !== undefined) {
+      if (!["active", "locked", "checked_out"].includes(patch.status)) {
+        throw new AppError("Invalid cart metadata", 400);
+      }
+    }
+
+    // Validate customer.email if provided
+    if (patch.customer?.email !== undefined) {
+      if (typeof patch.customer.email !== 'string' || patch.customer.email.trim() === '' || !patch.customer.email.includes('@')) {
+        throw new AppError("Invalid cart metadata", 400);
+      }
+    }
+  }
+
+  async function updateMetadata(cartId, patch) {
+    const cart = cartsStore.get(cartId);
+    if (!cart) {
+      throw new AppError("Cart not found", 404);
+    }
+
+    // Validate patch
+    validateMetadataPatch(patch, cart.metadata);
+
+    // Apply controlled merge (whitelist)
+    if (patch.displayCurrency !== undefined) {
+      cart.metadata.displayCurrency = patch.displayCurrency;
+    }
+    if (patch.status !== undefined) {
+      cart.metadata.status = patch.status;
+    }
+    if (patch.exchangeRate?.usdToVes !== undefined) {
+      cart.metadata.exchangeRate.usdToVes = patch.exchangeRate.usdToVes;
+    }
+    if (patch.exchangeRate?.asOf !== undefined) {
+      cart.metadata.exchangeRate.asOf = patch.exchangeRate.asOf;
+    }
+    if (patch.customer?.email !== undefined) {
+      cart.metadata.customer.email = patch.customer.email;
+    }
+    if (patch.customer?.name !== undefined) {
+      cart.metadata.customer.name = patch.customer.name;
+    }
+    if (patch.customer?.phone !== undefined) {
+      cart.metadata.customer.phone = patch.customer.phone;
+    }
+
+    // Update updatedAt
+    cart.metadata.updatedAt = nextUpdatedAt(cart.metadata.updatedAt);
+
+    return cart;
+  }
+
+  return { createCart, getCart, addItem, updateItem, removeItem, updateMetadata };
 }
 
 // Default instance for the application (backward compatible)

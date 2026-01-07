@@ -30,11 +30,33 @@ describe("createCart", () => {
 
     const cart = await cartService.getCart(cartId);
 
-    expect(cart).toEqual({
-      cartId,
-      items: [],
-      summary: { itemsCount: 0, subtotalUSD: 0 },
+    expect(cart.cartId).toBe(cartId);
+    expect(cart.items).toEqual([]);
+    expect(cart.summary).toEqual({ itemsCount: 0, subtotalUSD: 0 });
+    expect(cart.metadata).toMatchObject({
+      market: "VE",
+      baseCurrency: "USD",
+      displayCurrency: "USD",
+      exchangeRate: {
+        provider: "BCV",
+        usdToVes: null,
+        asOf: null,
+      },
+      tax: {
+        priceIncludesVAT: true,
+        vatRate: 0.16,
+      },
+      customer: {
+        email: null,
+        name: null,
+        phone: null,
+      },
+      status: "active",
     });
+    expect(typeof cart.metadata.createdAt).toBe("string");
+    expect(cart.metadata.createdAt.length).toBeGreaterThan(0);
+    expect(typeof cart.metadata.updatedAt).toBe("string");
+    expect(cart.metadata.updatedAt.length).toBeGreaterThan(0);
   });
 });
 
@@ -310,6 +332,67 @@ describe("removeItem", () => {
     await expect(cartService.removeItem(cartId, product.id)).rejects.toMatchObject({
       statusCode: 404,
       message: "Item not found in cart",
+    });
+  });
+});
+
+describe("updateMetadata", () => {
+  test("should apply a valid metadata patch and update updatedAt", async () => {
+    const { cartId } = await cartService.createCart();
+    const cartBefore = await cartService.getCart(cartId);
+    const previousUpdatedAt = cartBefore.metadata.updatedAt;
+
+    const patch = {
+      customer: { email: "test@example.com" },
+      displayCurrency: "VES",
+      exchangeRate: { usdToVes: 40, asOf: "2023-01-01T00:00:00.000Z" },
+    };
+
+    const cart = await cartService.updateMetadata(cartId, patch);
+
+    expect(cart.metadata.customer.email).toBe("test@example.com");
+    expect(cart.metadata.displayCurrency).toBe("VES");
+    expect(cart.metadata.exchangeRate.usdToVes).toBe(40);
+    expect(cart.metadata.exchangeRate.asOf).toBe("2023-01-01T00:00:00.000Z");
+    expect(cart.metadata.updatedAt).not.toBe(previousUpdatedAt);
+  });
+
+  test("should throw 404 when cart does not exist", async () => {
+    await expect(cartService.updateMetadata("invalid-cart", { displayCurrency: "USD" })).rejects.toMatchObject({
+      statusCode: 404,
+      message: "Cart not found",
+    });
+  });
+
+  test("should throw 400 when displayCurrency is invalid", async () => {
+    const { cartId } = await cartService.createCart();
+
+    await expect(cartService.updateMetadata(cartId, { displayCurrency: "EUR" })).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid cart metadata",
+    });
+  });
+
+  test("should throw 400 when displayCurrency is VES but exchangeRate is missing or invalid", async () => {
+    const { cartId } = await cartService.createCart();
+
+    await expect(cartService.updateMetadata(cartId, { displayCurrency: "VES" })).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid cart metadata",
+    });
+
+    await expect(cartService.updateMetadata(cartId, { displayCurrency: "VES", exchangeRate: { usdToVes: 0 } })).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid cart metadata",
+    });
+  });
+
+  test("should throw 400 when status is invalid", async () => {
+    const { cartId } = await cartService.createCart();
+
+    await expect(cartService.updateMetadata(cartId, { status: "archived" })).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid cart metadata",
     });
   });
 });

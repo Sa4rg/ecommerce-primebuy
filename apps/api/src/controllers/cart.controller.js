@@ -63,4 +63,18 @@ async function removeItem(req, res, next) {
   }
 }
 
-module.exports = { createCart, getCart, addItem, updateItem, removeItem };
+async function updateMetadata(req, res, next) {
+  try {
+    const { cartId } = req.params;
+    const patch = req.body;
+
+    const cart = await cartService.updateMetadata(cartId, patch);
+
+    res.status(200);
+    success(res, cart, "Cart metadata updated successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { createCart, getCart, addItem, updateItem, removeItem, updateMetadata };
