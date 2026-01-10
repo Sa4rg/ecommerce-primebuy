@@ -68,7 +68,14 @@ function createCheckoutService(deps = {}) {
     return checkout;
   }
 
-  return { createCheckout };
+  async function getCheckoutById(checkoutId) {
+    if (!checkoutsStore.has(checkoutId)) {
+      throw new AppError("Checkout not found", 404);
+    }
+    return checkoutsStore.get(checkoutId);
+  }
+
+  return { createCheckout, getCheckoutById };
 }
 
 const checkoutService = createCheckoutService();
