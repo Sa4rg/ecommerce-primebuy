@@ -12,6 +12,12 @@ function createOrdersService(deps = {}) {
   const ordersStore = deps.ordersStore || new Map();
   const idGenerator = deps.idGenerator || (() => crypto.randomUUID());
 
+  function nextUpdatedAt(previousUpdatedAt) {
+    const next = new Date().toISOString();
+    if (next !== previousUpdatedAt) return next;
+    return new Date(Date.parse(previousUpdatedAt) + 1).toISOString();
+  }
+
   async function getOrderById(orderId) {
     if (!ordersStore.has(orderId)) {
       throw new AppError("Order not found", 404);
@@ -79,7 +85,69 @@ function createOrdersService(deps = {}) {
     return order;
   }
 
-  return { createOrderFromPayment, getOrderById };
+  async function processOrder(orderId) {
+    const order = ordersStore.get(orderId);
+
+    if (!order) {
+      throw new AppError("Order not found", 404);
+    }
+
+    if (order.status !== "created") {
+      throw new AppError("Order cannot be processed", 409);
+    }
+
+    order.status = "processing";
+    order.updatedAt = nextUpdatedAt(order.updatedAt);
+
+    return order;
+  }
+
+  async function completeOrder(orderId) {
+    const order = ordersStore.get(orderId);
+
+    if (!order) {
+      throw new AppError("Order not found", 404);
+    }
+
+    if (!["created", "processing"].includes(order.status)) {
+      throw new AppError("Order cannot be completed", 409);
+    }
+
+    order.status = "completed";
+    order.updatedAt = nextUpdatedAt(order.updatedAt);
+
+    return order;
+  }
+
+  async function cancelOrder(orderId, reason) {
+    const order = ordersStore.get(orderId);
+
+    if (!order) {
+      throw new AppError("Order not found", 404);
+    }
+
+    if (typeof reason !== "string" || reason.trim().length === 0) {
+      throw new AppError("Invalid cancellation reason", 400);
+    }
+
+    if (order.status === "completed" || order.status === "cancelled") {
+      throw new AppError("Order cannot be cancelled", 409);
+    }
+
+    order.status = "cancelled";
+    order.cancellation = { reason: reason.trim() };
+    order.updatedAt = nextUpdatedAt(order.updatedAt);
+
+    return order;
+  }
+
+  return {
+    createOrderFromPayment,
+    getOrderById,
+    processOrder,
+    completeOrder,
+    cancelOrder,
+  };
 }
 
 const ordersService = createOrdersService();

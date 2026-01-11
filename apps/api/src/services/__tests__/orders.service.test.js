@@ -286,3 +286,157 @@ describe("getOrderById", () => {
     );
   });
 });
+
+describe("fulfillment", () => {
+  // Helper to create an order in "created" status
+  async function createOrderInCreatedStatus() {
+    const { cartId } = await cartService.createCart();
+    await cartService.addItem(cartId, "product-1", 1);
+    await cartService.updateMetadata(cartId, {
+      customer: { email: "test@example.com", name: "Test", phone: "+123" },
+    });
+
+    const checkout = await checkoutService.createCheckout(cartId);
+    const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
+    await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
+    await paymentsService.confirmPayment(payment.paymentId, null);
+
+    const order = await ordersService.createOrderFromPayment(payment.paymentId);
+    return order;
+  }
+
+  // --- processOrder ---
+
+  test("processOrder should set status to processing and update updatedAt", async () => {
+    // Arrange
+    const order = await createOrderInCreatedStatus();
+    const previousUpdatedAt = order.updatedAt;
+
+    // Act
+    const updatedOrder = await ordersService.processOrder(order.orderId);
+
+    // Assert
+    expect(updatedOrder.status).toBe("processing");
+    expect(updatedOrder.updatedAt).not.toBe(previousUpdatedAt);
+  });
+
+  test("processOrder should throw 404 when order does not exist", async () => {
+    await expect(ordersService.processOrder("invalid-order")).rejects.toMatchObject({
+      statusCode: 404,
+      message: "Order not found",
+    });
+  });
+
+  test("processOrder should throw 409 when order is not in created status", async () => {
+    // Arrange: create order and process it first
+    const order = await createOrderInCreatedStatus();
+    await ordersService.processOrder(order.orderId);
+
+    // Act + Assert: try to process again
+    await expect(ordersService.processOrder(order.orderId)).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Order cannot be processed",
+    });
+  });
+
+  // --- completeOrder ---
+
+  test("completeOrder should set status to completed from created and update updatedAt", async () => {
+    // Arrange
+    const order = await createOrderInCreatedStatus();
+    const previousUpdatedAt = order.updatedAt;
+
+    // Act
+    const updatedOrder = await ordersService.completeOrder(order.orderId);
+
+    // Assert
+    expect(updatedOrder.status).toBe("completed");
+    expect(updatedOrder.updatedAt).not.toBe(previousUpdatedAt);
+  });
+
+  test("completeOrder should set status to completed from processing", async () => {
+    // Arrange
+    const order = await createOrderInCreatedStatus();
+    await ordersService.processOrder(order.orderId);
+
+    // Act
+    const updatedOrder = await ordersService.completeOrder(order.orderId);
+
+    // Assert
+    expect(updatedOrder.status).toBe("completed");
+  });
+
+  test("completeOrder should throw 409 when order is cancelled", async () => {
+    // Arrange
+    const order = await createOrderInCreatedStatus();
+    await ordersService.cancelOrder(order.orderId, "Customer requested");
+
+    // Act + Assert
+    await expect(ordersService.completeOrder(order.orderId)).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Order cannot be completed",
+    });
+  });
+
+  // --- cancelOrder ---
+
+  test("cancelOrder should cancel an order in created status and store cancellation reason", async () => {
+    // Arrange
+    const order = await createOrderInCreatedStatus();
+    const previousUpdatedAt = order.updatedAt;
+
+    // Act
+    const updatedOrder = await ordersService.cancelOrder(order.orderId, "Customer requested");
+
+    // Assert
+    expect(updatedOrder.status).toBe("cancelled");
+    expect(updatedOrder.cancellation).toEqual(
+      expect.objectContaining({
+        reason: "Customer requested",
+      })
+    );
+    expect(updatedOrder.updatedAt).not.toBe(previousUpdatedAt);
+  });
+
+  test("cancelOrder should cancel an order in processing status", async () => {
+    // Arrange
+    const order = await createOrderInCreatedStatus();
+    await ordersService.processOrder(order.orderId);
+
+    // Act
+    const updatedOrder = await ordersService.cancelOrder(order.orderId, "Out of stock");
+
+    // Assert
+    expect(updatedOrder.status).toBe("cancelled");
+    expect(updatedOrder.cancellation.reason).toBe("Out of stock");
+  });
+
+  test("cancelOrder should throw 409 when trying to cancel a completed order", async () => {
+    // Arrange
+    const order = await createOrderInCreatedStatus();
+    await ordersService.completeOrder(order.orderId);
+
+    // Act + Assert
+    await expect(ordersService.cancelOrder(order.orderId, "Changed mind")).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Order cannot be cancelled",
+    });
+  });
+
+  test("cancelOrder should throw 400 when reason is invalid", async () => {
+    // Arrange
+    const order = await createOrderInCreatedStatus();
+
+    // Act + Assert: empty string
+    await expect(ordersService.cancelOrder(order.orderId, "")).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid cancellation reason",
+    });
+
+    // Act + Assert: whitespace only
+    await expect(ordersService.cancelOrder(order.orderId, "   ")).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid cancellation reason",
+    });
+  });
+});
