@@ -440,3 +440,276 @@ describe("fulfillment", () => {
     });
   });
 });
+
+describe("shipping", () => {
+  // Helper to create an order in "created" status for shipping tests
+  async function createOrderForShipping() {
+    const { cartId } = await cartService.createCart();
+    await cartService.addItem(cartId, "product-1", 1);
+    await cartService.updateMetadata(cartId, {
+      customer: { email: "test@example.com", name: "Test", phone: "+123" },
+    });
+
+    const checkout = await checkoutService.createCheckout(cartId);
+    const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
+    await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
+    await paymentsService.confirmPayment(payment.paymentId, null);
+
+    const order = await ordersService.createOrderFromPayment(payment.paymentId);
+    return order;
+  }
+
+  // Valid address for tests
+  const validAddress = {
+    recipientName: "John Doe",
+    phone: "+584141234567",
+    state: "Miranda",
+    city: "Caracas",
+    line1: "Av. Principal, Edificio Centro",
+    reference: "Frente al banco",
+  };
+
+  // --- Default shipping on order creation ---
+
+  test("should create orders with default shipping state", async () => {
+    // Arrange + Act
+    const order = await createOrderForShipping();
+
+    // Assert
+    expect(order.shipping).toBeDefined();
+    expect(order.shipping.status).toBe("pending");
+    expect(order.shipping.method).toBeNull();
+    expect(order.shipping.address).toBeNull();
+    expect(order.shipping.carrier).toEqual({ name: null, trackingNumber: null });
+    expect(order.shipping.dispatchedAt).toBeNull();
+    expect(order.shipping.deliveredAt).toBeNull();
+  });
+
+  // --- setShippingDetails ---
+
+  test("setShippingDetails should set shipping method pickup with null address", async () => {
+    // Arrange
+    const order = await createOrderForShipping();
+
+    // Act
+    const updatedOrder = await ordersService.setShippingDetails(order.orderId, {
+      method: "pickup",
+      address: null,
+    });
+
+    // Assert
+    expect(updatedOrder.shipping.method).toBe("pickup");
+    expect(updatedOrder.shipping.address).toBeNull();
+    expect(updatedOrder.shipping.status).toBe("pending");
+  });
+
+  test("setShippingDetails should set shipping method local_delivery with valid address", async () => {
+    // Arrange
+    const order = await createOrderForShipping();
+
+    // Act
+    const updatedOrder = await ordersService.setShippingDetails(order.orderId, {
+      method: "local_delivery",
+      address: validAddress,
+    });
+
+    // Assert
+    expect(updatedOrder.shipping.method).toBe("local_delivery");
+    expect(updatedOrder.shipping.address).toEqual(
+      expect.objectContaining({
+        recipientName: "John Doe",
+        phone: "+584141234567",
+        state: "Miranda",
+        city: "Caracas",
+        line1: "Av. Principal, Edificio Centro",
+      })
+    );
+  });
+
+  test("setShippingDetails should throw 400 when method is invalid", async () => {
+    // Arrange
+    const order = await createOrderForShipping();
+
+    // Act + Assert
+    await expect(
+      ordersService.setShippingDetails(order.orderId, {
+        method: "airdrop",
+        address: null,
+      })
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid shipping details",
+    });
+  });
+
+  test("setShippingDetails should throw 400 when address is missing for local_delivery", async () => {
+    // Arrange
+    const order = await createOrderForShipping();
+
+    // Act + Assert
+    await expect(
+      ordersService.setShippingDetails(order.orderId, {
+        method: "local_delivery",
+        address: null,
+      })
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid shipping details",
+    });
+  });
+
+  test("setShippingDetails should throw 400 when required address fields are missing", async () => {
+    // Arrange
+    const order = await createOrderForShipping();
+    const incompleteAddress = {
+      recipientName: "John Doe",
+      // missing phone, state, city, line1
+    };
+
+    // Act + Assert
+    await expect(
+      ordersService.setShippingDetails(order.orderId, {
+        method: "national_shipping",
+        address: incompleteAddress,
+      })
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid shipping details",
+    });
+  });
+
+  test("setShippingDetails should throw 409 when setting shipping on a completed order", async () => {
+    // Arrange
+    const order = await createOrderForShipping();
+    await ordersService.completeOrder(order.orderId);
+
+    // Act + Assert
+    await expect(
+      ordersService.setShippingDetails(order.orderId, {
+        method: "pickup",
+        address: null,
+      })
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Order cannot be updated for shipping",
+    });
+  });
+
+  test("setShippingDetails should throw 409 when setting shipping on a cancelled order", async () => {
+    // Arrange
+    const order = await createOrderForShipping();
+    await ordersService.cancelOrder(order.orderId, "Test cancellation");
+
+    // Act + Assert
+    await expect(
+      ordersService.setShippingDetails(order.orderId, {
+        method: "pickup",
+        address: null,
+      })
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Order cannot be updated for shipping",
+    });
+  });
+
+  // --- markDispatched ---
+
+  test("markDispatched should mark dispatched for local_delivery without carrier/tracking", async () => {
+    // Arrange
+    const order = await createOrderForShipping();
+    await ordersService.setShippingDetails(order.orderId, {
+      method: "local_delivery",
+      address: validAddress,
+    });
+
+    // Act
+    const updatedOrder = await ordersService.markDispatched(order.orderId, null);
+
+    // Assert
+    expect(updatedOrder.shipping.status).toBe("dispatched");
+    expect(typeof updatedOrder.shipping.dispatchedAt).toBe("string");
+    expect(updatedOrder.shipping.dispatchedAt.length).toBeGreaterThan(0);
+    expect(updatedOrder.shipping.carrier).toEqual({ name: null, trackingNumber: null });
+  });
+
+  test("markDispatched should require carrier and tracking for national_shipping", async () => {
+    // Arrange
+    const order = await createOrderForShipping();
+    await ordersService.setShippingDetails(order.orderId, {
+      method: "national_shipping",
+      address: validAddress,
+    });
+
+    // Act + Assert: null carrier should fail
+    await expect(ordersService.markDispatched(order.orderId, null)).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid shipping carrier",
+    });
+
+    // Act: valid carrier should succeed
+    const updatedOrder = await ordersService.markDispatched(order.orderId, {
+      name: "MRW",
+      trackingNumber: "123456789",
+    });
+
+    // Assert
+    expect(updatedOrder.shipping.status).toBe("dispatched");
+    expect(updatedOrder.shipping.carrier).toEqual({
+      name: "MRW",
+      trackingNumber: "123456789",
+    });
+  });
+
+  test("markDispatched should throw 409 when shipping is not pending", async () => {
+    // Arrange
+    const order = await createOrderForShipping();
+    await ordersService.setShippingDetails(order.orderId, {
+      method: "pickup",
+      address: null,
+    });
+    await ordersService.markDispatched(order.orderId, null);
+
+    // Act + Assert: try to dispatch again
+    await expect(ordersService.markDispatched(order.orderId, null)).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Shipping cannot be dispatched",
+    });
+  });
+
+  // --- markDelivered ---
+
+  test("markDelivered should mark delivered only from dispatched and auto-complete order", async () => {
+    // Arrange
+    const order = await createOrderForShipping();
+    await ordersService.setShippingDetails(order.orderId, {
+      method: "pickup",
+      address: null,
+    });
+    await ordersService.markDispatched(order.orderId, null);
+
+    // Act
+    const updatedOrder = await ordersService.markDelivered(order.orderId);
+
+    // Assert
+    expect(updatedOrder.shipping.status).toBe("delivered");
+    expect(typeof updatedOrder.shipping.deliveredAt).toBe("string");
+    expect(updatedOrder.shipping.deliveredAt.length).toBeGreaterThan(0);
+    expect(updatedOrder.status).toBe("completed");
+  });
+
+  test("markDelivered should throw 409 when shipping is not dispatched", async () => {
+    // Arrange
+    const order = await createOrderForShipping();
+    await ordersService.setShippingDetails(order.orderId, {
+      method: "pickup",
+      address: null,
+    });
+    // Note: NOT dispatching
+
+    // Act + Assert
+    await expect(ordersService.markDelivered(order.orderId)).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Shipping cannot be delivered",
+    });
+  });
+});

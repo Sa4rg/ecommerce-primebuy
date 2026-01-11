@@ -5,6 +5,9 @@ const defaultCartService = require("./cart.service");
 const defaultCheckoutService = require("./checkout.service");
 const defaultPaymentsService = require("./payments.service");
 
+const VALID_SHIPPING_METHODS = ["pickup", "local_delivery", "national_shipping"];
+const VALID_CARRIER_NAMES = ["MRW", "ZOOM", "OTHER"];
+
 function createOrdersService(deps = {}) {
   const cartService = deps.cartService || defaultCartService;
   const checkoutService = deps.checkoutService || defaultCheckoutService;
@@ -16,6 +19,78 @@ function createOrdersService(deps = {}) {
     const next = new Date().toISOString();
     if (next !== previousUpdatedAt) return next;
     return new Date(Date.parse(previousUpdatedAt) + 1).toISOString();
+  }
+
+  function getExistingOrder(orderId) {
+    if (!ordersStore.has(orderId)) {
+      throw new AppError("Order not found", 404);
+    }
+    return ordersStore.get(orderId);
+  }
+
+  function assertOrderEditableForShipping(order) {
+    if (order.status === "completed" || order.status === "cancelled") {
+      throw new AppError("Order cannot be updated for shipping", 409);
+    }
+  }
+
+  function validateShippingDetails(details) {
+    if (!details || typeof details !== "object") {
+      throw new AppError("Invalid shipping details", 400);
+    }
+
+    if (!VALID_SHIPPING_METHODS.includes(details.method)) {
+      throw new AppError("Invalid shipping details", 400);
+    }
+
+    if (details.method === "pickup") {
+      // Address must be null or undefined for pickup
+      if (details.address !== null && details.address !== undefined) {
+        throw new AppError("Invalid shipping details", 400);
+      }
+    } else {
+      // Address required for local_delivery and national_shipping
+      if (!details.address || typeof details.address !== "object") {
+        throw new AppError("Invalid shipping details", 400);
+      }
+
+      const requiredFields = ["recipientName", "phone", "state", "city", "line1"];
+      for (const field of requiredFields) {
+        const value = details.address[field];
+        if (typeof value !== "string" || value.trim().length === 0) {
+          throw new AppError("Invalid shipping details", 400);
+        }
+      }
+    }
+  }
+
+  function normalizeAddress(address) {
+    if (!address) return null;
+
+    return {
+      recipientName: address.recipientName.trim(),
+      phone: address.phone.trim(),
+      state: address.state.trim(),
+      city: address.city.trim(),
+      line1: address.line1.trim(),
+      reference: address.reference ? address.reference.trim() : null,
+    };
+  }
+
+  function validateCarrierForDispatch(order, carrier) {
+    if (order.shipping.method === "national_shipping") {
+      if (!carrier || typeof carrier !== "object") {
+        throw new AppError("Invalid shipping carrier", 400);
+      }
+
+      if (!VALID_CARRIER_NAMES.includes(carrier.name)) {
+        throw new AppError("Invalid shipping carrier", 400);
+      }
+
+      if (typeof carrier.trackingNumber !== "string" || carrier.trackingNumber.trim().length === 0) {
+        throw new AppError("Invalid shipping carrier", 400);
+      }
+    }
   }
 
   async function getOrderById(orderId) {
@@ -71,6 +146,14 @@ function createOrdersService(deps = {}) {
         method: payment.method,
         proof: payment.proof,
         review: payment.review,
+      },
+      shipping: {
+        method: null,
+        address: null,
+        carrier: { name: null, trackingNumber: null },
+        status: "pending",
+        dispatchedAt: null,
+        deliveredAt: null,
       },
       createdAt: now,
       updatedAt: now,
@@ -141,12 +224,76 @@ function createOrdersService(deps = {}) {
     return order;
   }
 
+  async function setShippingDetails(orderId, details) {
+    const order = getExistingOrder(orderId);
+    assertOrderEditableForShipping(order);
+    validateShippingDetails(details);
+
+    order.shipping.method = details.method;
+    order.shipping.address = details.method === "pickup" ? null : normalizeAddress(details.address);
+    order.updatedAt = nextUpdatedAt(order.updatedAt);
+
+    return order;
+  }
+
+  async function markDispatched(orderId, carrier) {
+    const order = getExistingOrder(orderId);
+    assertOrderEditableForShipping(order);
+
+    if (order.shipping.status !== "pending") {
+      throw new AppError("Shipping cannot be dispatched", 409);
+    }
+
+    if (order.shipping.method === null) {
+      throw new AppError("Invalid shipping details", 400);
+    }
+
+    if (["local_delivery", "national_shipping"].includes(order.shipping.method) && order.shipping.address === null) {
+      throw new AppError("Invalid shipping details", 400);
+    }
+
+    validateCarrierForDispatch(order, carrier);
+
+    order.shipping.status = "dispatched";
+    order.shipping.dispatchedAt = new Date().toISOString();
+
+    if (order.shipping.method === "national_shipping" && carrier) {
+      order.shipping.carrier = {
+        name: carrier.name,
+        trackingNumber: carrier.trackingNumber.trim(),
+      };
+    }
+
+    order.updatedAt = nextUpdatedAt(order.updatedAt);
+
+    return order;
+  }
+
+  async function markDelivered(orderId) {
+    const order = getExistingOrder(orderId);
+    assertOrderEditableForShipping(order);
+
+    if (order.shipping.status !== "dispatched") {
+      throw new AppError("Shipping cannot be delivered", 409);
+    }
+
+    order.shipping.status = "delivered";
+    order.shipping.deliveredAt = new Date().toISOString();
+    order.status = "completed";
+    order.updatedAt = nextUpdatedAt(order.updatedAt);
+
+    return order;
+  }
+
   return {
     createOrderFromPayment,
     getOrderById,
     processOrder,
     completeOrder,
     cancelOrder,
+    setShippingDetails,
+    markDispatched,
+    markDelivered,
   };
 }
 

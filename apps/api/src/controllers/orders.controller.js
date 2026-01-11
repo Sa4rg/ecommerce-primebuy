@@ -67,4 +67,54 @@ async function cancelOrder(req, res, next) {
   }
 }
 
-module.exports = { createOrder, getOrder, processOrder, completeOrder, cancelOrder };
+async function setShipping(req, res, next) {
+  try {
+    const { orderId } = req.params;
+    const { method, address } = req.body;
+
+    const order = await ordersService.setShippingDetails(orderId, { method, address });
+
+    res.status(200);
+    success(res, order, "Shipping updated successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function dispatchShipping(req, res, next) {
+  try {
+    const { orderId } = req.params;
+    const carrier = req.body?.carrier ?? null;
+
+    const order = await ordersService.markDispatched(orderId, carrier);
+
+    res.status(200);
+    success(res, order, "Shipping dispatched successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function deliverShipping(req, res, next) {
+  try {
+    const { orderId } = req.params;
+
+    const order = await ordersService.markDelivered(orderId);
+
+    res.status(200);
+    success(res, order, "Shipping delivered successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = {
+  createOrder,
+  getOrder,
+  processOrder,
+  completeOrder,
+  cancelOrder,
+  setShipping,
+  dispatchShipping,
+  deliverShipping,
+};
