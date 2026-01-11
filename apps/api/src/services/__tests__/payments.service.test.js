@@ -210,3 +210,195 @@ describe("submitPayment", () => {
     });
   });
 });
+
+describe("admin review", () => {
+  test("confirmPayment should confirm a submitted payment and update updatedAt", async () => {
+    // Arrange: create checkout and payment
+    const checkout = {
+      checkoutId: "checkout-1",
+      cartId: "cart-1",
+      totals: { subtotalUSD: 20, subtotalVES: 800 },
+    };
+    checkoutsStore.set("checkout-1", checkout);
+
+    await paymentsService.createPayment("checkout-1", "zelle");
+    const submittedPayment = await paymentsService.submitPayment("payment-1", {
+      reference: "ABC123",
+    });
+    const previousUpdatedAt = submittedPayment.updatedAt;
+
+    // Act
+    const confirmedPayment = await paymentsService.confirmPayment("payment-1", "Confirmed in bank");
+
+    // Assert
+    expect(confirmedPayment.status).toBe("confirmed");
+    expect(confirmedPayment.review.note).toBe("Confirmed in bank");
+    expect(confirmedPayment.updatedAt).not.toBe(previousUpdatedAt);
+    expect(typeof confirmedPayment.updatedAt).toBe("string");
+  });
+
+  test("confirmPayment should allow null/undefined note and still confirm", async () => {
+    // Arrange: create checkout and payment
+    const checkout = {
+      checkoutId: "checkout-1",
+      cartId: "cart-1",
+      totals: { subtotalUSD: 20, subtotalVES: 800 },
+    };
+    checkoutsStore.set("checkout-1", checkout);
+
+    await paymentsService.createPayment("checkout-1", "zelle");
+    const submittedPayment = await paymentsService.submitPayment("payment-1", {
+      reference: "ABC123",
+    });
+    const previousUpdatedAt = submittedPayment.updatedAt;
+
+    // Act
+    const confirmedPayment = await paymentsService.confirmPayment("payment-1");
+
+    // Assert
+    expect(confirmedPayment.status).toBe("confirmed");
+    expect(confirmedPayment.review.note).toBeNull();
+    expect(confirmedPayment.updatedAt).not.toBe(previousUpdatedAt);
+  });
+
+  test("confirmPayment should throw 404 when payment not found", async () => {
+    // Act + Assert
+    await expect(
+      paymentsService.confirmPayment("invalid-payment", "x")
+    ).rejects.toMatchObject({
+      statusCode: 404,
+      message: "Payment not found",
+    });
+  });
+
+  test("confirmPayment should throw 409 when payment is not submitted", async () => {
+    // Arrange: create payment (still pending)
+    const checkout = {
+      checkoutId: "checkout-1",
+      cartId: "cart-1",
+      totals: { subtotalUSD: 20, subtotalVES: 800 },
+    };
+    checkoutsStore.set("checkout-1", checkout);
+
+    await paymentsService.createPayment("checkout-1", "zelle");
+
+    // Act + Assert
+    await expect(
+      paymentsService.confirmPayment("payment-1", "x")
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Payment is not submitted",
+    });
+  });
+
+  test("confirmPayment should throw 400 when note is invalid", async () => {
+    // Arrange: create and submit payment
+    const checkout = {
+      checkoutId: "checkout-1",
+      cartId: "cart-1",
+      totals: { subtotalUSD: 20, subtotalVES: 800 },
+    };
+    checkoutsStore.set("checkout-1", checkout);
+
+    await paymentsService.createPayment("checkout-1", "zelle");
+    await paymentsService.submitPayment("payment-1", { reference: "ABC123" });
+
+    // Act + Assert
+    await expect(
+      paymentsService.confirmPayment("payment-1", "")
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid payment review",
+    });
+
+    await expect(
+      paymentsService.confirmPayment("payment-1", "   ")
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid payment review",
+    });
+  });
+
+  test("rejectPayment should reject a submitted payment and update updatedAt", async () => {
+    // Arrange: create checkout and payment
+    const checkout = {
+      checkoutId: "checkout-1",
+      cartId: "cart-1",
+      totals: { subtotalUSD: 20, subtotalVES: 800 },
+    };
+    checkoutsStore.set("checkout-1", checkout);
+
+    await paymentsService.createPayment("checkout-1", "zelle");
+    const submittedPayment = await paymentsService.submitPayment("payment-1", {
+      reference: "ABC123",
+    });
+    const previousUpdatedAt = submittedPayment.updatedAt;
+
+    // Act
+    const rejectedPayment = await paymentsService.rejectPayment("payment-1", "Reference not found");
+
+    // Assert
+    expect(rejectedPayment.status).toBe("rejected");
+    expect(rejectedPayment.review.reason).toBe("Reference not found");
+    expect(rejectedPayment.updatedAt).not.toBe(previousUpdatedAt);
+    expect(typeof rejectedPayment.updatedAt).toBe("string");
+  });
+
+  test("rejectPayment should throw 404 when payment not found", async () => {
+    // Act + Assert
+    await expect(
+      paymentsService.rejectPayment("invalid-payment", "x")
+    ).rejects.toMatchObject({
+      statusCode: 404,
+      message: "Payment not found",
+    });
+  });
+
+  test("rejectPayment should throw 409 when payment is not submitted", async () => {
+    // Arrange: create payment (still pending)
+    const checkout = {
+      checkoutId: "checkout-1",
+      cartId: "cart-1",
+      totals: { subtotalUSD: 20, subtotalVES: 800 },
+    };
+    checkoutsStore.set("checkout-1", checkout);
+
+    await paymentsService.createPayment("checkout-1", "zelle");
+
+    // Act + Assert
+    await expect(
+      paymentsService.rejectPayment("payment-1", "x")
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Payment is not submitted",
+    });
+  });
+
+  test("rejectPayment should throw 400 when reason is invalid", async () => {
+    // Arrange: create and submit payment
+    const checkout = {
+      checkoutId: "checkout-1",
+      cartId: "cart-1",
+      totals: { subtotalUSD: 20, subtotalVES: 800 },
+    };
+    checkoutsStore.set("checkout-1", checkout);
+
+    await paymentsService.createPayment("checkout-1", "zelle");
+    await paymentsService.submitPayment("payment-1", { reference: "ABC123" });
+
+    // Act + Assert
+    await expect(
+      paymentsService.rejectPayment("payment-1", "")
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid payment review",
+    });
+
+    await expect(
+      paymentsService.rejectPayment("payment-1", "   ")
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Invalid payment review",
+    });
+  });
+});

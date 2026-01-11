@@ -82,7 +82,53 @@ function createPaymentsService(deps = {}) {
     return payment;
   }
 
-  return { createPayment, submitPayment };
+  async function confirmPayment(paymentId, note) {
+    const payment = paymentsStore.get(paymentId);
+
+    if (!payment) {
+      throw new AppError("Payment not found", 404);
+    }
+
+    if (payment.status !== "submitted") {
+      throw new AppError("Payment is not submitted", 409);
+    }
+
+    if (note !== undefined && note !== null) {
+      if (typeof note !== "string" || note.trim().length === 0) {
+        throw new AppError("Invalid payment review", 400);
+      }
+    }
+
+    payment.status = "confirmed";
+    payment.review = { note: note ? note.trim() : null };
+    payment.updatedAt = nextUpdatedAt(payment.updatedAt);
+
+    return payment;
+  }
+
+  async function rejectPayment(paymentId, reason) {
+    const payment = paymentsStore.get(paymentId);
+
+    if (!payment) {
+      throw new AppError("Payment not found", 404);
+    }
+
+    if (payment.status !== "submitted") {
+      throw new AppError("Payment is not submitted", 409);
+    }
+
+    if (typeof reason !== "string" || reason.trim().length === 0) {
+      throw new AppError("Invalid payment review", 400);
+    }
+
+    payment.status = "rejected";
+    payment.review = { reason: reason.trim() };
+    payment.updatedAt = nextUpdatedAt(payment.updatedAt);
+
+    return payment;
+  }
+
+  return { createPayment, submitPayment, confirmPayment, rejectPayment };
 }
 
 const paymentsService = createPaymentsService();

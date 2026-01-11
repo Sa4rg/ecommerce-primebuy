@@ -226,6 +226,21 @@ function localContext() {
 - Avoid premature optimization
 - Avoid over-engineering
 
+### HTTP Test Naming Convention
+
+- New HTTP / integration tests under `apps/api/src/__tests__` must use the naming pattern:
+  `*.http.test.js`
+
+Examples:
+- payments.http.test.js
+- payments.admin.http.test.js
+- orders.http.test.js
+
+- Existing test files are **not required** to be renamed retroactively.
+- Service-level unit tests continue to live near services and follow:
+  `*.service.test.js`
+
+
 ### 9. AI Agent Behavior
 #### Tone & Role
 - Mixed: strict but explanatory
