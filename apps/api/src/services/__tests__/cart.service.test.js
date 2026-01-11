@@ -396,3 +396,111 @@ describe("updateMetadata", () => {
     });
   });
 });
+
+describe("cart status enforcement", () => {
+  test("addItem should throw 409 when cart is locked", async () => {
+    const { cartId } = await cartService.createCart();
+    await cartService.updateMetadata(cartId, { status: "locked" });
+
+    const product = await productsService.createProduct({
+      name: "Test Product",
+      priceUSD: 10,
+      stock: 5,
+      category: "Test",
+    });
+
+    await expect(cartService.addItem(cartId, product.id, 1)).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Cart is not active",
+    });
+  });
+
+  test("addItem should throw 409 when cart is checked_out", async () => {
+    const { cartId } = await cartService.createCart();
+    await cartService.updateMetadata(cartId, { status: "checked_out" });
+
+    const product = await productsService.createProduct({
+      name: "Test Product",
+      priceUSD: 10,
+      stock: 5,
+      category: "Test",
+    });
+
+    await expect(cartService.addItem(cartId, product.id, 1)).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Cart is not active",
+    });
+  });
+
+  test("updateItem should throw 409 when cart is locked", async () => {
+    const { cartId } = await cartService.createCart();
+    const product = await productsService.createProduct({
+      name: "Test Product",
+      priceUSD: 10,
+      stock: 5,
+      category: "Test",
+    });
+
+    await cartService.addItem(cartId, product.id, 1);
+    await cartService.updateMetadata(cartId, { status: "locked" });
+
+    await expect(cartService.updateItem(cartId, product.id, 2)).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Cart is not active",
+    });
+  });
+
+  test("updateItem should throw 409 when cart is checked_out", async () => {
+    const { cartId } = await cartService.createCart();
+    const product = await productsService.createProduct({
+      name: "Test Product",
+      priceUSD: 10,
+      stock: 5,
+      category: "Test",
+    });
+
+    await cartService.addItem(cartId, product.id, 1);
+    await cartService.updateMetadata(cartId, { status: "checked_out" });
+
+    await expect(cartService.updateItem(cartId, product.id, 2)).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Cart is not active",
+    });
+  });
+
+  test("removeItem should throw 409 when cart is locked", async () => {
+    const { cartId } = await cartService.createCart();
+    const product = await productsService.createProduct({
+      name: "Test Product",
+      priceUSD: 10,
+      stock: 5,
+      category: "Test",
+    });
+
+    await cartService.addItem(cartId, product.id, 1);
+    await cartService.updateMetadata(cartId, { status: "locked" });
+
+    await expect(cartService.removeItem(cartId, product.id)).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Cart is not active",
+    });
+  });
+
+  test("removeItem should throw 409 when cart is checked_out", async () => {
+    const { cartId } = await cartService.createCart();
+    const product = await productsService.createProduct({
+      name: "Test Product",
+      priceUSD: 10,
+      stock: 5,
+      category: "Test",
+    });
+
+    await cartService.addItem(cartId, product.id, 1);
+    await cartService.updateMetadata(cartId, { status: "checked_out" });
+
+    await expect(cartService.removeItem(cartId, product.id)).rejects.toMatchObject({
+      statusCode: 409,
+      message: "Cart is not active",
+    });
+  });
+});

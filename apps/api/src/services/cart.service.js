@@ -69,16 +69,23 @@ function createCartService(deps = {}) {
     return new Date(Date.parse(previousUpdatedAt) + 1).toISOString();
   }
 
+  function assertCartIsActive(cart) {
+    if (cart.metadata?.status !== "active") {
+      throw new AppError("Cart is not active", 409);
+    }
+  }
+
   async function addItem(cartId, productId, quantity) {
     if (!cartsStore.has(cartId)) {
       throw new AppError("Cart not found", 404);
     }
 
+    const cart = cartsStore.get(cartId);
+    assertCartIsActive(cart);
+
     validateQuantity(quantity);
 
     const product = await productsService.getProductById(productId);
-
-    const cart = cartsStore.get(cartId);
 
     const existingItem = cart.items.find((item) => item.productId === productId);
     const currentQuantity = existingItem ? existingItem.quantity : 0;
@@ -109,6 +116,8 @@ function createCartService(deps = {}) {
     const cart = cartsStore.get(cartId);
     if (!cart) throw new AppError("Cart not found", 404);
 
+    assertCartIsActive(cart);
+
     validateQuantity(quantity);
 
     const existingItem = cart.items.find((item) => item.productId === productId);
@@ -130,6 +139,8 @@ function createCartService(deps = {}) {
   async function removeItem(cartId, productId) {
    const cart = cartsStore.get(cartId);
     if (!cart) throw new AppError("Cart not found", 404);
+
+    assertCartIsActive(cart);
 
     const exists = cart.items.some(i => i.productId === productId);
     if (!exists) throw new AppError("Item not found in cart", 404);
