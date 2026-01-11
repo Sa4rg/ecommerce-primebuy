@@ -128,7 +128,14 @@ function createPaymentsService(deps = {}) {
     return payment;
   }
 
-  return { createPayment, submitPayment, confirmPayment, rejectPayment };
+  async function getPaymentById(paymentId) {
+    if (!paymentsStore.has(paymentId)) {
+      throw new AppError("Payment not found", 404);
+    }
+    return paymentsStore.get(paymentId);
+  }
+
+  return { createPayment, submitPayment, confirmPayment, rejectPayment, getPaymentById };
 }
 
 const paymentsService = createPaymentsService();
