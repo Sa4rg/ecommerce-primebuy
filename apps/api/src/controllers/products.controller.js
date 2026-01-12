@@ -1,5 +1,6 @@
-const { success, fail } = require('../utils/response');
-const productsService = require('../services/products.service');
+const { success } = require('../utils/response');
+const { services } = require('../composition/root');
+const productsService = services.productsService;
 
 async function listProducts(req, res, next) {
   try {

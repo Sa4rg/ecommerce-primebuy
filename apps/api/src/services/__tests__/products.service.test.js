@@ -203,3 +203,58 @@ describe("deleteProduct", () => {
     await expect(productsService.deleteProduct("999")).rejects.toThrow("Product not found");
   });
 });
+
+describe("createProductsService (DI)", () => {
+  const { createProductsService } = require("../products.service");
+  const {
+    InMemoryProductsRepository,
+  } = require("../../repositories/products/products.memory.repository");
+
+  test("getProducts() should return an empty array when repository is empty", async () => {
+    const repo = new InMemoryProductsRepository();
+    const service = createProductsService({ productsRepository: repo });
+
+    const products = await service.getProducts();
+
+    expect(products).toEqual([]);
+  });
+
+  test("getProductById() should throw NotFoundError when repository is empty", async () => {
+    const repo = new InMemoryProductsRepository();
+    const service = createProductsService({ productsRepository: repo });
+
+    await expect(service.getProductById("1")).rejects.toMatchObject({
+      name: "NotFoundError",
+      message: "Product not found",
+    });
+  });
+
+  test("createProduct() should create and return a product with inStock computed", async () => {
+    const repo = new InMemoryProductsRepository();
+    const service = createProductsService({ productsRepository: repo });
+
+    const input = {
+      name: "Test Product",
+      priceUSD: 50,
+      stock: 10,
+      category: "Testing",
+    };
+
+    const created = await service.createProduct(input);
+
+    expect(created).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        name: "Test Product",
+        priceUSD: 50,
+        stock: 10,
+        category: "Testing",
+        inStock: true,
+      })
+    );
+
+    const found = await service.getProductById(created.id);
+
+    expect(found).toEqual(created);
+  });
+});

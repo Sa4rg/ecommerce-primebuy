@@ -1,5 +1,6 @@
 const { success } = require("../utils/response");
-const paymentsService = require("../services/payments.service");
+const { services } = require("../composition/root");
+const paymentsService = services.paymentsService;
 
 async function createPayment(req, res, next) {
   try {

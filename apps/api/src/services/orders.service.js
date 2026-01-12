@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { AppError } = require("../utils/errors");
+const { InMemoryOrdersRepository } = require("../repositories/orders/orders.memory.repository");
 
 const defaultCartService = require("./cart.service");
 const defaultCheckoutService = require("./checkout.service");
@@ -8,12 +9,41 @@ const defaultPaymentsService = require("./payments.service");
 const VALID_SHIPPING_METHODS = ["pickup", "local_delivery", "national_shipping"];
 const VALID_CARRIER_NAMES = ["MRW", "ZOOM", "OTHER"];
 
+function createMapAdapter(map) {
+  return {
+    async create(order) {
+      const orderId = order.orderId;
+      map.set(orderId, order);
+      return { orderId };
+    },
+    async findById(orderId) {
+      const order = map.get(orderId);
+      return order || null;
+    },
+    async save(order) {
+      const orderId = order.orderId;
+      map.set(orderId, order);
+    },
+    async findAll() {
+      return Array.from(map.values());
+    },
+  };
+}
+
 function createOrdersService(deps = {}) {
   const cartService = deps.cartService || defaultCartService;
   const checkoutService = deps.checkoutService || defaultCheckoutService;
   const paymentsService = deps.paymentsService || defaultPaymentsService;
-  const ordersStore = deps.ordersStore || new Map();
   const idGenerator = deps.idGenerator || (() => crypto.randomUUID());
+
+  let ordersRepository;
+  if (deps.ordersRepository) {
+    ordersRepository = deps.ordersRepository;
+  } else if (deps.ordersStore) {
+    ordersRepository = createMapAdapter(deps.ordersStore);
+  } else {
+    ordersRepository = new InMemoryOrdersRepository();
+  }
 
   function nextUpdatedAt(previousUpdatedAt) {
     const next = new Date().toISOString();
@@ -21,11 +51,12 @@ function createOrdersService(deps = {}) {
     return new Date(Date.parse(previousUpdatedAt) + 1).toISOString();
   }
 
-  function getExistingOrder(orderId) {
-    if (!ordersStore.has(orderId)) {
+  async function getExistingOrder(orderId) {
+    const order = await ordersRepository.findById(orderId);
+    if (!order) {
       throw new AppError("Order not found", 404);
     }
-    return ordersStore.get(orderId);
+    return order;
   }
 
   function assertOrderEditableForShipping(order) {
@@ -94,10 +125,11 @@ function createOrdersService(deps = {}) {
   }
 
   async function getOrderById(orderId) {
-    if (!ordersStore.has(orderId)) {
+    const order = await ordersRepository.findById(orderId);
+    if (!order) {
       throw new AppError("Order not found", 404);
     }
-    return ordersStore.get(orderId);
+    return order;
   }
 
   async function createOrderFromPayment(paymentId) {
@@ -110,7 +142,8 @@ function createOrdersService(deps = {}) {
     }
 
     // 3) Prevent duplicates
-    for (const order of ordersStore.values()) {
+    const allOrders = await ordersRepository.findAll();
+    for (const order of allOrders) {
       if (order.paymentId === paymentId) {
         throw new AppError("Order already exists for payment", 409);
       }
@@ -163,13 +196,13 @@ function createOrdersService(deps = {}) {
     await cartService.updateMetadata(cart.cartId, { status: "checked_out" });
 
     // 8) Persist
-    ordersStore.set(orderId, order);
+    await ordersRepository.create(order);
 
     return order;
   }
 
   async function processOrder(orderId) {
-    const order = ordersStore.get(orderId);
+    const order = await ordersRepository.findById(orderId);
 
     if (!order) {
       throw new AppError("Order not found", 404);
@@ -182,11 +215,13 @@ function createOrdersService(deps = {}) {
     order.status = "processing";
     order.updatedAt = nextUpdatedAt(order.updatedAt);
 
+    await ordersRepository.save(order);
+
     return order;
   }
 
   async function completeOrder(orderId) {
-    const order = ordersStore.get(orderId);
+    const order = await ordersRepository.findById(orderId);
 
     if (!order) {
       throw new AppError("Order not found", 404);
@@ -199,11 +234,13 @@ function createOrdersService(deps = {}) {
     order.status = "completed";
     order.updatedAt = nextUpdatedAt(order.updatedAt);
 
+    await ordersRepository.save(order);
+
     return order;
   }
 
   async function cancelOrder(orderId, reason) {
-    const order = ordersStore.get(orderId);
+    const order = await ordersRepository.findById(orderId);
 
     if (!order) {
       throw new AppError("Order not found", 404);
@@ -221,11 +258,13 @@ function createOrdersService(deps = {}) {
     order.cancellation = { reason: reason.trim() };
     order.updatedAt = nextUpdatedAt(order.updatedAt);
 
+    await ordersRepository.save(order);
+
     return order;
   }
 
   async function setShippingDetails(orderId, details) {
-    const order = getExistingOrder(orderId);
+    const order = await getExistingOrder(orderId);
     assertOrderEditableForShipping(order);
     validateShippingDetails(details);
 
@@ -233,11 +272,13 @@ function createOrdersService(deps = {}) {
     order.shipping.address = details.method === "pickup" ? null : normalizeAddress(details.address);
     order.updatedAt = nextUpdatedAt(order.updatedAt);
 
+    await ordersRepository.save(order);
+
     return order;
   }
 
   async function markDispatched(orderId, carrier) {
-    const order = getExistingOrder(orderId);
+    const order = await getExistingOrder(orderId);
     assertOrderEditableForShipping(order);
 
     if (order.shipping.status !== "pending") {
@@ -266,11 +307,13 @@ function createOrdersService(deps = {}) {
 
     order.updatedAt = nextUpdatedAt(order.updatedAt);
 
+    await ordersRepository.save(order);
+
     return order;
   }
 
   async function markDelivered(orderId) {
-    const order = getExistingOrder(orderId);
+    const order = await getExistingOrder(orderId);
     assertOrderEditableForShipping(order);
 
     if (order.shipping.status !== "dispatched") {
@@ -281,6 +324,8 @@ function createOrdersService(deps = {}) {
     order.shipping.deliveredAt = new Date().toISOString();
     order.status = "completed";
     order.updatedAt = nextUpdatedAt(order.updatedAt);
+
+    await ordersRepository.save(order);
 
     return order;
   }

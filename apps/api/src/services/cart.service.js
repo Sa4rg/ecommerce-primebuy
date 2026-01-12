@@ -1,13 +1,47 @@
 const crypto = require("crypto");
 const { AppError } = require("../utils/errors");
+const {
+  InMemoryCartRepository,
+} = require("../repositories/cart/cart.memory.repository");
 
 // Default dependency (used by the app)
 const defaultProductsService = require("./products.service");
 
+/**
+ * Adapter to wrap a raw Map as a repository-like interface.
+ * Used for backward compatibility when deps.cartsStore is provided.
+ */
+function createMapAdapter(map) {
+  return {
+    async create(cart) {
+      map.set(cart.cartId, cart);
+      return { cartId: cart.cartId };
+    },
+    async findById(cartId) {
+      return map.get(cartId) || null;
+    },
+    async save(cart) {
+      map.set(cart.cartId, cart);
+    },
+    async delete(cartId) {
+      map.delete(cartId);
+    },
+  };
+}
+
 function createCartService(deps = {}) {
   const productsService = deps.productsService || defaultProductsService;
-  const cartsStore = deps.cartsStore || new Map();
   const idGenerator = deps.idGenerator || (() => crypto.randomUUID());
+
+  // Support both new repository pattern and legacy cartsStore
+  let cartRepository;
+  if (deps.cartRepository) {
+    cartRepository = deps.cartRepository;
+  } else if (deps.cartsStore) {
+    cartRepository = createMapAdapter(deps.cartsStore);
+  } else {
+    cartRepository = new InMemoryCartRepository();
+  }
 
   async function createCart() {
     const cartId = idGenerator();
@@ -40,15 +74,16 @@ function createCartService(deps = {}) {
       },
     };
 
-    cartsStore.set(cartId, cart);
+    await cartRepository.create(cart);
     return { cartId };
   }
 
   async function getCart(cartId) {
-    if (!cartsStore.has(cartId)) {
+    const cart = await cartRepository.findById(cartId);
+    if (!cart) {
       throw new AppError("Cart not found", 404);
     }
-    return cartsStore.get(cartId);
+    return cart;
   }
 
   function validateQuantity(quantity) {
@@ -76,11 +111,11 @@ function createCartService(deps = {}) {
   }
 
   async function addItem(cartId, productId, quantity) {
-    if (!cartsStore.has(cartId)) {
+    const cart = await cartRepository.findById(cartId);
+    if (!cart) {
       throw new AppError("Cart not found", 404);
     }
 
-    const cart = cartsStore.get(cartId);
     assertCartIsActive(cart);
 
     validateQuantity(quantity);
@@ -113,7 +148,7 @@ function createCartService(deps = {}) {
   }
 
   async function updateItem(cartId, productId, quantity) {
-    const cart = cartsStore.get(cartId);
+    const cart = await cartRepository.findById(cartId);
     if (!cart) throw new AppError("Cart not found", 404);
 
     assertCartIsActive(cart);
@@ -137,7 +172,7 @@ function createCartService(deps = {}) {
 
 
   async function removeItem(cartId, productId) {
-   const cart = cartsStore.get(cartId);
+    const cart = await cartRepository.findById(cartId);
     if (!cart) throw new AppError("Cart not found", 404);
 
     assertCartIsActive(cart);
@@ -187,7 +222,7 @@ function createCartService(deps = {}) {
   }
 
   async function updateMetadata(cartId, patch) {
-    const cart = cartsStore.get(cartId);
+    const cart = await cartRepository.findById(cartId);
     if (!cart) {
       throw new AppError("Cart not found", 404);
     }

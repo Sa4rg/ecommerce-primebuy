@@ -1,5 +1,6 @@
 const { success } = require("../utils/response");
-const ordersService = require("../services/orders.service");
+const { services } = require("../composition/root");
+const ordersService = services.ordersService;
 
 async function createOrder(req, res, next) {
   try {

@@ -1,5 +1,6 @@
-const { success, fail } = require('../utils/response');
-const cartService = require('../services/cart.service');
+const { success } = require('../utils/response');
+const { services } = require('../composition/root');
+const cartService = services.cartService;
 
 async function createCart(req, res, next) {
   try {

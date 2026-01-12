@@ -1,11 +1,7 @@
 const { AppError, NotFoundError } = require("../utils/errors");
-
-const products = [
-  { id: "1", name: "Laptop", priceUSD: 1000, stock: 10, category: "Electronics" },
-  { id: "2", name: "Mouse", priceUSD: 20, stock: 50, category: "Electronics" },
-  { id: "3", name: "Keyboard", priceUSD: 50, stock: 30, category: "Electronics" },
-  { id: "4", name: "USB Cable", priceUSD: 5, stock: 0, category: "Electronics" },
-];
+const {
+  InMemoryProductsRepository,
+} = require("../repositories/products/products.memory.repository");
 
 function toProductReadModel(product) {
   if (typeof product.priceUSD !== "number" || product.priceUSD <= 0) {
@@ -46,72 +42,101 @@ function validateCreateInput(input) {
   }
 }
 
-function generateId() {
-  return String(products.length + 1);
-}
+function createProductsService(deps = {}) {
+  const productsRepository =
+    deps.productsRepository || new InMemoryProductsRepository();
 
-async function getProducts() {
-  return products.map(toProductReadModel);
-}
-
-async function getProductById(id) {
-  const product = products.find(p => p.id === id);
-
-  if (!product) {
-    throw new NotFoundError("Product not found");
+  async function getProducts() {
+    const products = await productsRepository.findAll();
+    return products.map(toProductReadModel);
   }
 
-  return toProductReadModel(product);
-}
+  async function getProductById(id) {
+    const product = await productsRepository.findById(id);
 
-async function createProduct(input) {
-  validateCreateInput(input);
+    if (!product) {
+      throw new NotFoundError("Product not found");
+    }
 
-  const newProduct = {
-    id: generateId(),
-    name: input.name.trim(),
-    priceUSD: input.priceUSD,
-    stock: input.stock,
-    category: input.category.trim(),
+    return toProductReadModel(product);
+  }
+
+  async function createProduct(input) {
+    validateCreateInput(input);
+
+    const productData = {
+      name: input.name.trim(),
+      priceUSD: input.priceUSD,
+      stock: input.stock,
+      category: input.category.trim(),
+    };
+
+    const newProduct = await productsRepository.create(productData);
+
+    return toProductReadModel(newProduct);
+  }
+
+  async function updateProduct(id, input) {
+    const existing = await productsRepository.findById(id);
+
+    if (!existing) {
+      throw new NotFoundError("Product not found");
+    }
+
+    validateCreateInput(input);
+
+    const productData = {
+      name: input.name.trim(),
+      priceUSD: input.priceUSD,
+      stock: input.stock,
+      category: input.category.trim(),
+    };
+
+    const updatedProduct = await productsRepository.update(id, productData);
+
+    return toProductReadModel(updatedProduct);
+  }
+
+  async function deleteProduct(id) {
+    const deletedProduct = await productsRepository.delete(id);
+
+    if (!deletedProduct) {
+      throw new NotFoundError("Product not found");
+    }
+
+    return toProductReadModel(deletedProduct);
+  }
+
+  return {
+    getProducts,
+    getProductById,
+    createProduct,
+    updateProduct,
+    deleteProduct,
   };
-
-  products.push(newProduct);
-
-  return toProductReadModel(newProduct);
 }
 
-async function updateProduct(id, input) {
-  const productIndex = products.findIndex(p => p.id === id);
+// Initial seed data for backward compatibility with existing tests
+const SEED_PRODUCTS = [
+  { name: "Laptop", priceUSD: 1000, stock: 10, category: "Electronics" },
+  { name: "Mouse", priceUSD: 20, stock: 50, category: "Electronics" },
+  { name: "Keyboard", priceUSD: 50, stock: 30, category: "Electronics" },
+  { name: "USB Cable", priceUSD: 5, stock: 0, category: "Electronics" },
+];
 
-  if (productIndex === -1) {
-    throw new NotFoundError("Product not found");
-  }
+// NOTE: Legacy seed for backward compatibility with existing tests.
+// This will be removed once Products are persisted in MySQL with proper seeds/migrations.
 
-  validateCreateInput(input);
+// Default instance for backward compatibility
+const defaultService = createProductsService({
+  productsRepository: new InMemoryProductsRepository(SEED_PRODUCTS),
+});
 
-  const updatedProduct = {
-    ...products[productIndex],
-    name: input.name.trim(),
-    priceUSD: input.priceUSD,
-    stock: input.stock,
-    category: input.category.trim(),
-  };
-
-  products[productIndex] = updatedProduct;
-
-  return toProductReadModel(updatedProduct);
-}
-
-async function deleteProduct(id) {
-  const productIndex = products.findIndex(p => p.id === id);
-
-  if (productIndex === -1) {
-    throw new NotFoundError("Product not found");
-  }
-
-  const deletedProduct = products.splice(productIndex, 1)[0];
-
-  return toProductReadModel(deletedProduct);
-}
-
-module.exports = { getProducts, getProductById, createProduct, updateProduct, deleteProduct };
+module.exports = {
+  createProductsService,
+  getProducts: defaultService.getProducts,
+  getProductById: defaultService.getProductById,
+  createProduct: defaultService.createProduct,
+  updateProduct: defaultService.updateProduct,
+  deleteProduct: defaultService.deleteProduct,
+};

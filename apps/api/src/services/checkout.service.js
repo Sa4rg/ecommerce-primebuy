@@ -1,14 +1,45 @@
 const crypto = require("crypto");
 const { AppError } = require("../utils/errors");
+const {
+  InMemoryCheckoutRepository,
+} = require("../repositories/checkout/checkout.memory.repository");
 
 const defaultCartService = require("./cart.service");
 const defaultProductsService = require("./products.service");
 
+/**
+ * Adapter to wrap a raw Map as a repository-like interface.
+ * Used for backward compatibility when deps.checkoutsStore is provided.
+ */
+function createMapAdapter(map) {
+  return {
+    async create(checkout) {
+      map.set(checkout.checkoutId, checkout);
+      return { checkoutId: checkout.checkoutId };
+    },
+    async findById(checkoutId) {
+      return map.get(checkoutId) || null;
+    },
+    async save(checkout) {
+      map.set(checkout.checkoutId, checkout);
+    },
+  };
+}
+
 function createCheckoutService(deps = {}) {
   const cartService = deps.cartService || defaultCartService;
   const productsService = deps.productsService || defaultProductsService;
-  const checkoutsStore = deps.checkoutsStore || new Map();
   const idGenerator = deps.idGenerator || (() => crypto.randomUUID());
+
+  // Support both new repository pattern and legacy checkoutsStore
+  let checkoutRepository;
+  if (deps.checkoutRepository) {
+    checkoutRepository = deps.checkoutRepository;
+  } else if (deps.checkoutsStore) {
+    checkoutRepository = createMapAdapter(deps.checkoutsStore);
+  } else {
+    checkoutRepository = new InMemoryCheckoutRepository();
+  }
 
   async function createCheckout(cartId) {
     const cart = await cartService.getCart(cartId);
@@ -63,16 +94,17 @@ function createCheckoutService(deps = {}) {
       paymentMethods,
     };
 
-    checkoutsStore.set(checkoutId, checkout);
+    await checkoutRepository.create(checkout);
 
     return checkout;
   }
 
   async function getCheckoutById(checkoutId) {
-    if (!checkoutsStore.has(checkoutId)) {
+    const checkout = await checkoutRepository.findById(checkoutId);
+    if (!checkout) {
       throw new AppError("Checkout not found", 404);
     }
-    return checkoutsStore.get(checkoutId);
+    return checkout;
   }
 
   return { createCheckout, getCheckoutById };

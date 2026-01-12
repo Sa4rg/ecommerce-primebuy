@@ -1,5 +1,6 @@
 const { success } = require("../utils/response");
-const checkoutService = require("../services/checkout.service");
+const { services } = require("../composition/root");
+const checkoutService = services.checkoutService;
 
 async function createCheckout(req, res, next) {
   try {
