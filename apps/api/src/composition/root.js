@@ -21,11 +21,11 @@ const SEED_PRODUCTS = [
 ];
 
 // Repository imports
-const { InMemoryCartRepository } = require("../repositories/cart/cart.memory.repository");
 const { InMemoryCheckoutRepository } = require("../repositories/checkout/checkout.memory.repository");
-// Products, Payments and Orders repositories are created via factory (supports MySQL for integration tests)
+// Products, Payments, Cart and Orders repositories are created via factory (supports MySQL for integration tests)
 const { createProductsRepository } = require("./factories/products.repository.factory");
 const { createPaymentsRepository } = require("./factories/payments.repository.factory");
+const { createCartRepository } = require("./factories/cart.repository.factory");
 const { createOrdersRepository } = require("./factories/orders.repository.factory");
 
 // Service factory imports
@@ -37,7 +37,7 @@ const { createOrdersService } = require("../services/orders.service");
 
 // 1. Instantiate repositories
 const productsRepository = createProductsRepository(SEED_PRODUCTS);
-const cartRepository = new InMemoryCartRepository();
+const cartRepository = createCartRepository();
 const checkoutRepository = new InMemoryCheckoutRepository();
 const paymentsRepository = createPaymentsRepository();
 // Orders repository: Uses factory to select implementation based on environment

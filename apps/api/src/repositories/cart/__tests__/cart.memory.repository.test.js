@@ -28,7 +28,7 @@ describe("InMemoryCartRepository", () => {
     expect(result).toEqual({ cartId: "cart-123" });
   });
 
-  test("findById(cartId) should return the stored cart", async () => {
+  test("findById(cartId) should return the stored cart (same reference)", async () => {
     const cart = {
       cartId: "cart-456",
       items: [
@@ -56,6 +56,8 @@ describe("InMemoryCartRepository", () => {
     const found = await repo.findById("cart-456");
 
     expect(found).toEqual(cart);
+    // CRITICAL: Must be same reference for service mutation behavior
+    expect(found).toBe(cart);
   });
 
   test("findById(nonexistent) should return null", async () => {
@@ -108,6 +110,43 @@ describe("InMemoryCartRepository", () => {
     expect(found.items).toHaveLength(1);
     expect(found.summary.itemsCount).toBe(3);
     expect(found.summary.subtotalUSD).toBe(60);
+  });
+
+  test("save(cart) should preserve reference behavior for service mutations", async () => {
+    const cart = {
+      cartId: "cart-999",
+      items: [],
+      summary: { itemsCount: 0, subtotalUSD: 0 },
+      metadata: {
+        market: "VE",
+        baseCurrency: "USD",
+        displayCurrency: "USD",
+        status: "active",
+        createdAt: "2026-01-12T00:00:00.000Z",
+        updatedAt: "2026-01-12T00:00:00.000Z",
+      },
+    };
+
+    await repo.create(cart);
+
+    const retrieved1 = await repo.findById("cart-999");
+
+    // Service mutates cart directly (current behavior)
+    retrieved1.items.push({
+      productId: "1",
+      productName: "Keyboard",
+      unitPriceUSD: 50,
+      quantity: 1,
+      lineTotalUSD: 50,
+    });
+
+    await repo.save(retrieved1);
+
+    const retrieved2 = await repo.findById("cart-999");
+
+    // Must be same reference
+    expect(retrieved2).toBe(retrieved1);
+    expect(retrieved2.items).toHaveLength(1);
   });
 
   test("delete(cartId) should remove the cart", async () => {
