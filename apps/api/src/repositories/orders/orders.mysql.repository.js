@@ -18,6 +18,7 @@
  */
 
 const db = require('../../db/knex');
+const { isoToMySQLDatetime, mysqlDatetimeToISO } = require('../../utils/datetime');
 
 class MySQLOrdersRepository {
   constructor() {
@@ -50,8 +51,8 @@ class MySQLOrdersRepository {
       payment_proof_reference: order.payment.proof?.reference || null,
       payment_review_note: order.payment.review?.note || null,
       payment_review_reason: order.payment.review?.reason || null,
-      created_at: order.createdAt,
-      updated_at: order.updatedAt,
+      created_at: isoToMySQLDatetime(order.createdAt),
+      updated_at: isoToMySQLDatetime(order.updatedAt),
     };
   }
 
@@ -113,8 +114,8 @@ class MySQLOrdersRepository {
       address_reference: address?.reference || null,
       carrier_name: shipping.carrier?.name || null,
       carrier_tracking_number: shipping.carrier?.trackingNumber || null,
-      dispatched_at: shipping.dispatchedAt || null,
-      delivered_at: shipping.deliveredAt || null,
+      dispatched_at: shipping.dispatchedAt ? isoToMySQLDatetime(shipping.dispatchedAt) : null,
+      delivered_at: shipping.deliveredAt ? isoToMySQLDatetime(shipping.deliveredAt) : null,
     };
   }
 
@@ -207,11 +208,11 @@ class MySQLOrdersRepository {
         address,
         carrier,
         status: shipping.status,
-        dispatchedAt: shipping.dispatched_at ? new Date(shipping.dispatched_at).toISOString() : null,
-        deliveredAt: shipping.delivered_at ? new Date(shipping.delivered_at).toISOString() : null,
+        dispatchedAt: shipping.dispatched_at ? mysqlDatetimeToISO(shipping.dispatched_at) : null,
+        deliveredAt: shipping.delivered_at ? mysqlDatetimeToISO(shipping.delivered_at) : null,
       },
-      createdAt: new Date(orderRow.created_at).toISOString(),
-      updatedAt: new Date(orderRow.updated_at).toISOString(),
+      createdAt: mysqlDatetimeToISO(orderRow.created_at),
+      updatedAt: mysqlDatetimeToISO(orderRow.updated_at),
     };
   }
 

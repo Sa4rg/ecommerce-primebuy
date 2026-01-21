@@ -17,24 +17,7 @@
  */
 
 const db = require('../../db/knex');
-
-/**
- * Convert ISO 8601 string to MySQL DATETIME format
- * @param {string} isoString - ISO 8601 timestamp (e.g., "2026-01-21T10:00:00.000Z")
- * @returns {string} MySQL DATETIME format (e.g., "2026-01-21 10:00:00")
- */
-function isoToMysqlDatetime(isoString) {
-  return isoString.replace('T', ' ').substring(0, 19);
-}
-
-/**
- * Convert MySQL DATETIME to ISO 8601 string
- * @param {Date|string} mysqlDatetime - MySQL DATETIME value
- * @returns {string} ISO 8601 timestamp
- */
-function mysqlDatetimeToIso(mysqlDatetime) {
-  return new Date(mysqlDatetime).toISOString();
-}
+const { isoToMySQLDatetime, mysqlDatetimeToISO } = require('../../utils/datetime');
 
 class MySQLCartRepository {
   constructor() {
@@ -51,8 +34,8 @@ class MySQLCartRepository {
       cart_id: cart.cartId,
       status: cart.metadata.status,
       metadata_json: JSON.stringify(cart.metadata),
-      created_at: isoToMysqlDatetime(cart.metadata.createdAt),
-      updated_at: isoToMysqlDatetime(cart.metadata.updatedAt),
+      created_at: isoToMySQLDatetime(cart.metadata.createdAt),
+      updated_at: isoToMySQLDatetime(cart.metadata.updatedAt),
     };
   }
 
@@ -100,8 +83,8 @@ class MySQLCartRepository {
       summary,
       metadata: {
         ...metadata,
-        createdAt: mysqlDatetimeToIso(cartRow.created_at),
-        updatedAt: mysqlDatetimeToIso(cartRow.updated_at),
+        createdAt: mysqlDatetimeToISO(cartRow.created_at),
+        updatedAt: mysqlDatetimeToISO(cartRow.updated_at),
       },
     };
   }

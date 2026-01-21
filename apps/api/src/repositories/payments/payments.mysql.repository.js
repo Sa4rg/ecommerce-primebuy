@@ -16,6 +16,7 @@
  */
 
 const db = require('../../db/knex');
+const { isoToMySQLDatetime, mysqlDatetimeToISO } = require('../../utils/datetime');
 
 class MySQLPaymentsRepository {
   constructor() {
@@ -56,8 +57,8 @@ class MySQLPaymentsRepository {
       status: row.status,
       proof,
       review,
-      createdAt: new Date(row.created_at).toISOString(),
-      updatedAt: new Date(row.updated_at).toISOString(),
+      createdAt: mysqlDatetimeToISO(row.created_at),
+      updatedAt: mysqlDatetimeToISO(row.updated_at),
     };
   }
 
@@ -73,8 +74,8 @@ class MySQLPaymentsRepository {
       currency: payment.currency,
       amount: payment.amount,
       status: payment.status,
-      created_at: payment.createdAt,
-      updated_at: payment.updatedAt,
+      created_at: isoToMySQLDatetime(payment.createdAt),
+      updated_at: isoToMySQLDatetime(payment.updatedAt),
     };
     
     // Map proof object to flat columns
