@@ -12,36 +12,41 @@
  * - No circular dependencies
  */
 
+// Initial seed data for backward compatibility with existing tests
+const SEED_PRODUCTS = [
+  { name: "Laptop", priceUSD: 1000, stock: 10, category: "Electronics" },
+  { name: "Mouse", priceUSD: 20, stock: 50, category: "Electronics" },
+  { name: "Keyboard", priceUSD: 50, stock: 30, category: "Electronics" },
+  { name: "USB Cable", priceUSD: 5, stock: 0, category: "Electronics" },
+];
+
 // Repository imports
-const { InMemoryProductsRepository } = require("../repositories/products/products.memory.repository");
 const { InMemoryCartRepository } = require("../repositories/cart/cart.memory.repository");
 const { InMemoryCheckoutRepository } = require("../repositories/checkout/checkout.memory.repository");
-const { InMemoryPaymentsRepository } = require("../repositories/payments/payments.memory.repository");
-const { InMemoryOrdersRepository } = require("../repositories/orders/orders.memory.repository");
+// Products, Payments and Orders repositories are created via factory (supports MySQL for integration tests)
+const { createProductsRepository } = require("./factories/products.repository.factory");
+const { createPaymentsRepository } = require("./factories/payments.repository.factory");
+const { createOrdersRepository } = require("./factories/orders.repository.factory");
 
 // Service factory imports
-const productsServiceModule = require("../services/products.service");
+const { createProductsService } = require("../services/products.service");
 const { createCartService } = require("../services/cart.service");
 const { createCheckoutService } = require("../services/checkout.service");
 const { createPaymentsService } = require("../services/payments.service");
 const { createOrdersService } = require("../services/orders.service");
 
 // 1. Instantiate repositories
-// NOTE: productsRepository is NOT instantiated here because we reuse
-// the default productsService instance for backward compatibility with
-// tests that spy on the products.service module directly.
+const productsRepository = createProductsRepository(SEED_PRODUCTS);
 const cartRepository = new InMemoryCartRepository();
 const checkoutRepository = new InMemoryCheckoutRepository();
-const paymentsRepository = new InMemoryPaymentsRepository();
-const ordersRepository = new InMemoryOrdersRepository();
+const paymentsRepository = createPaymentsRepository();
+// Orders repository: Uses factory to select implementation based on environment
+const ordersRepository = createOrdersRepository();
 
 // 2. Instantiate services with explicit dependencies
-// NOTE: We must use factories and inject dependencies to ensure
-// all services share the same repository instances.
-
-// EXCEPTION: productsService uses the default export from products.service.js
-// for backward compatibility with existing tests that spy on that module.
-const productsService = productsServiceModule;
+const productsService = createProductsService({
+  productsRepository,
+});
 
 const cartService = createCartService({
   productsService,
