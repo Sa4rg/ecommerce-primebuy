@@ -15,6 +15,7 @@
 
 const { InMemoryProductsRepository } = require('../../repositories/products/products.memory.repository');
 const { MySQLProductsRepository } = require('../../repositories/products/products.mysql.repository');
+const { shouldUseMySQL } = require('./repository.provider');
 
 /**
  * Creates the appropriate ProductsRepository instance
@@ -22,7 +23,7 @@ const { MySQLProductsRepository } = require('../../repositories/products/product
  * @returns {InMemoryProductsRepository|MySQLProductsRepository}
  */
 function createProductsRepository(initialProducts = []) {
-  const useMySQL = process.env.DB_INTEGRATION === '1';
+  const useMySQL = shouldUseMySQL();
   
   if (useMySQL) {
     return new MySQLProductsRepository();

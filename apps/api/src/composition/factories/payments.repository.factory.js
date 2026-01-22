@@ -15,13 +15,14 @@
 
 const { InMemoryPaymentsRepository } = require('../../repositories/payments/payments.memory.repository');
 const { MySQLPaymentsRepository } = require('../../repositories/payments/payments.mysql.repository');
+const { shouldUseMySQL } = require('./repository.provider');
 
 /**
  * Creates the appropriate PaymentsRepository instance
  * @returns {InMemoryPaymentsRepository|MySQLPaymentsRepository}
  */
 function createPaymentsRepository() {
-  const useMySQL = process.env.DB_INTEGRATION === '1';
+  const useMySQL = shouldUseMySQL();
   
   if (useMySQL) {
     return new MySQLPaymentsRepository();

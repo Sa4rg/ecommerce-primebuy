@@ -15,13 +15,14 @@
 
 const { InMemoryOrdersRepository } = require('../../repositories/orders/orders.memory.repository');
 const { MySQLOrdersRepository } = require('../../repositories/orders/orders.mysql.repository');
+const { shouldUseMySQL } = require('./repository.provider');
 
 /**
  * Creates the appropriate OrdersRepository instance
  * @returns {InMemoryOrdersRepository|MySQLOrdersRepository}
  */
 function createOrdersRepository() {
-  const useMySQL = process.env.DB_INTEGRATION === '1';
+  const useMySQL = shouldUseMySQL();
   
   if (useMySQL) {
     return new MySQLOrdersRepository();

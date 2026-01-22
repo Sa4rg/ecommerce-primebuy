@@ -15,13 +15,14 @@
 
 const { InMemoryCartRepository } = require('../../repositories/cart/cart.memory.repository');
 const { MySQLCartRepository } = require('../../repositories/cart/cart.mysql.repository');
+const { shouldUseMySQL } = require('./repository.provider');
 
 /**
  * Creates the appropriate CartRepository instance
  * @returns {InMemoryCartRepository|MySQLCartRepository}
  */
 function createCartRepository() {
-  const useMySQL = process.env.DB_INTEGRATION === '1';
+  const useMySQL = shouldUseMySQL();
   
   if (useMySQL) {
     return new MySQLCartRepository();

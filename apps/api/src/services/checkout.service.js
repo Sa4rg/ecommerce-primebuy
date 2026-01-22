@@ -82,16 +82,20 @@ function createCheckoutService(deps = {}) {
     };
 
     const checkoutId = idGenerator();
+    const now = new Date().toISOString();
 
     const checkout = {
       checkoutId,
       cartId,
+      status: "pending", 
       totals: {
         subtotalUSD,
         subtotalVES,
       },
       exchangeRate,
       paymentMethods,
+      createdAt: now,
+      updatedAt: now,
     };
 
     await checkoutRepository.create(checkout);
