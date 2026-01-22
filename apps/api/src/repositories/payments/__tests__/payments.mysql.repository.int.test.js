@@ -11,6 +11,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { MySQLPaymentsRepository } from '../payments.mysql.repository.js';
 import db from '../../../db/knex.js';
+import { cleanupDb } from '../../../test_helpers/dbCleanup.js';
 
 describe('MySQLPaymentsRepository - Integration Tests', () => {
   let repository;
@@ -22,8 +23,8 @@ describe('MySQLPaymentsRepository - Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    // Clean table before each test
-    await db('payments').truncate();
+    // Clean all tables in FK-safe order
+    await cleanupDb(db);
   });
 
   afterAll(async () => {
@@ -39,7 +40,27 @@ describe('MySQLPaymentsRepository - Integration Tests', () => {
 
   describe('create() and findById()', () => {
     it('should persist and return the same payment fields', async () => {
-      // Arrange: Build a full payment object
+      // Arrange: Create FK dependencies (cart → checkout → payment)
+      await db('carts').insert({
+        cart_id: 'cart_test_67890',
+        status: 'active',
+        metadata_json: JSON.stringify({}),
+        created_at: '2026-01-15 10:00:00',
+        updated_at: '2026-01-15 10:00:00',
+      });
+
+      await db('checkouts').insert({
+        checkout_id: 'chk_test_67890',
+        cart_id: 'cart_test_67890',
+        status: 'pending',
+        totals_json: JSON.stringify({ subtotalUSD: 99.99 }),
+        payment_methods_json: JSON.stringify({ usd: ['zelle'] }),
+        exchange_rate_json: null,
+        created_at: '2026-01-15 10:00:00',
+        updated_at: '2026-01-15 10:00:00',
+      });
+
+      // Build payment object
       const payment = {
         paymentId: 'pay_test_12345',
         checkoutId: 'chk_test_67890',

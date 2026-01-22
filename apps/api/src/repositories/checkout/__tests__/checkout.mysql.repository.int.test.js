@@ -10,6 +10,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { MySQLCheckoutRepository } from '../checkout.mysql.repository';
 import db from '../../../db/knex';
+import { cleanupDb } from '../../../test_helpers/dbCleanup';
 
 describe('MySQLCheckoutRepository - Integration Tests', () => {
   let repository;
@@ -21,8 +22,8 @@ describe('MySQLCheckoutRepository - Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    // Clean table before each test
-    await db('checkouts').del();
+    // Clean all tables in FK-safe order
+    await cleanupDb(db);
   });
 
   afterAll(async () => {
@@ -32,7 +33,15 @@ describe('MySQLCheckoutRepository - Integration Tests', () => {
 
   describe('create() and findById()', () => {
     it('should persist and return a checkout snapshot', async () => {
-      // Arrange
+      // Arrange: Create cart first (FK dependency)
+      await db('carts').insert({
+        cart_id: 'cart_integration_001',
+        status: 'active',
+        metadata_json: JSON.stringify({}),
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
       const checkout = {
         checkoutId: 'chk_integration_001',
         cartId: 'cart_integration_001',
@@ -84,7 +93,15 @@ describe('MySQLCheckoutRepository - Integration Tests', () => {
     });
 
     it('should persist checkout with exchangeRate', async () => {
-      // Arrange
+      // Arrange: Create cart first (FK dependency)
+      await db('carts').insert({
+        cart_id: 'cart_integration_002',
+        status: 'active',
+        metadata_json: JSON.stringify({}),
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
       const checkout = {
         checkoutId: 'chk_integration_002',
         cartId: 'cart_integration_002',

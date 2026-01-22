@@ -11,6 +11,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { MySQLOrdersRepository } from '../orders.mysql.repository.js';
 import db from '../../../db/knex.js';
+import { cleanupDb } from '../../../test_helpers/dbCleanup.js';
 
 describe('MySQLOrdersRepository - Integration Tests', () => {
   let repository;
@@ -22,12 +23,8 @@ describe('MySQLOrdersRepository - Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    // Clean tables before each test (in correct order)
-    await db('order_items').del();
-    await db('order_shipping').del();
-    await db('order_tax').del();
-    await db('order_customer').del();
-    await db('orders').del();
+    // Clean all tables in FK-safe order
+    await cleanupDb(db);
   });
 
   afterAll(async () => {
@@ -37,7 +34,38 @@ describe('MySQLOrdersRepository - Integration Tests', () => {
 
   describe('create() and findById()', () => {
     it('should persist and return an order snapshot', async () => {
-      // Arrange: Create a realistic order object
+      // Arrange: Create FK dependencies in order (cart → checkout → payment → order)
+      await db('carts').insert({
+        cart_id: 'cart_test_67890',
+        status: 'active',
+        metadata_json: JSON.stringify({}),
+        created_at: '2026-01-15 10:00:00',
+        updated_at: '2026-01-15 10:00:00',
+      });
+
+      await db('checkouts').insert({
+        checkout_id: 'chk_test_11111',
+        cart_id: 'cart_test_67890',
+        status: 'pending',
+        totals_json: JSON.stringify({ subtotalUSD: 999.99 }),
+        payment_methods_json: JSON.stringify({ usd: ['zelle'] }),
+        exchange_rate_json: null,
+        created_at: '2026-01-15 10:00:00',
+        updated_at: '2026-01-15 10:00:00',
+      });
+
+      await db('payments').insert({
+        payment_id: 'pay_test_22222',
+        checkout_id: 'chk_test_11111',
+        method: 'zelle',
+        currency: 'USD',
+        amount: 999.99,
+        status: 'pending',
+        created_at: '2026-01-15 10:00:00',
+        updated_at: '2026-01-15 10:00:00',
+      });
+
+      // Create a realistic order object
       const order = {
         orderId: 'ord_test_12345',
         cartId: 'cart_test_67890',

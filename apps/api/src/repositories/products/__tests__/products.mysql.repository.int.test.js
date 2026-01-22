@@ -10,6 +10,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { MySQLProductsRepository } from '../products.mysql.repository';
 import db from '../../../db/knex';
+import { cleanupDb } from '../../../test_helpers/dbCleanup';
 
 describe('MySQLProductsRepository - Integration Tests', () => {
   let repository;
@@ -21,8 +22,8 @@ describe('MySQLProductsRepository - Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    // Clean table before each test
-    await db('products').truncate();
+    // Clean all tables in FK-safe order
+    await cleanupDb(db);
   });
 
   afterAll(async () => {
