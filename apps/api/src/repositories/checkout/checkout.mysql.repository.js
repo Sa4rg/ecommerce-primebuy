@@ -11,7 +11,7 @@
  * Rules:
  * - IDs remain strings (input and output)
  * - No business validation (persistence only)
- * - Timestamps managed internally (not exposed to domain)
+ * - No timestamp generation (comes from domain)
  * - No AppError usage
  */
 
@@ -28,8 +28,6 @@ class MySQLCheckoutRepository {
    * @private
    */
   _mapToDbFormat(checkout) {
-    const now = new Date().toISOString();
-    
     return {
       checkout_id: checkout.checkoutId,
       cart_id: checkout.cartId,
@@ -37,8 +35,8 @@ class MySQLCheckoutRepository {
       exchange_rate_json: checkout.exchangeRate ? JSON.stringify(checkout.exchangeRate) : null,
       payment_methods_json: JSON.stringify(checkout.paymentMethods),
       status: checkout.status || 'pending',
-      created_at: isoToMySQLDatetime(checkout.createdAt || now),
-      updated_at: isoToMySQLDatetime(checkout.updatedAt || now),
+      created_at: isoToMySQLDatetime(checkout.createdAt),
+      updated_at: isoToMySQLDatetime(checkout.updatedAt),
     };
   }
 

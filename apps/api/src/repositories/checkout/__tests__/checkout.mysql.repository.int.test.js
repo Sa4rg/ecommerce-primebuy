@@ -45,6 +45,8 @@ describe('MySQLCheckoutRepository - Integration Tests', () => {
           usd: ['zelle', 'zinli'],
           ves: ['bank_transfer', 'pago_movil'],
         },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
       // Act
@@ -99,6 +101,8 @@ describe('MySQLCheckoutRepository - Integration Tests', () => {
           usd: ['zelle'],
           ves: ['pago_movil'],
         },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
       // Act

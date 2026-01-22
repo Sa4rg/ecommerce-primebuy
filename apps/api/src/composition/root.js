@@ -2,17 +2,22 @@
  * Composition Root
  *
  * Central place where all dependencies are wired together.
- * Instantiates repositories and services using their factories,
- * ensuring a single shared instance graph.
+ * Creates repositories via factories and injects them into services.
  *
- * Benefits:
- * - Single source of truth for dependency wiring
- * - Easier to swap implementations (e.g., in-memory → MySQL)
- * - Explicit dependency graph
- * - No circular dependencies
+ * Structure:
+ * 1. Seed data (InMemory only)
+ * 2. Repository factories
+ * 3. Service factories
+ * 4. Wire dependencies
+ * 5. Export services container
+ *
+ * NOTE: Factories decide InMemory vs MySQL based on environment.
+ * This module only wires the dependency graph.
  */
 
-// Initial seed data for backward compatibility with existing tests
+// ============================================================================
+// SEED DATA (for InMemory repositories only)
+// ============================================================================
 const SEED_PRODUCTS = [
   { name: "Laptop", priceUSD: 1000, stock: 10, category: "Electronics" },
   { name: "Mouse", priceUSD: 20, stock: 50, category: "Electronics" },
@@ -20,30 +25,36 @@ const SEED_PRODUCTS = [
   { name: "USB Cable", priceUSD: 5, stock: 0, category: "Electronics" },
 ];
 
-// Repository imports
-// Products, Payments, Cart, Checkout and Orders repositories are created via factory (supports MySQL for integration tests)
+// ============================================================================
+// REPOSITORY FACTORIES
+// ============================================================================
 const { createProductsRepository } = require("./factories/products.repository.factory");
 const { createPaymentsRepository } = require("./factories/payments.repository.factory");
 const { createCartRepository } = require("./factories/cart.repository.factory");
 const { createCheckoutRepository } = require("./factories/checkout.repository.factory");
 const { createOrdersRepository } = require("./factories/orders.repository.factory");
 
-// Service factory imports
+// ============================================================================
+// SERVICE FACTORIES
+// ============================================================================
 const { createProductsService } = require("../services/products.service");
 const { createCartService } = require("../services/cart.service");
 const { createCheckoutService } = require("../services/checkout.service");
 const { createPaymentsService } = require("../services/payments.service");
 const { createOrdersService } = require("../services/orders.service");
 
-// 1. Instantiate repositories
+// ============================================================================
+// DEPENDENCY WIRING
+// ============================================================================
+
+// Repositories (factories decide implementation based on environment)
 const productsRepository = createProductsRepository(SEED_PRODUCTS);
 const cartRepository = createCartRepository();
 const checkoutRepository = createCheckoutRepository();
 const paymentsRepository = createPaymentsRepository();
-// Orders repository: Uses factory to select implementation based on environment
 const ordersRepository = createOrdersRepository();
 
-// 2. Instantiate services with explicit dependencies
+// Services (explicitly injected dependencies)
 const productsService = createProductsService({
   productsRepository,
 });
@@ -71,7 +82,9 @@ const ordersService = createOrdersService({
   ordersRepository,
 });
 
-// 3. Export container
+// ============================================================================
+// EXPORTS
+// ============================================================================
 module.exports = {
   services: {
     productsService,
