@@ -13,7 +13,8 @@ import { MySQLPaymentsRepository } from '../payments.mysql.repository.js';
 import db from '../../../db/knex.js';
 import { cleanupDb } from '../../../test_helpers/dbCleanup.js';
 import { PaymentStatus } from '../../../constants/paymentStatus.js';
-import { CheckoutStatus } from '../../../constants/shippingStatus.js';  
+import { CheckoutStatus } from '../../../constants/checkoutStatus.js';  
+
 
 describe('MySQLPaymentsRepository - Integration Tests', () => {
   let repository;
