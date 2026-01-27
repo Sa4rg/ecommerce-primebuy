@@ -14,7 +14,7 @@ describe("InMemoryOrdersRepository", () => {
       cartId: "cart-456",
       checkoutId: "checkout-789",
       paymentId: "payment-abc",
-      status: "created",
+      status: "paid",
       items: [
         {
           productId: "1",
@@ -124,7 +124,7 @@ describe("InMemoryOrdersRepository", () => {
       cartId: "cart-xyz",
       checkoutId: "checkout-xyz",
       paymentId: "payment-xyz",
-      status: "created",
+      status: "paid",
       items: [
         {
           productId: "3",
@@ -184,7 +184,7 @@ describe("InMemoryOrdersRepository", () => {
       cartId: "cart-ref",
       checkoutId: "checkout-ref",
       paymentId: "payment-ref",
-      status: "created",
+      status: "paid",
       items: [],
       totals: { subtotalUSD: 100, subtotalVES: null, currency: "USD", amountPaid: 100 },
       exchangeRate: null,

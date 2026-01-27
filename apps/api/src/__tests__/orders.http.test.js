@@ -134,7 +134,7 @@ describe("POST /api/orders", () => {
     expect(order.paymentId).toBe(paymentId);
     expect(order.checkoutId).toBe(checkoutId);
     expect(order.cartId).toBe(cartId);
-    expect(order.status).toBe("created");
+    expect(order.status).toBe("paid");
 
     // Assert items
     expect(order.items).toHaveLength(1);
@@ -257,7 +257,7 @@ describe("GET /api/orders/:orderId", () => {
       })
     );
     expect(res.body.data.orderId).toBe(orderId);
-    expect(res.body.data.status).toBe("created");
+    expect(res.body.data.status).toBe("paid");
   });
 
   test("should return 404 when orderId does not exist", async () => {

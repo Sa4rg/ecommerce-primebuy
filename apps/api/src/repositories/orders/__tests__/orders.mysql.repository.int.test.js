@@ -71,7 +71,7 @@ describe('MySQLOrdersRepository - Integration Tests', () => {
         cartId: 'cart_test_67890',
         checkoutId: 'chk_test_11111',
         paymentId: 'pay_test_22222',
-        status: 'pending_payment',
+        status: 'paid',
         
         items: [
           {
@@ -143,7 +143,7 @@ describe('MySQLOrdersRepository - Integration Tests', () => {
       expect(found).not.toBeNull();
       expect(found.orderId).toBe('ord_test_12345');
       expect(typeof found.orderId).toBe('string');
-      expect(found.status).toBe('pending_payment');
+      expect(found.status).toBe('paid');
       expect(found.paymentId).toBe('pay_test_22222');
       expect(found.totals.currency).toBe('USD');
       expect(found.items).toHaveLength(1);

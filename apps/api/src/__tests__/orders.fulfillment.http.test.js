@@ -88,7 +88,7 @@ describe("PATCH /api/orders/:orderId/process", () => {
     );
   });
 
-  test("should return 409 when processing an order not in created status", async () => {
+  test("should return 409 when processing an order not in paid status", async () => {
     // Arrange
     const { orderId } = await createConfirmedUsdOrder();
 
@@ -111,7 +111,7 @@ describe("PATCH /api/orders/:orderId/process", () => {
 });
 
 describe("PATCH /api/orders/:orderId/complete", () => {
-  test("should complete an order from created", async () => {
+  test("should complete an order from paid", async () => {
     // Arrange
     const { orderId } = await createConfirmedUsdOrder();
 
@@ -160,7 +160,7 @@ describe("PATCH /api/orders/:orderId/complete", () => {
 });
 
 describe("PATCH /api/orders/:orderId/cancel", () => {
-  test("should cancel an order in created status and store cancellation reason", async () => {
+  test("should cancel an order in paid status and store cancellation reason", async () => {
     // Arrange
     const { orderId } = await createConfirmedUsdOrder();
 

@@ -122,7 +122,7 @@ describe("createOrderFromPayment", () => {
     expect(order.paymentId).toBe(paymentId);
     expect(order.checkoutId).toBe(checkoutId);
     expect(order.cartId).toBe(cartId);
-    expect(order.status).toBe("created");
+    expect(order.status).toBe("paid");
 
     // Verify items snapshot
     expect(order.items).toHaveLength(1);
@@ -272,7 +272,7 @@ describe("getOrderById", () => {
 
     // Assert
     expect(order.orderId).toBe(orderId);
-    expect(order.status).toBe("created");
+    expect(order.status).toBe("paid");
     expect(order.paymentId).toBe(payment.paymentId);
   });
 
@@ -327,7 +327,7 @@ describe("fulfillment", () => {
     });
   });
 
-  test("processOrder should throw 409 when order is not in created status", async () => {
+  test("processOrder should throw 409 when order is not in paid status", async () => {
     // Arrange: create order and process it first
     const order = await createOrderInCreatedStatus();
     await ordersService.processOrder(order.orderId);
@@ -341,7 +341,7 @@ describe("fulfillment", () => {
 
   // --- completeOrder ---
 
-  test("completeOrder should set status to completed from created and update updatedAt", async () => {
+  test("completeOrder should set status to completed from paid and update updatedAt", async () => {
     // Arrange
     const order = await createOrderInCreatedStatus();
     const previousUpdatedAt = order.updatedAt;
@@ -380,7 +380,7 @@ describe("fulfillment", () => {
 
   // --- cancelOrder ---
 
-  test("cancelOrder should cancel an order in created status and store cancellation reason", async () => {
+  test("cancelOrder should cancel an order in paid status and store cancellation reason", async () => {
     // Arrange
     const order = await createOrderInCreatedStatus();
     const previousUpdatedAt = order.updatedAt;

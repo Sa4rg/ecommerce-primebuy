@@ -85,7 +85,7 @@
  * @property {string} cartId - Associated cart identifier
  * @property {string} checkoutId - Associated checkout identifier
  * @property {string} paymentId - Associated payment identifier
- * @property {string} status - Order status ("created", "processing", "completed", "cancelled")
+ * @property {string} status - Order status ("paid", "processing", "completed", "cancelled")
  * @property {OrderItem[]} items - Order items snapshot
  * @property {OrderTotals} totals - Order totals
  * @property {OrderExchangeRate|null} exchangeRate - Exchange rate used (if applicable)

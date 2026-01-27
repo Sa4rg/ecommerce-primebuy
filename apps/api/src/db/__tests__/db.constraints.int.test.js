@@ -122,7 +122,7 @@ describe('Database Foreign Key Constraints', () => {
         cart_id: 'cart_missing_001', // Does NOT exist
         checkout_id: 'chk_ok_001',
         payment_id: 'pay_ok_001',
-        status: 'pending_payment',
+        status: 'paid',
         currency: 'USD',
         subtotal_usd: 100.00,
         subtotal_ves: null,

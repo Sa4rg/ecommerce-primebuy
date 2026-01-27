@@ -12,6 +12,16 @@ const VALID_CARRIER_NAMES = ["MRW", "ZOOM", "OTHER"];
 function createMapAdapter(map) {
   return {
     async create(order) {
+      // Simulate UNIQUE constraint on payment_id
+      for (const existingOrder of map.values()) {
+        if (existingOrder.paymentId === order.paymentId) {
+          const error = new Error(`Duplicate entry '${order.paymentId}' for key 'orders_payment_id_unique'`);
+          error.code = 'ER_DUP_ENTRY';
+          error.sqlMessage = `Duplicate entry '${order.paymentId}' for key 'orders_payment_id_unique'`;
+          throw error;
+        }
+      }
+      
       const orderId = order.orderId;
       map.set(orderId, order);
       return { orderId };
@@ -141,21 +151,13 @@ function createOrdersService(deps = {}) {
       throw new AppError("Payment is not confirmed", 409);
     }
 
-    // 3) Prevent duplicates
-    const allOrders = await ordersRepository.findAll();
-    for (const order of allOrders) {
-      if (order.paymentId === paymentId) {
-        throw new AppError("Order already exists for payment", 409);
-      }
-    }
-
-    // 4) Load checkout
+    // 3) Load checkout
     const checkout = await checkoutService.getCheckoutById(payment.checkoutId);
 
-    // 5) Load cart
+    // 4) Load cart
     const cart = await cartService.getCart(checkout.cartId);
 
-    // 6) Build order snapshot
+    // 5) Build order snapshot
     const orderId = idGenerator();
     const now = new Date().toISOString();
 
@@ -164,7 +166,7 @@ function createOrdersService(deps = {}) {
       cartId: cart.cartId,
       checkoutId: checkout.checkoutId,
       paymentId: payment.paymentId,
-      status: "created",
+      status: "paid",
       items: cart.items.map((item) => ({ ...item })),
       totals: {
         subtotalUSD: checkout.totals.subtotalUSD,
@@ -192,11 +194,19 @@ function createOrdersService(deps = {}) {
       updatedAt: now,
     };
 
-    // 7) Finalize cart
+    // 6) Finalize cart
     await cartService.updateMetadata(cart.cartId, { status: "checked_out" });
 
-    // 8) Persist
-    await ordersRepository.create(order);
+    // 7) Persist - catch UNIQUE constraint violation
+    try {
+      await ordersRepository.create(order);
+    } catch (error) {
+      // Translate MySQL UNIQUE constraint violation
+      if (error.code === 'ER_DUP_ENTRY' && error.sqlMessage?.includes('orders_payment_id_unique')) {
+        throw new AppError("Order already exists for payment", 409);
+      }
+      throw error;
+    }
 
     return order;
   }
@@ -208,7 +218,7 @@ function createOrdersService(deps = {}) {
       throw new AppError("Order not found", 404);
     }
 
-    if (order.status !== "created") {
+    if (order.status !== "paid") {
       throw new AppError("Order cannot be processed", 409);
     }
 
@@ -227,7 +237,7 @@ function createOrdersService(deps = {}) {
       throw new AppError("Order not found", 404);
     }
 
-    if (!["created", "processing"].includes(order.status)) {
+    if (!["paid", "processing"].includes(order.status)) {
       throw new AppError("Order cannot be completed", 409);
     }
 
