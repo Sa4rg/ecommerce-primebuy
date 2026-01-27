@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest";
 import { InMemoryPaymentsRepository } from "../payments.memory.repository";
+import { PaymentStatus } from "../../../constants/paymentStatus.js";
 
 describe("InMemoryPaymentsRepository", () => {
   let repo;
@@ -15,7 +16,7 @@ describe("InMemoryPaymentsRepository", () => {
       method: "zelle",
       currency: "USD",
       amount: 1000,
-      status: "pending",
+      status: PaymentStatus.PENDING,
       proof: null,
       createdAt: "2026-01-12T00:00:00.000Z",
       updatedAt: "2026-01-12T00:00:00.000Z",
@@ -33,7 +34,7 @@ describe("InMemoryPaymentsRepository", () => {
       method: "pago_movil",
       currency: "VES",
       amount: 36000,
-      status: "submitted",
+      status: PaymentStatus.SUBMITTED,
       proof: {
         reference: "REF123456",
         date: "2026-01-12",
@@ -63,7 +64,7 @@ describe("InMemoryPaymentsRepository", () => {
       method: "zinli",
       currency: "USD",
       amount: 500,
-      status: "pending",
+      status: PaymentStatus.PENDING,
       proof: null,
       createdAt: "2026-01-12T00:00:00.000Z",
       updatedAt: "2026-01-12T00:00:00.000Z",
@@ -74,7 +75,7 @@ describe("InMemoryPaymentsRepository", () => {
     // Mutate payment (simulate submission)
     const updatedPayment = {
       ...payment,
-      status: "submitted",
+      status: PaymentStatus.SUBMITTED,
       proof: {
         reference: "ZINLI-987654",
       },
@@ -86,7 +87,7 @@ describe("InMemoryPaymentsRepository", () => {
     const found = await repo.findById("payment-update");
 
     expect(found).toEqual(updatedPayment);
-    expect(found.status).toBe("submitted");
+    expect(found.status).toBe(PaymentStatus.SUBMITTED);
     expect(found.proof).toEqual({ reference: "ZINLI-987654" });
   });
 
@@ -97,7 +98,7 @@ describe("InMemoryPaymentsRepository", () => {
       method: "bank_transfer",
       currency: "VES",
       amount: 18000,
-      status: "pending",
+      status: PaymentStatus.PENDING,
       proof: null,
       createdAt: "2026-01-12T00:00:00.000Z",
       updatedAt: "2026-01-12T00:00:00.000Z",
@@ -108,7 +109,7 @@ describe("InMemoryPaymentsRepository", () => {
     const retrieved = await repo.findById("payment-ref");
 
     // Mutate the retrieved object (as service does)
-    retrieved.status = "submitted";
+    retrieved.status = PaymentStatus.SUBMITTED;
     retrieved.proof = { reference: "TRANSFER-001" };
     retrieved.updatedAt = "2026-01-12T03:00:00.000Z";
 
@@ -116,7 +117,7 @@ describe("InMemoryPaymentsRepository", () => {
 
     const found = await repo.findById("payment-ref");
 
-    expect(found.status).toBe("submitted");
+    expect(found.status).toBe(PaymentStatus.SUBMITTED);
     expect(found.proof).toEqual({ reference: "TRANSFER-001" });
     expect(found).toBe(retrieved); // Same reference
   });
@@ -128,7 +129,7 @@ describe("InMemoryPaymentsRepository", () => {
       method: "zelle",
       currency: "USD",
       amount: 250,
-      status: "submitted",
+      status: PaymentStatus.SUBMITTED,
       proof: { reference: "ZELLE-111" },
       createdAt: "2026-01-12T00:00:00.000Z",
       updatedAt: "2026-01-12T01:00:00.000Z",
@@ -139,7 +140,7 @@ describe("InMemoryPaymentsRepository", () => {
     const retrieved = await repo.findById("payment-confirm");
 
     // Admin confirms
-    retrieved.status = "confirmed";
+    retrieved.status = PaymentStatus.CONFIRMED;
     retrieved.review = { note: "Verified" };
     retrieved.updatedAt = "2026-01-12T04:00:00.000Z";
 
@@ -147,7 +148,7 @@ describe("InMemoryPaymentsRepository", () => {
 
     const found = await repo.findById("payment-confirm");
 
-    expect(found.status).toBe("confirmed");
+    expect(found.status).toBe(PaymentStatus.CONFIRMED);
     expect(found.review).toEqual({ note: "Verified" });
   });
 
@@ -158,7 +159,7 @@ describe("InMemoryPaymentsRepository", () => {
       method: "pago_movil",
       currency: "VES",
       amount: 9000,
-      status: "submitted",
+      status: PaymentStatus.SUBMITTED,
       proof: { reference: "PAGO-222" },
       createdAt: "2026-01-12T00:00:00.000Z",
       updatedAt: "2026-01-12T01:00:00.000Z",
@@ -169,7 +170,7 @@ describe("InMemoryPaymentsRepository", () => {
     const retrieved = await repo.findById("payment-reject");
 
     // Admin rejects
-    retrieved.status = "rejected";
+    retrieved.status = PaymentStatus.REJECTED;
     retrieved.review = { reason: "Invalid reference" };
     retrieved.updatedAt = "2026-01-12T05:00:00.000Z";
 
@@ -177,7 +178,7 @@ describe("InMemoryPaymentsRepository", () => {
 
     const found = await repo.findById("payment-reject");
 
-    expect(found.status).toBe("rejected");
+    expect(found.status).toBe(PaymentStatus.REJECTED);
     expect(found.review).toEqual({ reason: "Invalid reference" });
   });
 });

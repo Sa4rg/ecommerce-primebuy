@@ -12,6 +12,8 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { MySQLPaymentsRepository } from '../payments.mysql.repository.js';
 import db from '../../../db/knex.js';
 import { cleanupDb } from '../../../test_helpers/dbCleanup.js';
+import { PaymentStatus } from '../../../constants/paymentStatus.js';
+import { CheckoutStatus } from '../../../constants/shippingStatus.js';  
 
 describe('MySQLPaymentsRepository - Integration Tests', () => {
   let repository;
@@ -52,7 +54,7 @@ describe('MySQLPaymentsRepository - Integration Tests', () => {
       await db('checkouts').insert({
         checkout_id: 'chk_test_67890',
         cart_id: 'cart_test_67890',
-        status: 'pending',
+        status: CheckoutStatus.PENDING,
         totals_json: JSON.stringify({ subtotalUSD: 99.99 }),
         payment_methods_json: JSON.stringify({ usd: ['zelle'] }),
         exchange_rate_json: null,
@@ -67,7 +69,7 @@ describe('MySQLPaymentsRepository - Integration Tests', () => {
         method: 'zelle',
         currency: 'USD',
         amount: 99.99,
-        status: 'pending',
+        status: PaymentStatus.PENDING,
         proof: null,
         createdAt: '2026-01-15 10:00:00',
         updatedAt: '2026-01-15 10:00:00',
@@ -85,7 +87,7 @@ describe('MySQLPaymentsRepository - Integration Tests', () => {
         method: 'zelle',
         currency: 'USD',
         amount: 99.99,
-        status: 'pending',
+        status: PaymentStatus.PENDING,
         proof: null,
       });
       

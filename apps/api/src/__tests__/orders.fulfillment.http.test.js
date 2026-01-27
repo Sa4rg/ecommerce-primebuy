@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
 import app from "../app.js";
+import { OrderStatus } from "../constants/orderStatus.js";
 
 /**
  * Helper to create a confirmed USD order through the full HTTP flow
@@ -122,7 +123,7 @@ describe("PATCH /api/orders/:orderId/complete", () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data.orderId).toBe(orderId);
-    expect(res.body.data.status).toBe("completed");
+    expect(res.body.data.status).toBe(OrderStatus.COMPLETED);
   });
 
   test("should complete an order from processing", async () => {
@@ -135,7 +136,7 @@ describe("PATCH /api/orders/:orderId/complete", () => {
 
     // Assert
     expect(res.status).toBe(200);
-    expect(res.body.data.status).toBe("completed");
+    expect(res.body.data.status).toBe(OrderStatus.COMPLETED);
   });
 
   test("should return 409 when completing a cancelled order", async () => {
@@ -173,7 +174,7 @@ describe("PATCH /api/orders/:orderId/cancel", () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data.orderId).toBe(orderId);
-    expect(res.body.data.status).toBe("cancelled");
+    expect(res.body.data.status).toBe(OrderStatus.CANCELLED);
     expect(res.body.data.cancellation).toEqual(
       expect.objectContaining({
         reason: "Customer requested",
@@ -193,7 +194,7 @@ describe("PATCH /api/orders/:orderId/cancel", () => {
 
     // Assert
     expect(res.status).toBe(200);
-    expect(res.body.data.status).toBe("cancelled");
+    expect(res.body.data.status).toBe(OrderStatus.CANCELLED);
     expect(res.body.data.cancellation.reason).toBe("Out of stock");
   });
 

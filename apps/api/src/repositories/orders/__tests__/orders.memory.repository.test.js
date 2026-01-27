@@ -1,5 +1,7 @@
 import { describe, test, expect, beforeEach } from "vitest";
 import { InMemoryOrdersRepository } from "../orders.memory.repository";
+import { OrderStatus } from "../../../constants/orderStatus.js";
+import { ShippingStatus } from "../../../constants/shippingStatus.js";
 
 describe("InMemoryOrdersRepository", () => {
   let repo;
@@ -14,7 +16,7 @@ describe("InMemoryOrdersRepository", () => {
       cartId: "cart-456",
       checkoutId: "checkout-789",
       paymentId: "payment-abc",
-      status: "paid",
+      status: OrderStatus.PAID,
       items: [
         {
           productId: "1",
@@ -42,7 +44,7 @@ describe("InMemoryOrdersRepository", () => {
         method: null,
         address: null,
         carrier: { name: null, trackingNumber: null },
-        status: "pending",
+        status: ShippingStatus.PENDING,
         dispatchedAt: null,
         deliveredAt: null,
       },
@@ -96,7 +98,7 @@ describe("InMemoryOrdersRepository", () => {
           reference: "Casa azul",
         },
         carrier: { name: null, trackingNumber: null },
-        status: "pending",
+        status: ShippingStatus.PENDING,
         dispatchedAt: null,
         deliveredAt: null,
       },
@@ -124,7 +126,7 @@ describe("InMemoryOrdersRepository", () => {
       cartId: "cart-xyz",
       checkoutId: "checkout-xyz",
       paymentId: "payment-xyz",
-      status: "paid",
+      status: OrderStatus.PAID,
       items: [
         {
           productId: "3",
@@ -152,7 +154,7 @@ describe("InMemoryOrdersRepository", () => {
         method: null,
         address: null,
         carrier: { name: null, trackingNumber: null },
-        status: "pending",
+        status: ShippingStatus.PENDING,
         dispatchedAt: null,
         deliveredAt: null,
       },
@@ -184,7 +186,7 @@ describe("InMemoryOrdersRepository", () => {
       cartId: "cart-ref",
       checkoutId: "checkout-ref",
       paymentId: "payment-ref",
-      status: "paid",
+      status: OrderStatus.PAID,
       items: [],
       totals: { subtotalUSD: 100, subtotalVES: null, currency: "USD", amountPaid: 100 },
       exchangeRate: null,
@@ -195,7 +197,7 @@ describe("InMemoryOrdersRepository", () => {
         method: null,
         address: null,
         carrier: { name: null, trackingNumber: null },
-        status: "pending",
+        status: ShippingStatus.PENDING,
         dispatchedAt: null,
         deliveredAt: null,
       },
@@ -208,18 +210,18 @@ describe("InMemoryOrdersRepository", () => {
     const retrieved = await repo.findById("order-ref");
 
     // Mutate the retrieved object (as service does)
-    retrieved.status = "completed";
+    retrieved.status = OrderStatus.COMPLETED;
     retrieved.shipping.method = "pickup";
-    retrieved.shipping.status = "delivered";
+    retrieved.shipping.status = ShippingStatus.DELIVERED;
     retrieved.updatedAt = "2026-01-12T03:00:00.000Z";
 
     await repo.save(retrieved);
 
     const found = await repo.findById("order-ref");
 
-    expect(found.status).toBe("completed");
+    expect(found.status).toBe(OrderStatus.COMPLETED);
     expect(found.shipping.method).toBe("pickup");
-    expect(found.shipping.status).toBe("delivered");
+    expect(found.shipping.status).toBe(ShippingStatus.DELIVERED);
     expect(found).toBe(retrieved); // Same reference
   });
 
@@ -240,7 +242,7 @@ describe("InMemoryOrdersRepository", () => {
         method: null,
         address: null,
         carrier: { name: null, trackingNumber: null },
-        status: "pending",
+        status: ShippingStatus.PENDING,
         dispatchedAt: null,
         deliveredAt: null,
       },
@@ -263,7 +265,7 @@ describe("InMemoryOrdersRepository", () => {
       reference: "Edificio azul",
     };
     retrieved.shipping.carrier = { name: "MRW", trackingNumber: "MRW12345" };
-    retrieved.shipping.status = "dispatched";
+    retrieved.shipping.status = ShippingStatus.DISPATCHED;
     retrieved.shipping.dispatchedAt = "2026-01-12T04:00:00.000Z";
     retrieved.updatedAt = "2026-01-12T04:00:00.000Z";
 
@@ -281,7 +283,7 @@ describe("InMemoryOrdersRepository", () => {
       reference: "Edificio azul",
     });
     expect(found.shipping.carrier).toEqual({ name: "MRW", trackingNumber: "MRW12345" });
-    expect(found.shipping.status).toBe("dispatched");
+    expect(found.shipping.status).toBe(ShippingStatus.DISPATCHED);
     expect(found.shipping.dispatchedAt).toBe("2026-01-12T04:00:00.000Z");
   });
 });

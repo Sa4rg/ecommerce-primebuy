@@ -1,5 +1,7 @@
 const crypto = require("crypto");
 const { AppError } = require("../utils/errors");
+const { PaymentStatus } = require("../constants/paymentStatus");
+const { nextUpdatedAt } = require("../utils/updatedAt");
 const {
   InMemoryPaymentsRepository,
 } = require("../repositories/payments/payments.memory.repository");
@@ -43,13 +45,6 @@ function createPaymentsService(deps = {}) {
   const USD_METHODS = ["zelle", "zinli"];
   const VES_METHODS = ["pago_movil", "bank_transfer"];
 
-  function nextUpdatedAt(previousUpdatedAt) {
-    const next = new Date().toISOString();
-    if (next !== previousUpdatedAt) return next;
-
-    return new Date(Date.parse(previousUpdatedAt) + 1).toISOString();
-  }
-
   async function createPayment(checkoutId, method) {
     const checkout = await checkoutService.getCheckoutById(checkoutId);
 
@@ -80,7 +75,7 @@ function createPaymentsService(deps = {}) {
       method,
       currency,
       amount,
-      status: "pending",
+      status: PaymentStatus.PENDING,
       proof: null,
       createdAt: now,
       updatedAt: now,
@@ -98,7 +93,7 @@ function createPaymentsService(deps = {}) {
       throw new AppError("Payment not found", 404);
     }
 
-    if (payment.status !== "pending") {
+    if (payment.status !== PaymentStatus.PENDING) {
       throw new AppError("Payment is not pending", 409);
     }
 
@@ -107,7 +102,7 @@ function createPaymentsService(deps = {}) {
     }
 
     payment.proof = proof;
-    payment.status = "submitted";
+    payment.status = PaymentStatus.SUBMITTED;
     payment.updatedAt = nextUpdatedAt(payment.updatedAt);
 
     await paymentsRepository.save(payment);
@@ -122,7 +117,7 @@ function createPaymentsService(deps = {}) {
       throw new AppError("Payment not found", 404);
     }
 
-    if (payment.status !== "submitted") {
+    if (payment.status !== PaymentStatus.SUBMITTED) {
       throw new AppError("Payment is not submitted", 409);
     }
 
@@ -132,7 +127,7 @@ function createPaymentsService(deps = {}) {
       }
     }
 
-    payment.status = "confirmed";
+    payment.status = PaymentStatus.CONFIRMED;
     payment.review = { note: note ? note.trim() : null };
     payment.updatedAt = nextUpdatedAt(payment.updatedAt);
 
@@ -148,7 +143,7 @@ function createPaymentsService(deps = {}) {
       throw new AppError("Payment not found", 404);
     }
 
-    if (payment.status !== "submitted") {
+    if (payment.status !== PaymentStatus.SUBMITTED) {
       throw new AppError("Payment is not submitted", 409);
     }
 
@@ -156,7 +151,7 @@ function createPaymentsService(deps = {}) {
       throw new AppError("Invalid payment review", 400);
     }
 
-    payment.status = "rejected";
+    payment.status = PaymentStatus.REJECTED;
     payment.review = { reason: reason.trim() };
     payment.updatedAt = nextUpdatedAt(payment.updatedAt);
 

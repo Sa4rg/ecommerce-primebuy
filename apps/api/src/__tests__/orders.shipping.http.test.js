@@ -1,6 +1,8 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
 import app from "../app.js";
+import { OrderStatus } from "../constants/orderStatus.js";
+import { ShippingStatus } from "../constants/shippingStatus.js";
 
 /**
  * Helper function to create a confirmed USD order through the full flow:
@@ -78,7 +80,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.shipping.method).toBe("pickup");
       expect(res.body.data.shipping.address).toBe(null);
-      expect(res.body.data.shipping.status).toBe("pending");
+      expect(res.body.data.shipping.status).toBe(ShippingStatus.PENDING);
     });
 
     test("should set shipping to local_delivery with valid address", async () => {
@@ -109,7 +111,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
           line1: "Av. Bolívar Norte, Edificio Centro, Piso 3, Apt 3-A",
         })
       );
-      expect(res.body.data.shipping.status).toBe("pending");
+      expect(res.body.data.shipping.status).toBe(ShippingStatus.PENDING);
     });
 
     test("should return 400 when method is invalid", async () => {
@@ -171,7 +173,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.shipping.status).toBe("dispatched");
+      expect(res.body.data.shipping.status).toBe(ShippingStatus.DISPATCHED);
       expect(typeof res.body.data.shipping.dispatchedAt).toBe("string");
       expect(res.body.data.shipping.dispatchedAt.length).toBeGreaterThan(0);
       expect(res.body.data.shipping.carrier.name).toBe(null);
@@ -221,7 +223,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
 
       expect(successRes.status).toBe(200);
       expect(successRes.body.success).toBe(true);
-      expect(successRes.body.data.shipping.status).toBe("dispatched");
+      expect(successRes.body.data.shipping.status).toBe(ShippingStatus.DISPATCHED);
       expect(successRes.body.data.shipping.carrier.name).toBe("MRW");
       expect(successRes.body.data.shipping.carrier.trackingNumber).toBe("MRW-123456789");
     });
@@ -279,11 +281,11 @@ describe("Orders Shipping HTTP Endpoints", () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.shipping.status).toBe("delivered");
+      expect(res.body.data.shipping.status).toBe(ShippingStatus.DELIVERED);
       expect(typeof res.body.data.shipping.deliveredAt).toBe("string");
       expect(res.body.data.shipping.deliveredAt.length).toBeGreaterThan(0);
       // Order should be auto-completed
-      expect(res.body.data.status).toBe("completed");
+      expect(res.body.data.status).toBe(OrderStatus.COMPLETED);
     });
   });
 });

@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach } from "vitest";
 import { createRequire } from "module";
+import { PaymentStatus } from "../../constants/paymentStatus.js";
 
 const require = createRequire(import.meta.url);
 
@@ -58,7 +59,7 @@ describe("createPayment", () => {
     expect(payment.method).toBe("zelle");
     expect(payment.currency).toBe("USD");
     expect(payment.amount).toBe(20);
-    expect(payment.status).toBe("pending");
+    expect(payment.status).toBe(PaymentStatus.PENDING);
     expect(payment.proof).toBeNull();
     expect(typeof payment.createdAt).toBe("string");
     expect(typeof payment.updatedAt).toBe("string");
@@ -83,7 +84,7 @@ describe("createPayment", () => {
     expect(payment.method).toBe("pago_movil");
     expect(payment.currency).toBe("VES");
     expect(payment.amount).toBe(800);
-    expect(payment.status).toBe("pending");
+    expect(payment.status).toBe(PaymentStatus.PENDING);
   });
 
   test("should throw 400 when method is invalid", async () => {
@@ -153,7 +154,7 @@ describe("submitPayment", () => {
     });
 
     // Assert
-    expect(submittedPayment.status).toBe("submitted");
+    expect(submittedPayment.status).toBe(PaymentStatus.SUBMITTED);
     expect(submittedPayment.proof).toEqual({ reference: "ABC123" });
     expect(submittedPayment.updatedAt).not.toBe(initialUpdatedAt);
     expect(typeof submittedPayment.updatedAt).toBe("string");
@@ -231,7 +232,7 @@ describe("admin review", () => {
     const confirmedPayment = await paymentsService.confirmPayment("payment-1", "Confirmed in bank");
 
     // Assert
-    expect(confirmedPayment.status).toBe("confirmed");
+    expect(confirmedPayment.status).toBe(PaymentStatus.CONFIRMED);
     expect(confirmedPayment.review.note).toBe("Confirmed in bank");
     expect(confirmedPayment.updatedAt).not.toBe(previousUpdatedAt);
     expect(typeof confirmedPayment.updatedAt).toBe("string");
@@ -256,7 +257,7 @@ describe("admin review", () => {
     const confirmedPayment = await paymentsService.confirmPayment("payment-1");
 
     // Assert
-    expect(confirmedPayment.status).toBe("confirmed");
+    expect(confirmedPayment.status).toBe(PaymentStatus.CONFIRMED);
     expect(confirmedPayment.review.note).toBeNull();
     expect(confirmedPayment.updatedAt).not.toBe(previousUpdatedAt);
   });
@@ -338,7 +339,7 @@ describe("admin review", () => {
     const rejectedPayment = await paymentsService.rejectPayment("payment-1", "Reference not found");
 
     // Assert
-    expect(rejectedPayment.status).toBe("rejected");
+    expect(rejectedPayment.status).toBe(PaymentStatus.REJECTED);
     expect(rejectedPayment.review.reason).toBe("Reference not found");
     expect(rejectedPayment.updatedAt).not.toBe(previousUpdatedAt);
     expect(typeof rejectedPayment.updatedAt).toBe("string");

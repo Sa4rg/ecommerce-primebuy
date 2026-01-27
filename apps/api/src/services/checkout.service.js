@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { AppError } = require("../utils/errors");
+const { CheckoutStatus } = require("../constants/checkoutStatus");
 const {
   InMemoryCheckoutRepository,
 } = require("../repositories/checkout/checkout.memory.repository");
@@ -87,7 +88,7 @@ function createCheckoutService(deps = {}) {
     const checkout = {
       checkoutId,
       cartId,
-      status: "pending", 
+      status: CheckoutStatus.PENDING, 
       totals: {
         subtotalUSD,
         subtotalVES,

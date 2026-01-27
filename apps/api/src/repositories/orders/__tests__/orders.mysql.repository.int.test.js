@@ -12,6 +12,10 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { MySQLOrdersRepository } from '../orders.mysql.repository.js';
 import db from '../../../db/knex.js';
 import { cleanupDb } from '../../../test_helpers/dbCleanup.js';
+import { OrderStatus } from '../../../constants/orderStatus.js';
+import { PaymentStatus } from '../../../constants/paymentStatus.js';
+import { ShippingStatus } from '../../../constants/shippingStatus.js';
+
 
 describe('MySQLOrdersRepository - Integration Tests', () => {
   let repository;
@@ -46,7 +50,7 @@ describe('MySQLOrdersRepository - Integration Tests', () => {
       await db('checkouts').insert({
         checkout_id: 'chk_test_11111',
         cart_id: 'cart_test_67890',
-        status: 'pending',
+        status: ShippingStatus.PENDING,
         totals_json: JSON.stringify({ subtotalUSD: 999.99 }),
         payment_methods_json: JSON.stringify({ usd: ['zelle'] }),
         exchange_rate_json: null,
@@ -60,7 +64,7 @@ describe('MySQLOrdersRepository - Integration Tests', () => {
         method: 'zelle',
         currency: 'USD',
         amount: 999.99,
-        status: 'pending',
+        status: PaymentStatus.PENDING,
         created_at: '2026-01-15 10:00:00',
         updated_at: '2026-01-15 10:00:00',
       });
@@ -71,7 +75,7 @@ describe('MySQLOrdersRepository - Integration Tests', () => {
         cartId: 'cart_test_67890',
         checkoutId: 'chk_test_11111',
         paymentId: 'pay_test_22222',
-        status: 'paid',
+        status: OrderStatus.PAID,
         
         items: [
           {
@@ -123,7 +127,7 @@ describe('MySQLOrdersRepository - Integration Tests', () => {
             name: null,
             trackingNumber: null,
           },
-          status: 'pending',
+          status: ShippingStatus.PENDING,
           dispatchedAt: null,
           deliveredAt: null,
         },
@@ -143,7 +147,7 @@ describe('MySQLOrdersRepository - Integration Tests', () => {
       expect(found).not.toBeNull();
       expect(found.orderId).toBe('ord_test_12345');
       expect(typeof found.orderId).toBe('string');
-      expect(found.status).toBe('paid');
+      expect(found.status).toBe(OrderStatus.PAID);
       expect(found.paymentId).toBe('pay_test_22222');
       expect(found.totals.currency).toBe('USD');
       expect(found.items).toHaveLength(1);

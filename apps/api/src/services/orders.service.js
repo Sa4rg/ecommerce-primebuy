@@ -1,6 +1,9 @@
 const crypto = require("crypto");
 const { AppError } = require("../utils/errors");
 const { InMemoryOrdersRepository } = require("../repositories/orders/orders.memory.repository");
+const { OrderStatus } = require("../constants/orderStatus");
+const { ShippingStatus } = require("../constants/shippingStatus");
+const { nextUpdatedAt } = require("../utils/updatedAt");
 
 const defaultCartService = require("./cart.service");
 const defaultCheckoutService = require("./checkout.service");
@@ -55,12 +58,6 @@ function createOrdersService(deps = {}) {
     ordersRepository = new InMemoryOrdersRepository();
   }
 
-  function nextUpdatedAt(previousUpdatedAt) {
-    const next = new Date().toISOString();
-    if (next !== previousUpdatedAt) return next;
-    return new Date(Date.parse(previousUpdatedAt) + 1).toISOString();
-  }
-
   async function getExistingOrder(orderId) {
     const order = await ordersRepository.findById(orderId);
     if (!order) {
@@ -70,7 +67,7 @@ function createOrdersService(deps = {}) {
   }
 
   function assertOrderEditableForShipping(order) {
-    if (order.status === "completed" || order.status === "cancelled") {
+    if (order.status === OrderStatus.COMPLETED || order.status === OrderStatus.CANCELLED) {
       throw new AppError("Order cannot be updated for shipping", 409);
     }
   }
@@ -166,7 +163,7 @@ function createOrdersService(deps = {}) {
       cartId: cart.cartId,
       checkoutId: checkout.checkoutId,
       paymentId: payment.paymentId,
-      status: "paid",
+      status: OrderStatus.PAID,
       items: cart.items.map((item) => ({ ...item })),
       totals: {
         subtotalUSD: checkout.totals.subtotalUSD,
@@ -186,7 +183,7 @@ function createOrdersService(deps = {}) {
         method: null,
         address: null,
         carrier: { name: null, trackingNumber: null },
-        status: "pending",
+        status: ShippingStatus.PENDING,
         dispatchedAt: null,
         deliveredAt: null,
       },
@@ -218,7 +215,7 @@ function createOrdersService(deps = {}) {
       throw new AppError("Order not found", 404);
     }
 
-    if (order.status !== "paid") {
+    if (order.status !== OrderStatus.PAID) {
       throw new AppError("Order cannot be processed", 409);
     }
 
@@ -237,11 +234,11 @@ function createOrdersService(deps = {}) {
       throw new AppError("Order not found", 404);
     }
 
-    if (!["paid", "processing"].includes(order.status)) {
+    if (![OrderStatus.PAID, "processing"].includes(order.status)) {
       throw new AppError("Order cannot be completed", 409);
     }
 
-    order.status = "completed";
+    order.status = OrderStatus.COMPLETED;
     order.updatedAt = nextUpdatedAt(order.updatedAt);
 
     await ordersRepository.save(order);
@@ -260,11 +257,11 @@ function createOrdersService(deps = {}) {
       throw new AppError("Invalid cancellation reason", 400);
     }
 
-    if (order.status === "completed" || order.status === "cancelled") {
+    if (order.status === OrderStatus.COMPLETED || order.status === OrderStatus.CANCELLED) {
       throw new AppError("Order cannot be cancelled", 409);
     }
 
-    order.status = "cancelled";
+    order.status = OrderStatus.CANCELLED;
     order.cancellation = { reason: reason.trim() };
     order.updatedAt = nextUpdatedAt(order.updatedAt);
 
@@ -291,7 +288,7 @@ function createOrdersService(deps = {}) {
     const order = await getExistingOrder(orderId);
     assertOrderEditableForShipping(order);
 
-    if (order.shipping.status !== "pending") {
+    if (order.shipping.status !== ShippingStatus.PENDING) {
       throw new AppError("Shipping cannot be dispatched", 409);
     }
 
@@ -305,7 +302,7 @@ function createOrdersService(deps = {}) {
 
     validateCarrierForDispatch(order, carrier);
 
-    order.shipping.status = "dispatched";
+    order.shipping.status = ShippingStatus.DISPATCHED;
     order.shipping.dispatchedAt = new Date().toISOString();
 
     if (order.shipping.method === "national_shipping" && carrier) {
@@ -326,13 +323,13 @@ function createOrdersService(deps = {}) {
     const order = await getExistingOrder(orderId);
     assertOrderEditableForShipping(order);
 
-    if (order.shipping.status !== "dispatched") {
+    if (order.shipping.status !== ShippingStatus.DISPATCHED) {
       throw new AppError("Shipping cannot be delivered", 409);
     }
 
-    order.shipping.status = "delivered";
+    order.shipping.status = ShippingStatus.DELIVERED;
     order.shipping.deliveredAt = new Date().toISOString();
-    order.status = "completed";
+    order.status = OrderStatus.COMPLETED;
     order.updatedAt = nextUpdatedAt(order.updatedAt);
 
     await ordersRepository.save(order);

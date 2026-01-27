@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { AppError } = require("../utils/errors");
+const { nextUpdatedAt } = require("../utils/updatedAt");
 const {
   InMemoryCartRepository,
 } = require("../repositories/cart/cart.memory.repository");
@@ -95,13 +96,6 @@ function createCartService(deps = {}) {
   function recalcSummary(cart) {
     cart.summary.itemsCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
     cart.summary.subtotalUSD = cart.items.reduce((sum, item) => sum + item.lineTotalUSD, 0);
-  }
-
-  function nextUpdatedAt(previousUpdatedAt) {
-    const next = new Date().toISOString();
-    if (next !== previousUpdatedAt) return next;
-
-    return new Date(Date.parse(previousUpdatedAt) + 1).toISOString();
   }
 
   function assertCartIsActive(cart) {

@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
 import app from "../app.js";
+import { PaymentStatus } from "../constants/paymentStatus.js";
 
 async function createSubmittedPayment() {
   // Create cart
@@ -68,7 +69,7 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
     );
 
     expect(confirmRes.body.data.paymentId).toBe(paymentId);
-    expect(confirmRes.body.data.status).toBe("confirmed");
+    expect(confirmRes.body.data.status).toBe(PaymentStatus.CONFIRMED);
     expect(confirmRes.body.data.review.note).toBe("Confirmed in bank");
     expect(typeof confirmRes.body.data.updatedAt).toBe("string");
     expect(confirmRes.body.data.updatedAt).not.toBe(previousUpdatedAt);
@@ -85,7 +86,7 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
 
     // Assert
     expect(confirmRes.status).toBe(200);
-    expect(confirmRes.body.data.status).toBe("confirmed");
+    expect(confirmRes.body.data.status).toBe(PaymentStatus.CONFIRMED);
     expect(confirmRes.body.data.review.note).toBeNull();
     expect(confirmRes.body.data.updatedAt).not.toBe(previousUpdatedAt);
   });
@@ -136,7 +137,7 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
       .send({ checkoutId, method: "zelle" });
     expect(paymentRes.status).toBe(201);
     const paymentId = paymentRes.body.data.paymentId;
-    expect(paymentRes.body.data.status).toBe("pending");
+    expect(paymentRes.body.data.status).toBe(PaymentStatus.PENDING);
 
     // Act: try to confirm pending payment
     const confirmRes = await request(app)
@@ -206,7 +207,7 @@ describe("PATCH /api/payments/:paymentId/reject", () => {
     );
 
     expect(rejectRes.body.data.paymentId).toBe(paymentId);
-    expect(rejectRes.body.data.status).toBe("rejected");
+    expect(rejectRes.body.data.status).toBe(PaymentStatus.REJECTED);
     expect(rejectRes.body.data.review.reason).toBe("Reference not found");
     expect(typeof rejectRes.body.data.updatedAt).toBe("string");
     expect(rejectRes.body.data.updatedAt).not.toBe(previousUpdatedAt);

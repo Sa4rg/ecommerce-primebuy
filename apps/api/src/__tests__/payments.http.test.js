@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
 import app from "../app.js";
+import { PaymentStatus } from "../constants/paymentStatus.js";
 
 describe("POST /api/payments", () => {
   test("should create a USD payment for zelle using checkout subtotalUSD", async () => {
@@ -53,7 +54,7 @@ describe("POST /api/payments", () => {
     expect(paymentRes.body.data.method).toBe("zelle");
     expect(paymentRes.body.data.currency).toBe("USD");
     expect(paymentRes.body.data.amount).toBe(20);
-    expect(paymentRes.body.data.status).toBe("pending");
+    expect(paymentRes.body.data.status).toBe(PaymentStatus.PENDING);
     expect(paymentRes.body.data.proof).toBeNull();
     expect(typeof paymentRes.body.data.createdAt).toBe("string");
     expect(typeof paymentRes.body.data.updatedAt).toBe("string");
@@ -116,7 +117,7 @@ describe("POST /api/payments", () => {
     expect(paymentRes.body.data.method).toBe("pago_movil");
     expect(paymentRes.body.data.currency).toBe("VES");
     expect(paymentRes.body.data.amount).toBe(800);
-    expect(paymentRes.body.data.status).toBe("pending");
+    expect(paymentRes.body.data.status).toBe(PaymentStatus.PENDING);
   });
 
   test("should return 400 when payment method is invalid", async () => {
@@ -268,7 +269,7 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
     );
 
     expect(submitRes.body.data.paymentId).toBe(paymentId);
-    expect(submitRes.body.data.status).toBe("submitted");
+    expect(submitRes.body.data.status).toBe(PaymentStatus.SUBMITTED);
     expect(submitRes.body.data.proof).toEqual({ reference: "ABC123" });
     expect(typeof submitRes.body.data.updatedAt).toBe("string");
     expect(submitRes.body.data.updatedAt).not.toBe(previousUpdatedAt);

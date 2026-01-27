@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
 import app from "../app.js";
+import { OrderStatus } from "../constants/orderStatus.js";
 
 /**
  * Helper function to create a confirmed USD payment through the full flow:
@@ -134,7 +135,7 @@ describe("POST /api/orders", () => {
     expect(order.paymentId).toBe(paymentId);
     expect(order.checkoutId).toBe(checkoutId);
     expect(order.cartId).toBe(cartId);
-    expect(order.status).toBe("paid");
+    expect(order.status).toBe(OrderStatus.PAID);
 
     // Assert items
     expect(order.items).toHaveLength(1);
@@ -257,7 +258,7 @@ describe("GET /api/orders/:orderId", () => {
       })
     );
     expect(res.body.data.orderId).toBe(orderId);
-    expect(res.body.data.status).toBe("paid");
+    expect(res.body.data.status).toBe(OrderStatus.PAID);
   });
 
   test("should return 404 when orderId does not exist", async () => {

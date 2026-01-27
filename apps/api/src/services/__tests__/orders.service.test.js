@@ -1,5 +1,7 @@
 import { describe, test, expect, beforeEach } from "vitest";
 import { createRequire } from "module";
+import { OrderStatus } from "../../constants/orderStatus.js";
+import { ShippingStatus } from "../../constants/shippingStatus.js";
 
 const require = createRequire(import.meta.url);
 
@@ -8,6 +10,7 @@ const cartModule = require("../cart.service");
 const checkoutModule = require("../checkout.service");
 const paymentsModule = require("../payments.service");
 const ordersModule = require("../orders.service");
+const { OrderStatus } = require("../../constants/orderStatus");
 
 let cartService;
 let checkoutService;
@@ -122,7 +125,7 @@ describe("createOrderFromPayment", () => {
     expect(order.paymentId).toBe(paymentId);
     expect(order.checkoutId).toBe(checkoutId);
     expect(order.cartId).toBe(cartId);
-    expect(order.status).toBe("paid");
+    expect(order.status).toBe(OrderStatus.PAID);
 
     // Verify items snapshot
     expect(order.items).toHaveLength(1);
@@ -272,7 +275,7 @@ describe("getOrderById", () => {
 
     // Assert
     expect(order.orderId).toBe(orderId);
-    expect(order.status).toBe("paid");
+    expect(order.status).toBe(OrderStatus.PAID);
     expect(order.paymentId).toBe(payment.paymentId);
   });
 
@@ -350,7 +353,7 @@ describe("fulfillment", () => {
     const updatedOrder = await ordersService.completeOrder(order.orderId);
 
     // Assert
-    expect(updatedOrder.status).toBe("completed");
+    expect(updatedOrder.status).toBe(OrderStatus.COMPLETED);
     expect(updatedOrder.updatedAt).not.toBe(previousUpdatedAt);
   });
 
@@ -363,7 +366,7 @@ describe("fulfillment", () => {
     const updatedOrder = await ordersService.completeOrder(order.orderId);
 
     // Assert
-    expect(updatedOrder.status).toBe("completed");
+    expect(updatedOrder.status).toBe(OrderStatus.COMPLETED);
   });
 
   test("completeOrder should throw 409 when order is cancelled", async () => {
@@ -389,7 +392,7 @@ describe("fulfillment", () => {
     const updatedOrder = await ordersService.cancelOrder(order.orderId, "Customer requested");
 
     // Assert
-    expect(updatedOrder.status).toBe("cancelled");
+    expect(updatedOrder.status).toBe(OrderStatus.CANCELLED);
     expect(updatedOrder.cancellation).toEqual(
       expect.objectContaining({
         reason: "Customer requested",
@@ -407,7 +410,7 @@ describe("fulfillment", () => {
     const updatedOrder = await ordersService.cancelOrder(order.orderId, "Out of stock");
 
     // Assert
-    expect(updatedOrder.status).toBe("cancelled");
+    expect(updatedOrder.status).toBe(OrderStatus.CANCELLED);
     expect(updatedOrder.cancellation.reason).toBe("Out of stock");
   });
 
@@ -477,7 +480,7 @@ describe("shipping", () => {
 
     // Assert
     expect(order.shipping).toBeDefined();
-    expect(order.shipping.status).toBe("pending");
+    expect(order.shipping.status).toBe(ShippingStatus.PENDING);
     expect(order.shipping.method).toBeNull();
     expect(order.shipping.address).toBeNull();
     expect(order.shipping.carrier).toEqual({ name: null, trackingNumber: null });
@@ -500,7 +503,7 @@ describe("shipping", () => {
     // Assert
     expect(updatedOrder.shipping.method).toBe("pickup");
     expect(updatedOrder.shipping.address).toBeNull();
-    expect(updatedOrder.shipping.status).toBe("pending");
+    expect(updatedOrder.shipping.status).toBe(ShippingStatus.PENDING);
   });
 
   test("setShippingDetails should set shipping method local_delivery with valid address", async () => {
@@ -626,7 +629,7 @@ describe("shipping", () => {
     const updatedOrder = await ordersService.markDispatched(order.orderId, null);
 
     // Assert
-    expect(updatedOrder.shipping.status).toBe("dispatched");
+    expect(updatedOrder.shipping.status).toBe(ShippingStatus.DISPATCHED);
     expect(typeof updatedOrder.shipping.dispatchedAt).toBe("string");
     expect(updatedOrder.shipping.dispatchedAt.length).toBeGreaterThan(0);
     expect(updatedOrder.shipping.carrier).toEqual({ name: null, trackingNumber: null });
@@ -653,7 +656,7 @@ describe("shipping", () => {
     });
 
     // Assert
-    expect(updatedOrder.shipping.status).toBe("dispatched");
+    expect(updatedOrder.shipping.status).toBe(ShippingStatus.DISPATCHED);
     expect(updatedOrder.shipping.carrier).toEqual({
       name: "MRW",
       trackingNumber: "123456789",
@@ -691,10 +694,10 @@ describe("shipping", () => {
     const updatedOrder = await ordersService.markDelivered(order.orderId);
 
     // Assert
-    expect(updatedOrder.shipping.status).toBe("delivered");
+    expect(updatedOrder.shipping.status).toBe(ShippingStatus.DELIVERED);
     expect(typeof updatedOrder.shipping.deliveredAt).toBe("string");
     expect(updatedOrder.shipping.deliveredAt.length).toBeGreaterThan(0);
-    expect(updatedOrder.status).toBe("completed");
+    expect(updatedOrder.status).toBe(OrderStatus.COMPLETED);
   });
 
   test("markDelivered should throw 409 when shipping is not dispatched", async () => {
