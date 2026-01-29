@@ -1,10 +1,21 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const { NODE_ENV, FRONTEND_ORIGIN } = require('./config/env');
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:5173" }));
+// Trust proxy in production (for X-Forwarded-* headers)
+if (NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
+// CORS configuration based on environment
+const corsOrigin = NODE_ENV === 'production' 
+  ? FRONTEND_ORIGIN 
+  : 'http://localhost:5173';
+
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 

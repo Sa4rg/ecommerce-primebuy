@@ -1,8 +1,37 @@
 const env = require('./config/env');
 const app = require('./app');
+const db = require('./db/knex');
 
 const PORT = env.PORT;
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+const server = app.listen(PORT, () => {
+  const envPrefix = env.NODE_ENV === 'production' ? '[PROD]' : '[DEV]';
+  const message = env.NODE_ENV === 'production'
+    ? `${envPrefix} Server running on port ${PORT}`
+    : `${envPrefix} Server running on http://localhost:${PORT}`;
+  
+  console.log(message);
 });
+
+// Graceful shutdown handler
+function shutdown(signal) {
+  console.log(`\n${signal} received. Starting graceful shutdown...`);
+  
+  server.close(() => {
+    console.log('HTTP server closed');
+    
+    db.destroy()
+      .then(() => {
+        console.log('Database connections closed');
+        process.exit(0);
+      })
+      .catch((err) => {
+        console.error('Error closing database connections:', err);
+        process.exit(1);
+      });
+  });
+}
+
+// Listen for termination signals
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));

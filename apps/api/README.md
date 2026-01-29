@@ -85,6 +85,33 @@ Key variables:
 - `DB_NAME`: Development database name (default: `ecommerce_dev`)
 - `DB_NAME_TEST`: Test database name (default: `ecommerce_test`)
 
+## Database Connection (Production)
+
+Some cloud database providers (AWS RDS, Azure Database, etc.) require SSL connections.
+
+SSL support is **optional** and controlled via environment variables:
+
+- `DB_SSL`: Set to `"1"` to enable SSL connections
+- `DB_SSL_REJECT_UNAUTHORIZED`: Controls certificate validation (default: `"1"`)
+  - `"1"` (default): Requires valid, trusted certificates (production recommended)
+  - `"0"`: Accepts self-signed certificates (development/staging only)
+
+**Development & Docker:**
+- SSL is **not required** for local MySQL (Docker)
+- Leave `DB_SSL` unset for local development
+
+**Production Example:**
+
+```bash
+# Production with SSL (valid certificates)
+DB_SSL=1
+DB_SSL_REJECT_UNAUTHORIZED=1  # Optional, this is the default
+
+# Staging with self-signed certificates
+DB_SSL=1
+DB_SSL_REJECT_UNAUTHORIZED=0
+```
+
 ## Database Migrations
 
 ```bash

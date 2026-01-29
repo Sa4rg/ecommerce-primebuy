@@ -150,6 +150,54 @@ This is achieved by introducing explicit **persistence seams** via repositories 
 - Enables gradual migration
 - Improves long-term maintainability
 
+### 4.5 Database Connection Hardening (Production)
+
+| Decision | Optional SSL + Connection Timeouts via Environment Variables |
+|----------|-------------------------------------------------------------|
+
+**Problem:**
+
+Production database providers (AWS RDS, Azure Database, DigitalOcean Managed Databases, etc.) commonly require or recommend SSL connections. However:
+
+- Local Docker MySQL does not require SSL
+- Unit tests run against in-memory repositories (no DB)
+- Integration tests use local MySQL
+- Forcing SSL globally breaks development workflows
+
+**Solution:**
+
+SSL support is **opt-in** via environment variables:
+
+- `DB_SSL="1"` → Enables SSL connections
+- `DB_SSL_REJECT_UNAUTHORIZED="1"` → Requires valid, trusted certificates (default)
+- `DB_SSL_REJECT_UNAUTHORIZED="0"` → Accepts self-signed certificates (staging/dev only)
+
+Connection timeouts (`acquireConnectionTimeout: 10000ms`) are always enabled across all environments to prevent hanging connections in production.
+
+**Reasoning:**
+
+- **Environment parity without enforcement**: Production can enable SSL without forcing it in development
+- **Developer ergonomics**: Local Docker MySQL and tests remain simple (no SSL configuration)
+- **Security by default in production**: When SSL is enabled, strict certificate validation is the default
+- **Fail-fast behavior**: Timeouts prevent hung connections in production environments
+- **No silent failures**: Missing SSL in production must be explicit (via env var), not accidental
+
+**Impact:**
+
+- ✅ Unit tests unaffected (no DB connection)
+- ✅ Docker local development unaffected (SSL not required)
+- ✅ Integration tests unaffected unless explicitly enabled
+- ✅ Production deployments can enforce SSL without code changes
+- ✅ No breaking changes to existing workflows
+
+**Explicitly rejected:**
+
+- ❌ Auto-detecting SSL requirements → Too implicit, fragile
+- ❌ Forcing SSL in all environments → Breaks local development
+- ❌ Using different Knex configs per environment → Violates DRY, harder to test
+
+> This approach balances production-readiness with local development simplicity.
+
 ---
 
 ## 5. Testing Strategy During Migration
