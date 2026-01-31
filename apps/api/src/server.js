@@ -14,7 +14,17 @@ const server = app.listen(PORT, () => {
 });
 
 // Graceful shutdown handler
+
+let isShuttingDown = false;
+
 function shutdown(signal) {
+
+  if (isShuttingDown) {
+    console.log(`Shutdown already in progress, ignoring ${signal}`);
+    return;
+  }
+
+  isShuttingDown = true;
   console.log(`\n${signal} received. Starting graceful shutdown...`);
   
   server.close(() => {

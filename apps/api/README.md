@@ -125,6 +125,20 @@ pnpm --filter api db:rollback
 pnpm --filter api db:status
 ```
 
+## Pasos Tipicos de Deploy
+
+# Install dependency
+pnpm install --prod
+
+# Execute migrations
+pnpm --filter api db:migrate
+
+# up server
+pnpm --filter api start
+
+Las migraciones son parte del deploy, no del runtime.
+
+
 ## Project Structure
 
 ```
