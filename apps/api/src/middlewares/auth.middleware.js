@@ -25,6 +25,7 @@ function requireAuth(req, res, next) {
     req.user = {
       userId: decoded.sub,
       role: decoded.role,
+      email: decoded.email || null, 
     };
 
     // 5) Continue

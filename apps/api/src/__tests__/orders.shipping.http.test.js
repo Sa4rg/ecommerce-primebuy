@@ -1,9 +1,18 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 import app from "../app.js";
 import { OrderStatus } from "../constants/orderStatus.js";
 import { ShippingStatus } from "../constants/shippingStatus.js";
 import { createConfirmedUsdOrder } from "../test_helpers/orderHelper.js";
+
+function adminToken() {
+  return jwt.sign(
+    { sub: "admin-test-user", role: "admin" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}
 
 describe("Orders Shipping HTTP Endpoints", () => {
   describe("PATCH /api/orders/:orderId/shipping", () => {
@@ -12,6 +21,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
 
       const res = await request(app)
         .patch(`/api/orders/${orderId}/shipping`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({ method: "pickup", address: null });
 
       expect(res.status).toBe(200);
@@ -35,6 +45,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
 
       const res = await request(app)
         .patch(`/api/orders/${orderId}/shipping`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({ method: "local_delivery", address: validAddress });
 
       expect(res.status).toBe(200);
@@ -57,6 +68,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
 
       const res = await request(app)
         .patch(`/api/orders/${orderId}/shipping`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({ method: "airdrop", address: null });
 
       expect(res.status).toBe(400);
@@ -73,6 +85,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
 
       const res = await request(app)
         .patch(`/api/orders/${orderId}/shipping`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({ method: "local_delivery", address: null });
 
       expect(res.status).toBe(400);
@@ -92,6 +105,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
       // Set shipping first
       const setShippingRes = await request(app)
         .patch(`/api/orders/${orderId}/shipping`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({
           method: "local_delivery",
           address: {
@@ -107,6 +121,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
       // Dispatch without carrier
       const res = await request(app)
         .patch(`/api/orders/${orderId}/shipping/dispatch`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({});
 
       expect(res.status).toBe(200);
@@ -124,6 +139,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
       // Set shipping to national_shipping
       const setShippingRes = await request(app)
         .patch(`/api/orders/${orderId}/shipping`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({
           method: "national_shipping",
           address: {
@@ -139,6 +155,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
       // Try to dispatch without carrier - should fail
       const failRes = await request(app)
         .patch(`/api/orders/${orderId}/shipping/dispatch`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({});
 
       expect(failRes.status).toBe(400);
@@ -152,6 +169,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
       // Dispatch with valid carrier - should succeed
       const successRes = await request(app)
         .patch(`/api/orders/${orderId}/shipping/dispatch`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({
           carrier: {
             name: "MRW",
@@ -172,18 +190,21 @@ describe("Orders Shipping HTTP Endpoints", () => {
       // Set shipping to pickup
       const setShippingRes = await request(app)
         .patch(`/api/orders/${orderId}/shipping`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({ method: "pickup", address: null });
       expect(setShippingRes.status).toBe(200);
 
       // First dispatch - should succeed
       const firstDispatch = await request(app)
         .patch(`/api/orders/${orderId}/shipping/dispatch`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({});
       expect(firstDispatch.status).toBe(200);
 
       // Second dispatch - should fail with 409
       const secondDispatch = await request(app)
         .patch(`/api/orders/${orderId}/shipping/dispatch`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({});
 
       expect(secondDispatch.status).toBe(409);
@@ -203,18 +224,21 @@ describe("Orders Shipping HTTP Endpoints", () => {
       // Set shipping to pickup
       const setShippingRes = await request(app)
         .patch(`/api/orders/${orderId}/shipping`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({ method: "pickup", address: null });
       expect(setShippingRes.status).toBe(200);
 
       // Dispatch
       const dispatchRes = await request(app)
         .patch(`/api/orders/${orderId}/shipping/dispatch`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({});
       expect(dispatchRes.status).toBe(200);
 
       // Deliver
       const res = await request(app)
         .patch(`/api/orders/${orderId}/shipping/deliver`)
+        .set("Authorization", `Bearer ${adminToken()}`)
         .send({});
 
       expect(res.status).toBe(200);

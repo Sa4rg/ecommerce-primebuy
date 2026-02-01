@@ -1,8 +1,17 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 import app from "../app.js";
 import { OrderStatus } from "../constants/orderStatus.js";
 import { createConfirmedUsdOrder } from "../test_helpers/orderHelper.js";
+
+function adminToken() {
+  return jwt.sign(
+    { sub: "admin-test-user", role: "admin" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}
 
 describe("PATCH /api/orders/:orderId/process", () => {
   test("should set order status to processing", async () => {
@@ -10,7 +19,9 @@ describe("PATCH /api/orders/:orderId/process", () => {
     const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
 
     // Act
-    const res = await request(app).patch(`/api/orders/${orderId}/process`);
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/process`)
+      .set("Authorization", `Bearer ${adminToken()}`);
 
     // Assert
     expect(res.status).toBe(200);
@@ -24,7 +35,9 @@ describe("PATCH /api/orders/:orderId/process", () => {
 
   test("should return 404 when order does not exist", async () => {
     // Act
-    const res = await request(app).patch("/api/orders/invalid-order/process");
+    const res = await request(app)
+      .patch("/api/orders/invalid-order/process")
+      .set("Authorization", `Bearer ${adminToken()}`);
 
     // Assert
     expect(res.status).toBe(404);
@@ -41,11 +54,15 @@ describe("PATCH /api/orders/:orderId/process", () => {
     const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
 
     // First process (success)
-    const firstRes = await request(app).patch(`/api/orders/${orderId}/process`);
+    const firstRes = await request(app)
+      .patch(`/api/orders/${orderId}/process`)
+      .set("Authorization", `Bearer ${adminToken()}`);
     expect(firstRes.status).toBe(200);
 
     // Act: try to process again
-    const res = await request(app).patch(`/api/orders/${orderId}/process`);
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/process`)
+      .set("Authorization", `Bearer ${adminToken()}`);
 
     // Assert
     expect(res.status).toBe(409);
@@ -64,7 +81,9 @@ describe("PATCH /api/orders/:orderId/complete", () => {
     const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
 
     // Act
-    const res = await request(app).patch(`/api/orders/${orderId}/complete`);
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/complete`)
+      .set("Authorization", `Bearer ${adminToken()}`);
 
     // Assert
     expect(res.status).toBe(200);
@@ -76,10 +95,14 @@ describe("PATCH /api/orders/:orderId/complete", () => {
   test("should complete an order from processing", async () => {
     // Arrange
     const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
-    await request(app).patch(`/api/orders/${orderId}/process`);
+    await request(app)
+      .patch(`/api/orders/${orderId}/process`)
+      .set("Authorization", `Bearer ${adminToken()}`);
 
     // Act
-    const res = await request(app).patch(`/api/orders/${orderId}/complete`);
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/complete`)
+      .set("Authorization", `Bearer ${adminToken()}`);
 
     // Assert
     expect(res.status).toBe(200);
@@ -91,10 +114,13 @@ describe("PATCH /api/orders/:orderId/complete", () => {
     const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
     await request(app)
       .patch(`/api/orders/${orderId}/cancel`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ reason: "Out of stock" });
 
     // Act
-    const res = await request(app).patch(`/api/orders/${orderId}/complete`);
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/complete`)
+      .set("Authorization", `Bearer ${adminToken()}`);
 
     // Assert
     expect(res.status).toBe(409);
@@ -115,6 +141,7 @@ describe("PATCH /api/orders/:orderId/cancel", () => {
     // Act
     const res = await request(app)
       .patch(`/api/orders/${orderId}/cancel`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ reason: "Customer requested" });
 
     // Assert
@@ -132,11 +159,14 @@ describe("PATCH /api/orders/:orderId/cancel", () => {
   test("should cancel an order in processing status", async () => {
     // Arrange
     const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
-    await request(app).patch(`/api/orders/${orderId}/process`);
+    await request(app)
+      .patch(`/api/orders/${orderId}/process`)
+      .set("Authorization", `Bearer ${adminToken()}`);
 
     // Act
     const res = await request(app)
       .patch(`/api/orders/${orderId}/cancel`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ reason: "Out of stock" });
 
     // Assert
@@ -148,11 +178,14 @@ describe("PATCH /api/orders/:orderId/cancel", () => {
   test("should return 409 when cancelling a completed order", async () => {
     // Arrange
     const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
-    await request(app).patch(`/api/orders/${orderId}/complete`);
+    await request(app)
+      .patch(`/api/orders/${orderId}/complete`)
+      .set("Authorization", `Bearer ${adminToken()}`);
 
     // Act
     const res = await request(app)
       .patch(`/api/orders/${orderId}/cancel`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ reason: "Too late" });
 
     // Assert
@@ -172,6 +205,7 @@ describe("PATCH /api/orders/:orderId/cancel", () => {
     // Act: empty string
     const res = await request(app)
       .patch(`/api/orders/${orderId}/cancel`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ reason: "" });
 
     // Assert

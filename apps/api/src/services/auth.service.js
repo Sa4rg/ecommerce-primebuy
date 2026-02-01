@@ -81,7 +81,7 @@ function createAuthService({
       throw new AppError('Invalid credentials', 401);
     }
     const accessToken = jwtSigner(
-      { sub: user.userId, role: user.role },
+      { sub: user.userId, role: user.role, email: user.email },
       { expiresIn: JWT_EXPIRES_IN }
     );
     return { accessToken };

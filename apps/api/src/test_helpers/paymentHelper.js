@@ -23,9 +23,13 @@ function adminToken() {
  * Create a confirmed USD payment through the full flow:
  * cart → product → add item → checkout → payment → submit → confirm
  * @param {Express.Application} app - Express app instance
+ * @param {Object} [options] - Optional configuration
+ * @param {string} [options.customerEmail] - Customer email to associate with order
  * @returns {Promise<{ cartId: string, checkoutId: string, paymentId: string }>}
  */
-async function createConfirmedUsdPayment(app) {
+async function createConfirmedUsdPayment(app, options = {}) {
+  const { customerEmail } = options;
+
   // Create cart
   const createCartRes = await request(app).post('/api/cart');
   expect(createCartRes.status).toBe(201);
@@ -46,6 +50,14 @@ async function createConfirmedUsdPayment(app) {
     .post(`/api/cart/${cartId}/items`)
     .send({ productId, quantity: 2 });
   expect(addItemRes.status).toBe(200);
+
+  // Set customer email if provided
+  if (customerEmail) {
+    const metadataRes = await request(app)
+      .patch(`/api/cart/${cartId}/metadata`)
+      .send({ customer: { email: customerEmail } });
+    expect(metadataRes.status).toBe(200);
+  }
 
   // Create checkout
   const checkoutRes = await request(app).post('/api/checkout').send({ cartId });

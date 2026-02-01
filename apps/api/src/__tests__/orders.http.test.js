@@ -1,9 +1,18 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 import app from "../app.js";
 import { OrderStatus } from "../constants/orderStatus.js";
-import { registerAndLogin } from "../test_helpers/authHelper.js";
+import { registerAndLogin, registerAndLoginWithEmail } from "../test_helpers/authHelper.js";
 import { createConfirmedUsdPayment, createSubmittedPayment } from "../test_helpers/paymentHelper.js";
+
+function adminToken() {
+  return jwt.sign(
+    { sub: "admin-test-user", role: "admin" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}
 
 describe("POST /api/orders", () => {
   test("should create an order from a confirmed payment and return 201", async () => {
@@ -143,10 +152,10 @@ describe("POST /api/orders", () => {
 });
 
 describe("GET /api/orders/:orderId", () => {
-  test("should return 200 and the order when orderId exists", async () => {
-    // Arrange: create confirmed payment and order
-    const token = await registerAndLogin(app, 'order');
-    const { paymentId } = await createConfirmedUsdPayment(app);
+  test("should return 200 and the order when orderId exists (owner can view)", async () => {
+    // Arrange: create user and payment with matching customer email
+    const { token, email } = await registerAndLoginWithEmail(app, 'order');
+    const { paymentId } = await createConfirmedUsdPayment(app, { customerEmail: email });
 
     const createOrderRes = await request(app)
       .post("/api/orders")
@@ -155,8 +164,10 @@ describe("GET /api/orders/:orderId", () => {
     expect(createOrderRes.status).toBe(201);
     const orderId = createOrderRes.body.data.orderId;
 
-    // Act
-    const res = await request(app).get(`/api/orders/${orderId}`);
+    // Act - Owner can view their own order
+    const res = await request(app)
+      .get(`/api/orders/${orderId}`)
+      .set("Authorization", `Bearer ${token}`);
 
     // Assert
     expect(res.status).toBe(200);
@@ -173,7 +184,9 @@ describe("GET /api/orders/:orderId", () => {
 
   test("should return 404 when orderId does not exist", async () => {
     // Act
-    const res = await request(app).get("/api/orders/invalid-order");
+    const res = await request(app)
+      .get("/api/orders/invalid-order")
+      .set("Authorization", `Bearer ${adminToken()}`);
 
     // Assert
     expect(res.status).toBe(404);
