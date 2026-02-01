@@ -3,6 +3,17 @@ require('dotenv').config();
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;
 
+// JWT configuration
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
+
+// Fail fast in production if JWT_SECRET is missing
+if (NODE_ENV === 'production' && !JWT_SECRET) {
+  throw new Error(
+    'FATAL: JWT_SECRET environment variable is required in production.'
+  );
+}
+
 // Database configuration
 const DB_PROVIDER = process.env.DB_PROVIDER;
 const DB_HOST = process.env.DB_HOST;
@@ -56,5 +67,7 @@ module.exports = {
   DB_PORT,
   DB_USER,
   DB_PASSWORD,
-  DB_NAME
+  DB_NAME,
+  JWT_SECRET,
+  JWT_EXPIRES_IN
 };

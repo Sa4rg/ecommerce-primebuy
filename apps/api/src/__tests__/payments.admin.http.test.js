@@ -2,6 +2,21 @@ import { describe, test, expect } from "vitest";
 import request from "supertest";
 import app from "../app.js";
 import { PaymentStatus } from "../constants/paymentStatus.js";
+const jwt = require("jsonwebtoken");
+import { registerAndLogin } from "../test_helpers/authHelper.js";
+
+function adminToken() {
+  return jwt.sign(
+    { sub: "admin-test-user", role: "admin" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}
+
+async function customerToken() {
+  return registerAndLogin(app, "customer-payments");
+}
+
 
 async function createSubmittedPayment() {
   // Create cart
@@ -48,6 +63,33 @@ async function createSubmittedPayment() {
   return { paymentId, previousUpdatedAt };
 }
 
+
+describe("PATCH /api/payments/:id/confirm - authorization", () => {
+    it("should return 401 without token", async () => {
+    const { paymentId } = await createSubmittedPayment();
+
+    const res = await request(app)
+      .patch(`/api/payments/${paymentId}/confirm`)
+      .send({ note: "ok" });
+
+    expect(res.status).toBe(401);
+  });
+
+
+  it("should return 403 for non-admin token", async () => {
+    const token = await customerToken();
+    const { paymentId } = await createSubmittedPayment();
+
+    const res = await request(app)
+      .patch(`/api/payments/${paymentId}/confirm`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ note: "ok" });
+
+    expect(res.status).toBe(403);
+  });
+});
+
+
 describe("PATCH /api/payments/:paymentId/confirm", () => {
   test("should confirm a submitted payment and update updatedAt", async () => {
     // Arrange
@@ -56,6 +98,7 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
     // Act
     const confirmRes = await request(app)
       .patch(`/api/payments/${paymentId}/confirm`)
+       .set("Authorization", `Bearer ${adminToken()}`)
       .send({ note: "Confirmed in bank" });
 
     // Assert
@@ -82,7 +125,8 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
     // Act
     const confirmRes = await request(app)
       .patch(`/api/payments/${paymentId}/confirm`)
-      .send({});
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({ note: null });  
 
     // Assert
     expect(confirmRes.status).toBe(200);
@@ -95,6 +139,7 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
     // Act
     const confirmRes = await request(app)
       .patch("/api/payments/invalid-payment/confirm")
+       .set("Authorization", `Bearer ${adminToken()}`)
       .send({ note: "x" });
 
     // Assert
@@ -142,6 +187,7 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
     // Act: try to confirm pending payment
     const confirmRes = await request(app)
       .patch(`/api/payments/${paymentId}/confirm`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ note: "x" });
 
     // Assert
@@ -161,6 +207,7 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
     // Act + Assert: empty note
     const emptyNoteRes = await request(app)
       .patch(`/api/payments/${paymentId}/confirm`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ note: "" });
 
     expect(emptyNoteRes.status).toBe(400);
@@ -174,6 +221,7 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
     // Act + Assert: whitespace-only note
     const whitespaceNoteRes = await request(app)
       .patch(`/api/payments/${paymentId}/confirm`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ note: "   " });
 
     expect(whitespaceNoteRes.status).toBe(400);
@@ -194,6 +242,7 @@ describe("PATCH /api/payments/:paymentId/reject", () => {
     // Act
     const rejectRes = await request(app)
       .patch(`/api/payments/${paymentId}/reject`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ reason: "Reference not found" });
 
     // Assert
@@ -217,6 +266,7 @@ describe("PATCH /api/payments/:paymentId/reject", () => {
     // Act
     const rejectRes = await request(app)
       .patch("/api/payments/invalid-payment/reject")
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ reason: "x" });
 
     // Assert
@@ -263,6 +313,7 @@ describe("PATCH /api/payments/:paymentId/reject", () => {
     // Act: try to reject pending payment
     const rejectRes = await request(app)
       .patch(`/api/payments/${paymentId}/reject`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ reason: "x" });
 
     // Assert
@@ -282,6 +333,7 @@ describe("PATCH /api/payments/:paymentId/reject", () => {
     // Act + Assert: empty reason
     const emptyReasonRes = await request(app)
       .patch(`/api/payments/${paymentId}/reject`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ reason: "" });
 
     expect(emptyReasonRes.status).toBe(400);
@@ -295,6 +347,7 @@ describe("PATCH /api/payments/:paymentId/reject", () => {
     // Act + Assert: whitespace-only reason
     const whitespaceReasonRes = await request(app)
       .patch(`/api/payments/${paymentId}/reject`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ reason: "   " });
 
     expect(whitespaceReasonRes.status).toBe(400);

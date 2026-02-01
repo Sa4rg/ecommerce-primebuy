@@ -7,5 +7,6 @@ router.use('/cart', require('./cart.routes'));
 router.use('/checkout', require('./checkout.routes'));
 router.use('/payments', require('./payments.routes'));
 router.use('/orders', require('./orders.routes'));
+router.use('/auth', require('./auth.routes'));
 
 module.exports = router;

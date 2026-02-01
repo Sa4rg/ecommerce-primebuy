@@ -2,65 +2,12 @@ import { describe, test, expect } from "vitest";
 import request from "supertest";
 import app from "../app.js";
 import { OrderStatus } from "../constants/orderStatus.js";
-
-/**
- * Helper to create a confirmed USD order through the full HTTP flow
- * @returns {Promise<{ orderId: string }>}
- */
-async function createConfirmedUsdOrder() {
-  // 1) Create cart
-  const cartRes = await request(app).post("/api/cart");
-  const cartId = cartRes.body.data.cartId;
-
-  // 2) Create product
-  const productRes = await request(app).post("/api/products").send({
-    name: "Fulfillment Test Product",
-    priceUSD: 10,
-    stock: 5,
-    category: "Test",
-  });
-  const productId = productRes.body.data.id;
-
-  // 3) Add item to cart
-  await request(app)
-    .post(`/api/cart/${cartId}/items`)
-    .send({ productId, quantity: 2 });
-
-  // 4) Create checkout
-  const checkoutRes = await request(app)
-    .post("/api/checkout")
-    .send({ cartId });
-  const checkoutId = checkoutRes.body.data.checkoutId;
-
-  // 5) Create payment
-  const paymentRes = await request(app)
-    .post("/api/payments")
-    .send({ checkoutId, method: "zelle" });
-  const paymentId = paymentRes.body.data.paymentId;
-
-  // 6) Submit payment
-  await request(app)
-    .patch(`/api/payments/${paymentId}/submit`)
-    .send({ reference: "ABC123" });
-
-  // 7) Confirm payment
-  await request(app)
-    .patch(`/api/payments/${paymentId}/confirm`)
-    .send({ note: "Confirmed" });
-
-  // 8) Create order
-  const orderRes = await request(app)
-    .post("/api/orders")
-    .send({ paymentId });
-  const orderId = orderRes.body.data.orderId;
-
-  return { orderId };
-}
+import { createConfirmedUsdOrder } from "../test_helpers/orderHelper.js";
 
 describe("PATCH /api/orders/:orderId/process", () => {
   test("should set order status to processing", async () => {
     // Arrange
-    const { orderId } = await createConfirmedUsdOrder();
+    const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
 
     // Act
     const res = await request(app).patch(`/api/orders/${orderId}/process`);
@@ -91,7 +38,7 @@ describe("PATCH /api/orders/:orderId/process", () => {
 
   test("should return 409 when processing an order not in paid status", async () => {
     // Arrange
-    const { orderId } = await createConfirmedUsdOrder();
+    const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
 
     // First process (success)
     const firstRes = await request(app).patch(`/api/orders/${orderId}/process`);
@@ -114,7 +61,7 @@ describe("PATCH /api/orders/:orderId/process", () => {
 describe("PATCH /api/orders/:orderId/complete", () => {
   test("should complete an order from paid", async () => {
     // Arrange
-    const { orderId } = await createConfirmedUsdOrder();
+    const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
 
     // Act
     const res = await request(app).patch(`/api/orders/${orderId}/complete`);
@@ -128,7 +75,7 @@ describe("PATCH /api/orders/:orderId/complete", () => {
 
   test("should complete an order from processing", async () => {
     // Arrange
-    const { orderId } = await createConfirmedUsdOrder();
+    const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
     await request(app).patch(`/api/orders/${orderId}/process`);
 
     // Act
@@ -141,7 +88,7 @@ describe("PATCH /api/orders/:orderId/complete", () => {
 
   test("should return 409 when completing a cancelled order", async () => {
     // Arrange
-    const { orderId } = await createConfirmedUsdOrder();
+    const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
     await request(app)
       .patch(`/api/orders/${orderId}/cancel`)
       .send({ reason: "Out of stock" });
@@ -163,7 +110,7 @@ describe("PATCH /api/orders/:orderId/complete", () => {
 describe("PATCH /api/orders/:orderId/cancel", () => {
   test("should cancel an order in paid status and store cancellation reason", async () => {
     // Arrange
-    const { orderId } = await createConfirmedUsdOrder();
+    const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
 
     // Act
     const res = await request(app)
@@ -184,7 +131,7 @@ describe("PATCH /api/orders/:orderId/cancel", () => {
 
   test("should cancel an order in processing status", async () => {
     // Arrange
-    const { orderId } = await createConfirmedUsdOrder();
+    const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
     await request(app).patch(`/api/orders/${orderId}/process`);
 
     // Act
@@ -200,7 +147,7 @@ describe("PATCH /api/orders/:orderId/cancel", () => {
 
   test("should return 409 when cancelling a completed order", async () => {
     // Arrange
-    const { orderId } = await createConfirmedUsdOrder();
+    const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
     await request(app).patch(`/api/orders/${orderId}/complete`);
 
     // Act
@@ -220,7 +167,7 @@ describe("PATCH /api/orders/:orderId/cancel", () => {
 
   test("should return 400 when cancellation reason is invalid", async () => {
     // Arrange
-    const { orderId } = await createConfirmedUsdOrder();
+    const { orderId } = await createConfirmedUsdOrder(app, 'fulfillment');
 
     // Act: empty string
     const res = await request(app)

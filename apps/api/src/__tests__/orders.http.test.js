@@ -2,120 +2,19 @@ import { describe, test, expect } from "vitest";
 import request from "supertest";
 import app from "../app.js";
 import { OrderStatus } from "../constants/orderStatus.js";
-
-/**
- * Helper function to create a confirmed USD payment through the full flow:
- * cart → product → add item → checkout → payment → submit → confirm
- * @returns {{ cartId: string, checkoutId: string, paymentId: string }}
- */
-async function createConfirmedUsdPayment() {
-  // Create cart
-  const createCartRes = await request(app).post("/api/cart");
-  expect(createCartRes.status).toBe(201);
-  const cartId = createCartRes.body.data.cartId;
-
-  // Create product
-  const createProductRes = await request(app).post("/api/products").send({
-    name: "Order Test Product",
-    priceUSD: 10,
-    stock: 5,
-    category: "Test",
-  });
-  expect(createProductRes.status).toBe(201);
-  const productId = createProductRes.body.data.id;
-
-  // Add item to cart (quantity 2 → total 20 USD)
-  const addItemRes = await request(app)
-    .post(`/api/cart/${cartId}/items`)
-    .send({ productId, quantity: 2 });
-  expect(addItemRes.status).toBe(200);
-
-  // Create checkout
-  const checkoutRes = await request(app)
-    .post("/api/checkout")
-    .send({ cartId });
-  expect(checkoutRes.status).toBe(200);
-  const checkoutId = checkoutRes.body.data.checkoutId;
-
-  // Create payment
-  const paymentRes = await request(app)
-    .post("/api/payments")
-    .send({ checkoutId, method: "zelle" });
-  expect(paymentRes.status).toBe(201);
-  const paymentId = paymentRes.body.data.paymentId;
-
-  // Submit payment
-  const submitRes = await request(app)
-    .patch(`/api/payments/${paymentId}/submit`)
-    .send({ reference: "ABC123" });
-  expect(submitRes.status).toBe(200);
-
-  // Confirm payment
-  const confirmRes = await request(app)
-    .patch(`/api/payments/${paymentId}/confirm`)
-    .send({ note: "Confirmed" });
-  expect(confirmRes.status).toBe(200);
-
-  return { cartId, checkoutId, paymentId };
-}
-
-/**
- * Helper to create a submitted (not confirmed) payment
- * @returns {{ cartId: string, checkoutId: string, paymentId: string }}
- */
-async function createSubmittedPayment() {
-  // Create cart
-  const createCartRes = await request(app).post("/api/cart");
-  expect(createCartRes.status).toBe(201);
-  const cartId = createCartRes.body.data.cartId;
-
-  // Create product
-  const createProductRes = await request(app).post("/api/products").send({
-    name: "Submitted Payment Product",
-    priceUSD: 10,
-    stock: 5,
-    category: "Test",
-  });
-  expect(createProductRes.status).toBe(201);
-  const productId = createProductRes.body.data.id;
-
-  // Add item to cart
-  const addItemRes = await request(app)
-    .post(`/api/cart/${cartId}/items`)
-    .send({ productId, quantity: 1 });
-  expect(addItemRes.status).toBe(200);
-
-  // Create checkout
-  const checkoutRes = await request(app)
-    .post("/api/checkout")
-    .send({ cartId });
-  expect(checkoutRes.status).toBe(200);
-  const checkoutId = checkoutRes.body.data.checkoutId;
-
-  // Create payment
-  const paymentRes = await request(app)
-    .post("/api/payments")
-    .send({ checkoutId, method: "zelle" });
-  expect(paymentRes.status).toBe(201);
-  const paymentId = paymentRes.body.data.paymentId;
-
-  // Submit payment (but DO NOT confirm)
-  const submitRes = await request(app)
-    .patch(`/api/payments/${paymentId}/submit`)
-    .send({ reference: "REF-SUBMITTED" });
-  expect(submitRes.status).toBe(200);
-
-  return { cartId, checkoutId, paymentId };
-}
+import { registerAndLogin } from "../test_helpers/authHelper.js";
+import { createConfirmedUsdPayment, createSubmittedPayment } from "../test_helpers/paymentHelper.js";
 
 describe("POST /api/orders", () => {
   test("should create an order from a confirmed payment and return 201", async () => {
     // Arrange
-    const { cartId, checkoutId, paymentId } = await createConfirmedUsdPayment();
+    const token = await registerAndLogin(app, 'order');
+    const { cartId, checkoutId, paymentId } = await createConfirmedUsdPayment(app);
 
     // Act
     const res = await request(app)
       .post("/api/orders")
+      .set('Authorization', `Bearer ${token}`)
       .send({ paymentId });
 
     // Assert response structure
@@ -174,9 +73,13 @@ describe("POST /api/orders", () => {
   });
 
   test("should return 404 when payment does not exist", async () => {
+    // Arrange
+    const token = await registerAndLogin(app, 'order');
+
     // Act
     const res = await request(app)
       .post("/api/orders")
+      .set('Authorization', `Bearer ${token}`)
       .send({ paymentId: "invalid-payment" });
 
     // Assert
@@ -191,11 +94,13 @@ describe("POST /api/orders", () => {
 
   test("should return 409 when payment is not confirmed", async () => {
     // Arrange: create payment but only submit (not confirm)
-    const { paymentId } = await createSubmittedPayment();
+    const token = await registerAndLogin(app, 'order');
+    const { paymentId } = await createSubmittedPayment(app);
 
     // Act
     const res = await request(app)
       .post("/api/orders")
+      .set('Authorization', `Bearer ${token}`)
       .send({ paymentId });
 
     // Assert
@@ -210,17 +115,20 @@ describe("POST /api/orders", () => {
 
   test("should return 409 when order already exists for payment", async () => {
     // Arrange
-    const { paymentId } = await createConfirmedUsdPayment();
+    const token = await registerAndLogin(app, 'order');
+    const { paymentId } = await createConfirmedUsdPayment(app);
 
     // Create order first time
     const firstRes = await request(app)
       .post("/api/orders")
+      .set('Authorization', `Bearer ${token}`)
       .send({ paymentId });
     expect(firstRes.status).toBe(201);
 
     // Act: try to create order again with same paymentId
     const res = await request(app)
       .post("/api/orders")
+      .set('Authorization', `Bearer ${token}`)
       .send({ paymentId });
 
     // Assert
@@ -237,10 +145,12 @@ describe("POST /api/orders", () => {
 describe("GET /api/orders/:orderId", () => {
   test("should return 200 and the order when orderId exists", async () => {
     // Arrange: create confirmed payment and order
-    const { paymentId } = await createConfirmedUsdPayment();
+    const token = await registerAndLogin(app, 'order');
+    const { paymentId } = await createConfirmedUsdPayment(app);
 
     const createOrderRes = await request(app)
       .post("/api/orders")
+      .set('Authorization', `Bearer ${token}`)
       .send({ paymentId });
     expect(createOrderRes.status).toBe(201);
     const orderId = createOrderRes.body.data.orderId;

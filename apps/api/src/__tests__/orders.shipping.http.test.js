@@ -3,74 +3,12 @@ import request from "supertest";
 import app from "../app.js";
 import { OrderStatus } from "../constants/orderStatus.js";
 import { ShippingStatus } from "../constants/shippingStatus.js";
-
-/**
- * Helper function to create a confirmed USD order through the full flow:
- * cart → product → add item → checkout → payment → submit → confirm → order
- * @returns {{ orderId: string }}
- */
-async function createConfirmedUsdOrder() {
-  // 1) Create cart
-  const cartRes = await request(app).post("/api/cart");
-  expect(cartRes.status).toBe(201);
-  const cartId = cartRes.body.data.cartId;
-
-  // 2) Create product
-  const productRes = await request(app).post("/api/products").send({
-    name: "Shipping Test Product",
-    priceUSD: 25,
-    stock: 10,
-    category: "Test",
-  });
-  expect(productRes.status).toBe(201);
-  const productId = productRes.body.data.id;
-
-  // 3) Add item to cart
-  const addItemRes = await request(app)
-    .post(`/api/cart/${cartId}/items`)
-    .send({ productId, quantity: 2 });
-  expect(addItemRes.status).toBe(200);
-
-  // 4) Create checkout
-  const checkoutRes = await request(app)
-    .post("/api/checkout")
-    .send({ cartId });
-  expect(checkoutRes.status).toBe(200);
-  const checkoutId = checkoutRes.body.data.checkoutId;
-
-  // 5) Create payment
-  const paymentRes = await request(app)
-    .post("/api/payments")
-    .send({ checkoutId, method: "zelle" });
-  expect(paymentRes.status).toBe(201);
-  const paymentId = paymentRes.body.data.paymentId;
-
-  // 6) Submit payment
-  const submitRes = await request(app)
-    .patch(`/api/payments/${paymentId}/submit`)
-    .send({ reference: "REF-123" });
-  expect(submitRes.status).toBe(200);
-
-  // 7) Confirm payment
-  const confirmRes = await request(app)
-    .patch(`/api/payments/${paymentId}/confirm`)
-    .send({ note: "ok" });
-  expect(confirmRes.status).toBe(200);
-
-  // 8) Create order from confirmed payment
-  const orderRes = await request(app)
-    .post("/api/orders")
-    .send({ paymentId });
-  expect(orderRes.status).toBe(201);
-  const orderId = orderRes.body.data.orderId;
-
-  return { orderId };
-}
+import { createConfirmedUsdOrder } from "../test_helpers/orderHelper.js";
 
 describe("Orders Shipping HTTP Endpoints", () => {
   describe("PATCH /api/orders/:orderId/shipping", () => {
     test("should set shipping to pickup with null address", async () => {
-      const { orderId } = await createConfirmedUsdOrder();
+      const { orderId } = await createConfirmedUsdOrder(app, 'shipping');
 
       const res = await request(app)
         .patch(`/api/orders/${orderId}/shipping`)
@@ -84,7 +22,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
     });
 
     test("should set shipping to local_delivery with valid address", async () => {
-      const { orderId } = await createConfirmedUsdOrder();
+      const { orderId } = await createConfirmedUsdOrder(app, 'shipping');
 
       const validAddress = {
         recipientName: "Juan Pérez",
@@ -115,7 +53,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
     });
 
     test("should return 400 when method is invalid", async () => {
-      const { orderId } = await createConfirmedUsdOrder();
+      const { orderId } = await createConfirmedUsdOrder(app, 'shipping');
 
       const res = await request(app)
         .patch(`/api/orders/${orderId}/shipping`)
@@ -131,7 +69,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
     });
 
     test("should return 400 when address is missing for local_delivery", async () => {
-      const { orderId } = await createConfirmedUsdOrder();
+      const { orderId } = await createConfirmedUsdOrder(app, 'shipping');
 
       const res = await request(app)
         .patch(`/api/orders/${orderId}/shipping`)
@@ -149,7 +87,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
 
   describe("PATCH /api/orders/:orderId/shipping/dispatch", () => {
     test("should dispatch local_delivery without carrier", async () => {
-      const { orderId } = await createConfirmedUsdOrder();
+      const { orderId } = await createConfirmedUsdOrder(app, 'shipping');
 
       // Set shipping first
       const setShippingRes = await request(app)
@@ -181,7 +119,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
     });
 
     test("should require carrier for national_shipping dispatch", async () => {
-      const { orderId } = await createConfirmedUsdOrder();
+      const { orderId } = await createConfirmedUsdOrder(app, 'shipping');
 
       // Set shipping to national_shipping
       const setShippingRes = await request(app)
@@ -229,7 +167,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
     });
 
     test("should return 409 when dispatching twice", async () => {
-      const { orderId } = await createConfirmedUsdOrder();
+      const { orderId } = await createConfirmedUsdOrder(app, 'shipping');
 
       // Set shipping to pickup
       const setShippingRes = await request(app)
@@ -260,7 +198,7 @@ describe("Orders Shipping HTTP Endpoints", () => {
 
   describe("PATCH /api/orders/:orderId/shipping/deliver", () => {
     test("should deliver only from dispatched and auto-complete order", async () => {
-      const { orderId } = await createConfirmedUsdOrder();
+      const { orderId } = await createConfirmedUsdOrder(app, 'shipping');
 
       // Set shipping to pickup
       const setShippingRes = await request(app)

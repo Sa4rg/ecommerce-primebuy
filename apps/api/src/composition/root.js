@@ -33,6 +33,7 @@ const { createPaymentsRepository } = require("./factories/payments.repository.fa
 const { createCartRepository } = require("./factories/cart.repository.factory");
 const { createCheckoutRepository } = require("./factories/checkout.repository.factory");
 const { createOrdersRepository } = require("./factories/orders.repository.factory");
+const { createUsersRepository } = require("./factories/users/users.factory");
 
 // ============================================================================
 // SERVICE FACTORIES
@@ -42,6 +43,8 @@ const { createCartService } = require("../services/cart.service");
 const { createCheckoutService } = require("../services/checkout.service");
 const { createPaymentsService } = require("../services/payments.service");
 const { createOrdersService } = require("../services/orders.service");
+const { createAuthService } = require("../services/auth.service");
+
 
 // ============================================================================
 // DEPENDENCY WIRING
@@ -53,38 +56,20 @@ const cartRepository = createCartRepository();
 const checkoutRepository = createCheckoutRepository();
 const paymentsRepository = createPaymentsRepository();
 const ordersRepository = createOrdersRepository();
+const usersRepository = createUsersRepository();
 
 // Services (explicitly injected dependencies)
-const productsService = createProductsService({
-  productsRepository,
-});
-
-const cartService = createCartService({
-  productsService,
-  cartRepository,
-});
-
-const checkoutService = createCheckoutService({
-  cartService,
-  productsService,
-  checkoutRepository,
-});
-
-const paymentsService = createPaymentsService({
-  checkoutService,
-  paymentsRepository,
-});
-
-const ordersService = createOrdersService({
-  cartService,
-  checkoutService,
-  paymentsService,
-  ordersRepository,
-});
+const productsService = createProductsService({ productsRepository });
+const cartService = createCartService({ productsService, cartRepository });
+const checkoutService = createCheckoutService({ cartService, productsService, checkoutRepository });
+const paymentsService = createPaymentsService({ checkoutService, paymentsRepository });
+const ordersService = createOrdersService({ cartService, checkoutService, paymentsService, ordersRepository });
+const authService = createAuthService({ usersRepository });
 
 // ============================================================================
 // EXPORTS
 // ============================================================================
+ 
 module.exports = {
   services: {
     productsService,
@@ -92,5 +77,6 @@ module.exports = {
     checkoutService,
     paymentsService,
     ordersService,
+    authService,
   },
-};
+}
