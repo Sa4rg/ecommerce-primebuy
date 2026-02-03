@@ -11,6 +11,7 @@ let paymentsService;
 let checkoutService;
 let paymentsStore;
 let checkoutsStore;
+const TEST_USER_ID = "user-test-1";
 
 beforeEach(() => {
   // Stub checkoutService with DI

@@ -1,6 +1,15 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 import app from "../app.js";
+
+function adminToken() {
+  return jwt.sign(
+    { sub: "admin-test", role: "admin" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}
 
 describe("PATCH /api/cart/:cartId/items/:productId", () => {
   test("should update item quantity and return updated cart", async () => {
@@ -10,12 +19,15 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
     const cartId = createCartRes.body.data.cartId;
 
     // Arrange: create product
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Patch Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Patch Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -63,12 +75,15 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
 
   test("should return 404 when cart does not exist", async () => {
     // create a product so productId is valid
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Any Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Any Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -91,12 +106,15 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
     const cartId = createCartRes.body.data.cartId;
 
     // create a product but do NOT add it to cart
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Not In Cart Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Not In Cart Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -118,12 +136,15 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Invalid Qty Patch Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Invalid Qty Patch Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -152,12 +173,15 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Low Stock Patch Product",
-      priceUSD: 10,
-      stock: 2,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Low Stock Patch Product",
+        priceUSD: 10,
+        stock: 2,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 

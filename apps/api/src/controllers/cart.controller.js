@@ -4,7 +4,9 @@ const cartService = services.cartService;
 
 async function createCart(req, res, next) {
   try {
-    const result = await cartService.createCart();
+    // userId es opcional - carritos pueden ser anónimos
+    const userId = req.user?.userId || null;
+    const result = await cartService.createCart(userId);
     res.status(201);
     success(res, result, "Cart created successfully");
   } catch (error) {

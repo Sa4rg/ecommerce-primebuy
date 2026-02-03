@@ -1,6 +1,15 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
 import app from "../app.js";
+import jwt from "jsonwebtoken";
+
+function adminToken() {
+  return jwt.sign(
+    { sub: "admin-test", role: "admin" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}
 
 describe("POST /api/products", () => {
   test("should return 201 and the created product when input is valid", async () => {
@@ -11,7 +20,10 @@ describe("POST /api/products", () => {
       category: "Electronics",
     };
 
-    const response = await request(app).post("/api/products").send(payload);
+    const response = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send(payload);
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual(
@@ -42,7 +54,10 @@ describe("POST /api/products", () => {
       category: "Electronics",
     };
 
-    const response = await request(app).post("/api/products").send(payload);
+    const response = await request(app)
+    .post("/api/products")
+    .set("Authorization", `Bearer ${adminToken()}`)
+    .send(payload);
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual(

@@ -44,11 +44,14 @@ function createCartService(deps = {}) {
     cartRepository = new InMemoryCartRepository();
   }
 
-  async function createCart() {
+  async function createCart(userId = null) {
+    // userId es opcional - null para carritos anónimos
+    // Se asociará al usuario en checkout si está autenticado
     const cartId = idGenerator();
     const now = new Date().toISOString();
     const cart = {
       cartId,
+      userId,
       items: [],
       summary: { itemsCount: 0, subtotalUSD: 0 },
       metadata: {

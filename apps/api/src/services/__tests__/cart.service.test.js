@@ -8,6 +8,7 @@ const cartModule = require("../cart.service");
 const productsService = require("../products.service");
 
 let cartService;
+const TEST_USER_ID = "user-test-1";
 
 beforeEach(() => {
   cartService = cartModule.createCartService({
@@ -18,7 +19,7 @@ beforeEach(() => {
 
 describe("createCart", () => {
   test("should return a cartId string", async () => {
-    const result = await cartService.createCart();
+    const result = await cartService.createCart(TEST_USER_ID);
 
     expect(result).toHaveProperty("cartId");
     expect(typeof result.cartId).toBe("string");
@@ -26,7 +27,7 @@ describe("createCart", () => {
   });
 
   test("should create an empty cart accessible by getCart", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
 
     const cart = await cartService.getCart(cartId);
 
@@ -62,7 +63,7 @@ describe("createCart", () => {
 
 describe("addItem", () => {
   test("should add a new item to an empty cart", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -88,7 +89,7 @@ describe("addItem", () => {
   });
 
   test("should increment quantity if product already exists in cart", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -125,7 +126,7 @@ describe("addItem", () => {
   });
 
   test("should throw 404 when product does not exist", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
 
     await expect(
       cartService.addItem(cartId, "invalid-product", 1)
@@ -136,7 +137,7 @@ describe("addItem", () => {
   });
 
   test("should throw 400 when quantity is invalid", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -156,7 +157,7 @@ describe("addItem", () => {
   });
 
   test("should throw 409 when quantity exceeds stock", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -173,7 +174,7 @@ describe("addItem", () => {
 
 describe("updateItem", () => {
   test("should update quantity of an existing cart item", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -208,7 +209,7 @@ describe("updateItem", () => {
   });
 
   test("should throw 404 when product does not exist in cart", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -223,7 +224,7 @@ describe("updateItem", () => {
   });
 
   test("should throw 400 when quantity is invalid", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -245,7 +246,7 @@ describe("updateItem", () => {
   });
 
   test("should throw 409 when quantity exceeds product stock", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -264,7 +265,7 @@ describe("updateItem", () => {
 
 describe("removeItem", () => {
   test("should remove an item from the cart and recalculate summary", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -282,7 +283,7 @@ describe("removeItem", () => {
   });
 
   test("should remove only the specified item and keep the other items intact", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const productA = await productsService.createProduct({
       name: "Product A",
       priceUSD: 10,
@@ -321,7 +322,7 @@ describe("removeItem", () => {
   });
 
   test("should throw 404 when item does not exist in cart", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -338,7 +339,7 @@ describe("removeItem", () => {
 
 describe("updateMetadata", () => {
   test("should apply a valid metadata patch and update updatedAt", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const cartBefore = await cartService.getCart(cartId);
     const previousUpdatedAt = cartBefore.metadata.updatedAt;
 
@@ -365,7 +366,7 @@ describe("updateMetadata", () => {
   });
 
   test("should throw 400 when displayCurrency is invalid", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
 
     await expect(cartService.updateMetadata(cartId, { displayCurrency: "EUR" })).rejects.toMatchObject({
       statusCode: 400,
@@ -374,8 +375,7 @@ describe("updateMetadata", () => {
   });
 
   test("should throw 400 when displayCurrency is VES but exchangeRate is missing or invalid", async () => {
-    const { cartId } = await cartService.createCart();
-
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await expect(cartService.updateMetadata(cartId, { displayCurrency: "VES" })).rejects.toMatchObject({
       statusCode: 400,
       message: "Invalid cart metadata",
@@ -388,7 +388,7 @@ describe("updateMetadata", () => {
   });
 
   test("should throw 400 when status is invalid", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
 
     await expect(cartService.updateMetadata(cartId, { status: "archived" })).rejects.toMatchObject({
       statusCode: 400,
@@ -399,7 +399,7 @@ describe("updateMetadata", () => {
 
 describe("cart status enforcement", () => {
   test("addItem should throw 409 when cart is locked", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.updateMetadata(cartId, { status: "locked" });
 
     const product = await productsService.createProduct({
@@ -416,7 +416,7 @@ describe("cart status enforcement", () => {
   });
 
   test("addItem should throw 409 when cart is checked_out", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.updateMetadata(cartId, { status: "checked_out" });
 
     const product = await productsService.createProduct({
@@ -433,7 +433,7 @@ describe("cart status enforcement", () => {
   });
 
   test("updateItem should throw 409 when cart is locked", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -451,7 +451,7 @@ describe("cart status enforcement", () => {
   });
 
   test("updateItem should throw 409 when cart is checked_out", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -469,7 +469,7 @@ describe("cart status enforcement", () => {
   });
 
   test("removeItem should throw 409 when cart is locked", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,
@@ -487,7 +487,7 @@ describe("cart status enforcement", () => {
   });
 
   test("removeItem should throw 409 when cart is checked_out", async () => {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     const product = await productsService.createProduct({
       name: "Test Product",
       priceUSD: 10,

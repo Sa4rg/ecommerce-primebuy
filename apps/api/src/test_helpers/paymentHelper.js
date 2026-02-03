@@ -35,13 +35,16 @@ async function createConfirmedUsdPayment(app, options = {}) {
   expect(createCartRes.status).toBe(201);
   const cartId = createCartRes.body.data.cartId;
 
-  // Create product
-  const createProductRes = await request(app).post('/api/products').send({
-    name: 'Payment Test Product',
-    priceUSD: 10,
-    stock: 5,
-    category: 'Test',
-  });
+  // Create product (requires admin)
+  const createProductRes = await request(app)
+    .post('/api/products')
+    .set('Authorization', `Bearer ${adminToken()}`)
+    .send({
+      name: 'Payment Test Product',
+      priceUSD: 10,
+      stock: 5,
+      category: 'Test',
+    });
   expect(createProductRes.status).toBe(201);
   const productId = createProductRes.body.data.id;
 
@@ -98,13 +101,16 @@ async function createSubmittedPayment(app) {
   expect(createCartRes.status).toBe(201);
   const cartId = createCartRes.body.data.cartId;
 
-  // Create product
-  const createProductRes = await request(app).post('/api/products').send({
-    name: 'Submitted Payment Product',
-    priceUSD: 10,
-    stock: 5,
-    category: 'Test',
-  });
+  // Create product (requires admin)
+  const createProductRes = await request(app)
+    .post('/api/products')
+    .set('Authorization', `Bearer ${adminToken()}`)
+    .send({
+      name: 'Submitted Payment Product',
+      priceUSD: 10,
+      stock: 5,
+      category: 'Test',
+    });
   expect(createProductRes.status).toBe(201);
   const productId = createProductRes.body.data.id;
 

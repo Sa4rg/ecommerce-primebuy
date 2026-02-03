@@ -1,6 +1,15 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 import app from "../app.js";
+
+function adminToken() {
+  return jwt.sign(
+    { sub: "admin-test", role: "admin" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}
 
 describe("DELETE /api/cart/:cartId/items/:productId", () => {
   test("should remove item from cart and return updated cart", async () => {
@@ -10,21 +19,27 @@ describe("DELETE /api/cart/:cartId/items/:productId", () => {
     const cartId = createCartRes.body.data.cartId;
 
     // Arrange: create two products
-    const createProductARes = await request(app).post("/api/products").send({
-      name: "Product A",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductARes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Product A",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductARes.status).toBe(201);
     const productAId = createProductARes.body.data.id;
 
-    const createProductBRes = await request(app).post("/api/products").send({
-      name: "Product B",
-      priceUSD: 20,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductBRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Product B",
+        priceUSD: 20,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductBRes.status).toBe(201);
     const productBId = createProductBRes.body.data.id;
 
@@ -85,12 +100,15 @@ describe("DELETE /api/cart/:cartId/items/:productId", () => {
 
   test("should return 404 when cart does not exist", async () => {
     // Arrange: create a product
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Any Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Any Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -115,12 +133,15 @@ describe("DELETE /api/cart/:cartId/items/:productId", () => {
     const cartId = createCartRes.body.data.cartId;
 
     // Arrange: create product but do not add to cart
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Not In Cart Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Not In Cart Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 

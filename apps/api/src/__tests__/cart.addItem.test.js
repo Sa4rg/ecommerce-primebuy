@@ -1,6 +1,15 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 import app from "../app.js";
+
+function adminToken() {
+  return jwt.sign(
+    { sub: "admin-test", role: "admin" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}
 
 describe("POST /api/cart/:cartId/items", () => {
   test("should add an item to cart and return updated cart", async () => {
@@ -12,12 +21,15 @@ describe("POST /api/cart/:cartId/items", () => {
     expect(cartId).toBeDefined();
 
     // Arrange: create product
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Cart Item Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Cart Item Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
 
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
@@ -60,12 +72,15 @@ describe("POST /api/cart/:cartId/items", () => {
 
   test("should return 404 when cart does not exist", async () => {
     // Arrange: create product
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Another Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Another Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
 
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
@@ -90,12 +105,15 @@ describe("POST /api/cart/:cartId/items", () => {
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Invalid Qty Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Invalid Qty Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
 
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
@@ -118,12 +136,15 @@ describe("POST /api/cart/:cartId/items", () => {
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Low Stock Product",
-      priceUSD: 10,
-      stock: 2,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Low Stock Product",
+        priceUSD: 10,
+        stock: 2,
+        category: "Test",
+      });
 
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;

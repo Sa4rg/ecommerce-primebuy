@@ -1,6 +1,15 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
 import app from "../app.js";
+import jwt from "jsonwebtoken";
+
+function adminToken() {
+  return jwt.sign(
+    { sub: "admin-test", role: "admin" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}
 
 describe("PUT /api/products/:id", () => {
   test("should return 200 and the updated product when input is valid", async () => {
@@ -13,6 +22,7 @@ describe("PUT /api/products/:id", () => {
 
     const createResponse = await request(app)
       .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send(createPayload);
 
     expect(createResponse.status).toBe(201);
@@ -27,6 +37,7 @@ describe("PUT /api/products/:id", () => {
 
     const updateResponse = await request(app)
       .put(`/api/products/${createdId}`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send(updatePayload);
 
     expect(updateResponse.status).toBe(200);
@@ -60,6 +71,7 @@ describe("PUT /api/products/:id", () => {
 
     const response = await request(app)
       .put("/api/products/999")
+      .set("Authorization", `Bearer ${adminToken()}`) 
       .send(payload);
 
     expect(response.status).toBe(404);
@@ -81,7 +93,9 @@ describe("PUT /api/products/:id", () => {
 
     const createResponse = await request(app)
       .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send(createPayload);
+
 
     expect(createResponse.status).toBe(201);
     const createdId = createResponse.body.data.id;
@@ -95,6 +109,7 @@ describe("PUT /api/products/:id", () => {
 
     const updateResponse = await request(app)
       .put(`/api/products/${createdId}`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send(invalidPayload);
 
     expect(updateResponse.status).toBe(400);

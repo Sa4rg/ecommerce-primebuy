@@ -1,7 +1,16 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 import app from "../app.js";
 import { PaymentStatus } from "../constants/paymentStatus.js";
+
+function adminToken() {
+  return jwt.sign(
+    { sub: "admin-test", role: "admin" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}
 
 describe("POST /api/payments", () => {
   test("should create a USD payment for zelle using checkout subtotalUSD", async () => {
@@ -11,12 +20,15 @@ describe("POST /api/payments", () => {
     const cartId = createCartRes.body.data.cartId;
 
     // Arrange: create product
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Payment Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Payment Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -67,12 +79,15 @@ describe("POST /api/payments", () => {
     const cartId = createCartRes.body.data.cartId;
 
     // Arrange: create product
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "VES Payment Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "VES Payment Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -126,12 +141,15 @@ describe("POST /api/payments", () => {
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -182,12 +200,15 @@ describe("POST /api/payments", () => {
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -226,12 +247,15 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Submit Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Submit Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -297,12 +321,15 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Double Submit Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Double Submit Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -349,12 +376,15 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Invalid Proof Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Invalid Proof Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 

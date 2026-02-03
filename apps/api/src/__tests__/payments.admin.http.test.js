@@ -24,13 +24,16 @@ async function createSubmittedPayment() {
   expect(createCartRes.status).toBe(201);
   const cartId = createCartRes.body.data.cartId;
 
-  // Create product
-  const createProductRes = await request(app).post("/api/products").send({
-    name: "Admin Review Product",
-    priceUSD: 10,
-    stock: 5,
-    category: "Test",
-  });
+  // Create product (requires admin)
+  const createProductRes = await request(app)
+    .post("/api/products")
+    .set("Authorization", `Bearer ${adminToken()}`)
+    .send({
+      name: "Admin Review Product",
+      priceUSD: 10,
+      stock: 5,
+      category: "Test",
+    });
   expect(createProductRes.status).toBe(201);
   const productId = createProductRes.body.data.id;
 
@@ -158,12 +161,15 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Pending Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Pending Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -285,12 +291,15 @@ describe("PATCH /api/payments/:paymentId/reject", () => {
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    const createProductRes = await request(app).post("/api/products").send({
-      name: "Pending Reject Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Pending Reject Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 

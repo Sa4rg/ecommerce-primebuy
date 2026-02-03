@@ -31,13 +31,16 @@ async function createConfirmedUsdOrder(app, prefix = 'order') {
   const cartRes = await request(app).post('/api/cart');
   const cartId = cartRes.body.data.cartId;
 
-  // 2) Create product
-  const productRes = await request(app).post('/api/products').send({
-    name: 'Order Test Product',
-    priceUSD: 10,
-    stock: 5,
-    category: 'Test',
-  });
+  // 2) Create product (requires admin)
+  const productRes = await request(app)
+    .post('/api/products')
+    .set('Authorization', `Bearer ${adminToken()}`)
+    .send({
+      name: 'Order Test Product',
+      priceUSD: 10,
+      stock: 5,
+      category: 'Test',
+    });
   const productId = productRes.body.data.id;
 
   // 3) Add item to cart

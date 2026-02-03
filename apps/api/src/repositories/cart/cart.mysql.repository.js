@@ -32,6 +32,7 @@ class MySQLCartRepository {
   _mapCartToDbFormat(cart) {
     return {
       cart_id: cart.cartId,
+      user_id: cart.userId,
       status: cart.metadata.status,
       metadata_json: JSON.stringify(cart.metadata),
       created_at: isoToMySQLDatetime(cart.metadata.createdAt),
@@ -79,6 +80,7 @@ class MySQLCartRepository {
 
     return {
       cartId: cartRow.cart_id,
+      userId: cartRow.user_id,
       items,
       summary,
       metadata: {

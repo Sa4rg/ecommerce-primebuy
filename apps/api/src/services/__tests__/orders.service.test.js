@@ -96,7 +96,7 @@ beforeEach(() => {
 describe("createOrderFromPayment", () => {
   test("should create an order from a confirmed payment and set cart to checked_out", async () => {
     // Arrange: create full flow: cart → product → checkout → payment → submit → confirm
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.addItem(cartId, "product-1", 2);
     await cartService.updateMetadata(cartId, {
       displayCurrency: "USD",
@@ -212,7 +212,7 @@ describe("createOrderFromPayment", () => {
 
   test("should throw 409 when payment is not confirmed", async () => {
     // Arrange: create payment but keep it pending
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.addItem(cartId, "product-1", 1);
     await cartService.updateMetadata(cartId, {
       customer: { email: "test@example.com", name: "Test", phone: "+123" },
@@ -232,7 +232,7 @@ describe("createOrderFromPayment", () => {
 
   test("should throw 409 when order already exists for payment", async () => {
     // Arrange: create confirmed payment
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.addItem(cartId, "product-1", 1);
     await cartService.updateMetadata(cartId, {
       customer: { email: "test@example.com", name: "Test", phone: "+123" },
@@ -259,7 +259,7 @@ describe("createOrderFromPayment", () => {
 describe("getOrderById", () => {
   test("should return an existing order", async () => {
     // Arrange: create confirmed payment and order
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.addItem(cartId, "product-1", 1);
     await cartService.updateMetadata(cartId, {
       customer: { email: "test@example.com", name: "Test", phone: "+123" },
@@ -296,7 +296,7 @@ describe("getOrderById", () => {
 describe("fulfillment", () => {
   // Helper to create an order in "created" status
   async function createOrderInCreatedStatus() {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.addItem(cartId, "product-1", 1);
     await cartService.updateMetadata(cartId, {
       customer: { email: "test@example.com", name: "Test", phone: "+123" },
@@ -450,7 +450,7 @@ describe("fulfillment", () => {
 describe("shipping", () => {
   // Helper to create an order in "created" status for shipping tests
   async function createOrderForShipping() {
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.addItem(cartId, "product-1", 1);
     await cartService.updateMetadata(cartId, {
       customer: { email: "test@example.com", name: "Test", phone: "+123" },

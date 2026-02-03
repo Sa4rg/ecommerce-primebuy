@@ -11,6 +11,7 @@ let cartService;
 let checkoutService;
 let productsService;
 let checkoutsStore;
+const TEST_USER_ID = "user-test-1";
 
 beforeEach(() => {
   // Stub productsService with DI
@@ -50,7 +51,7 @@ beforeEach(() => {
 describe("createCheckout", () => {
   test("should create a checkout with totals in USD and VES when exchange rate is available", async () => {
     // Arrange: create cart with items and exchange rate
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.addItem(cartId, "product-1", 2);
     await cartService.updateMetadata(cartId, {
       displayCurrency: "VES",
@@ -83,7 +84,7 @@ describe("createCheckout", () => {
 
   test("should create a checkout with subtotalVES null when exchange rate is missing", async () => {
     // Arrange: create cart with items but no exchange rate
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.addItem(cartId, "product-1", 1);
 
     // Act
@@ -107,7 +108,7 @@ describe("createCheckout", () => {
 
   test("should throw 400 when cart is empty", async () => {
     // Arrange: create cart without items
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
 
     // Act + Assert
     await expect(
@@ -120,7 +121,7 @@ describe("createCheckout", () => {
 
   test("should throw 409 when cart is not active", async () => {
     // Arrange: create cart and set status to locked
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.addItem(cartId, "product-1", 1);
     await cartService.updateMetadata(cartId, { status: "locked" });
 
@@ -135,7 +136,7 @@ describe("createCheckout", () => {
 
   test("should throw 409 when stock is insufficient at checkout", async () => {
     // Arrange: create cart with items, then simulate stock drop
-    const { cartId } = await cartService.createCart();
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.addItem(cartId, "product-1", 2);
 
     // Simulate stock drop: modify productsService stub behavior
