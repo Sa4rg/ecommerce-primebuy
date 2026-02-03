@@ -139,7 +139,11 @@ function createOrdersService(deps = {}) {
     return order;
   }
 
-  async function createOrderFromPayment(paymentId) {
+  async function createOrderFromPayment(paymentId, userId) {
+    if (!userId || typeof userId !== "string") {
+      throw new AppError("Unauthorized", 401);
+    }
+
     // 1) Load payment
     const payment = await paymentsService.getPaymentById(paymentId);
 
@@ -160,6 +164,7 @@ function createOrdersService(deps = {}) {
 
     const order = {
       orderId,
+      userId,
       cartId: cart.cartId,
       checkoutId: checkout.checkoutId,
       paymentId: payment.paymentId,

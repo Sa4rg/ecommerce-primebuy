@@ -38,7 +38,16 @@ describe('MySQLOrdersRepository - Integration Tests', () => {
 
   describe('create() and findById()', () => {
     it('should persist and return an order snapshot', async () => {
-      // Arrange: Create FK dependencies in order (cart → checkout → payment → order)
+      // Arrange: Create FK dependencies in order (user → cart → checkout → payment → order)
+      await db('users').insert({
+        user_id: 'user_test_99999',
+        email: 'testuser@example.com',
+        password_hash: 'hashed_password_placeholder',
+        role: 'customer',
+        created_at: '2026-01-15 10:00:00',
+        updated_at: '2026-01-15 10:00:00',
+      });
+
       await db('carts').insert({
         cart_id: 'cart_test_67890',
         status: 'active',
@@ -72,6 +81,7 @@ describe('MySQLOrdersRepository - Integration Tests', () => {
       // Create a realistic order object
       const order = {
         orderId: 'ord_test_12345',
+        userId: 'user_test_99999',
         cartId: 'cart_test_67890',
         checkoutId: 'chk_test_11111',
         paymentId: 'pay_test_22222',
@@ -146,6 +156,7 @@ describe('MySQLOrdersRepository - Integration Tests', () => {
       // Assert: Found order matches key fields
       expect(found).not.toBeNull();
       expect(found.orderId).toBe('ord_test_12345');
+      expect(found.userId).toBe('user_test_99999');
       expect(typeof found.orderId).toBe('string');
       expect(found.status).toBe(OrderStatus.PAID);
       expect(found.paymentId).toBe('pay_test_22222');

@@ -9,11 +9,11 @@ function requireOrderOwnerOrAdmin() {
 
       if (req.user?.role === 'admin') return next();
 
-      if (!req.user?.email) throw new AppError('Unauthorized', 401);
+      if (!req.user?.userId) throw new AppError('Unauthorized', 401);
 
       const order = await ordersService.getOrderById(orderId);
 
-      if (order.customer?.email !== req.user.email) {
+      if (order.userId !== req.user.userId) {
         throw new AppError('Forbidden', 403);
       }
 

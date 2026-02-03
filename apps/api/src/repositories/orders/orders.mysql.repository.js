@@ -36,6 +36,7 @@ class MySQLOrdersRepository {
   _mapOrderToDbFormat(order) {
     return {
       order_id: order.orderId,
+      user_id: order.userId,
       cart_id: order.cartId,
       checkout_id: order.checkoutId,
       payment_id: order.paymentId,
@@ -171,6 +172,7 @@ class MySQLOrdersRepository {
 
     return {
       orderId: String(orderRow.order_id),
+      userId: orderRow.user_id ? String(orderRow.user_id) : null,
       cartId: String(orderRow.cart_id),
       checkoutId: String(orderRow.checkout_id),
       paymentId: String(orderRow.payment_id),

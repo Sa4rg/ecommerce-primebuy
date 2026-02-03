@@ -5,6 +5,9 @@ import { ShippingStatus } from "../../constants/shippingStatus.js";
 
 const require = createRequire(import.meta.url);
 
+// Test user ID for ownership tests
+const TEST_USER_ID = "user-123";
+
 // CommonJS modules from your backend
 const cartModule = require("../cart.service");
 const checkoutModule = require("../checkout.service");
@@ -118,7 +121,7 @@ describe("createOrderFromPayment", () => {
     await paymentsService.confirmPayment(paymentId, "Verified payment");
 
     // Act
-    const order = await ordersService.createOrderFromPayment(paymentId);
+    const order = await ordersService.createOrderFromPayment(paymentId, TEST_USER_ID);
 
     // Assert
     expect(order.orderId).toBe("order-1");
@@ -199,7 +202,7 @@ describe("createOrderFromPayment", () => {
 
   test("should throw 404 when payment does not exist", async () => {
     // Act + Assert
-    await expect(ordersService.createOrderFromPayment("invalid-payment")).rejects.toEqual(
+    await expect(ordersService.createOrderFromPayment("invalid-payment", TEST_USER_ID)).rejects.toEqual(
       expect.objectContaining({
         statusCode: 404,
         message: "Payment not found",
@@ -219,7 +222,7 @@ describe("createOrderFromPayment", () => {
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
 
     // Act + Assert: payment is still pending
-    await expect(ordersService.createOrderFromPayment(payment.paymentId)).rejects.toEqual(
+    await expect(ordersService.createOrderFromPayment(payment.paymentId, TEST_USER_ID)).rejects.toEqual(
       expect.objectContaining({
         statusCode: 409,
         message: "Payment is not confirmed",
@@ -241,10 +244,10 @@ describe("createOrderFromPayment", () => {
     await paymentsService.confirmPayment(payment.paymentId, null);
 
     // Create order once
-    await ordersService.createOrderFromPayment(payment.paymentId);
+    await ordersService.createOrderFromPayment(payment.paymentId, TEST_USER_ID);
 
     // Act + Assert: try to create again
-    await expect(ordersService.createOrderFromPayment(payment.paymentId)).rejects.toEqual(
+    await expect(ordersService.createOrderFromPayment(payment.paymentId, TEST_USER_ID)).rejects.toEqual(
       expect.objectContaining({
         statusCode: 409,
         message: "Order already exists for payment",
@@ -267,7 +270,7 @@ describe("getOrderById", () => {
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
 
-    const createdOrder = await ordersService.createOrderFromPayment(payment.paymentId);
+    const createdOrder = await ordersService.createOrderFromPayment(payment.paymentId, TEST_USER_ID);
     const orderId = createdOrder.orderId;
 
     // Act
@@ -304,7 +307,7 @@ describe("fulfillment", () => {
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
 
-    const order = await ordersService.createOrderFromPayment(payment.paymentId);
+    const order = await ordersService.createOrderFromPayment(payment.paymentId, TEST_USER_ID);
     return order;
   }
 
@@ -458,7 +461,7 @@ describe("shipping", () => {
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
 
-    const order = await ordersService.createOrderFromPayment(payment.paymentId);
+    const order = await ordersService.createOrderFromPayment(payment.paymentId, TEST_USER_ID);
     return order;
   }
 

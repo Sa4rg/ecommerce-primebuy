@@ -21,7 +21,8 @@ async function cleanupDb(db) {
     'checkouts',
     'cart_items',
     'carts',
-    'products'
+    'products',
+    "users"
   ];
 
   for (const table of tables) {

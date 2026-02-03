@@ -5,8 +5,9 @@ const ordersService = services.ordersService;
 async function createOrder(req, res, next) {
   try {
     const { paymentId } = req.body;
+    const userId = req.user?.userId;
 
-    const order = await ordersService.createOrderFromPayment(paymentId);
+    const order = await ordersService.createOrderFromPayment(paymentId, userId);
 
     res.status(201);
     success(res, order, "Order created successfully");
