@@ -34,6 +34,7 @@ const { createCartRepository } = require("./factories/cart.repository.factory");
 const { createCheckoutRepository } = require("./factories/checkout.repository.factory");
 const { createOrdersRepository } = require("./factories/orders.repository.factory");
 const { createUsersRepository } = require("./factories/users/users.factory");
+const { createRefreshTokensRepository } = require("./factories/refreshTokens.repository.factory");
 
 // ============================================================================
 // SERVICE FACTORIES
@@ -57,6 +58,7 @@ const checkoutRepository = createCheckoutRepository();
 const paymentsRepository = createPaymentsRepository();
 const ordersRepository = createOrdersRepository();
 const usersRepository = createUsersRepository();
+const refreshTokensRepository = createRefreshTokensRepository();
 
 // Services (explicitly injected dependencies)
 const productsService = createProductsService({ productsRepository });
@@ -64,7 +66,7 @@ const cartService = createCartService({ productsService, cartRepository });
 const checkoutService = createCheckoutService({ cartService, productsService, checkoutRepository });
 const paymentsService = createPaymentsService({ checkoutService, paymentsRepository });
 const ordersService = createOrdersService({ cartService, checkoutService, paymentsService, ordersRepository });
-const authService = createAuthService({ usersRepository });
+const authService = createAuthService({ usersRepository, refreshTokensRepository });
 
 // ============================================================================
 // EXPORTS

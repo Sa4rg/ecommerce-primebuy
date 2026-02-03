@@ -69,5 +69,92 @@ describe('Auth HTTP API', () => {
       message: 'Invalid credentials',
     });
   });
+
+  it('POST /api/auth/login -> returns both accessToken and refreshToken', async () => {
+    await registerUser('tokens@example.com', 'password123');
+    const res = await request(app)
+      .post(`${baseUrl}/login`)
+      .send({ email: 'tokens@example.com', password: 'password123' });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveProperty('accessToken');
+    expect(res.body.data).toHaveProperty('refreshToken');
+    expect(typeof res.body.data.refreshToken).toBe('string');
+    expect(res.body.data.refreshToken.length).toBeGreaterThan(0);
+  });
+
+  it('POST /api/auth/refresh -> 200 with new accessToken for valid refreshToken', async () => {
+    await registerUser('refresh@example.com', 'password123');
+    const loginRes = await request(app)
+      .post(`${baseUrl}/login`)
+      .send({ email: 'refresh@example.com', password: 'password123' });
+    const { refreshToken } = loginRes.body.data;
+
+    const res = await request(app)
+      .post(`${baseUrl}/refresh`)
+      .send({ refreshToken });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      success: true,
+      message: expect.any(String),
+      data: {
+        accessToken: expect.any(String),
+      },
+    });
+  });
+
+  it('POST /api/auth/refresh -> 401 with invalid refreshToken', async () => {
+    const res = await request(app)
+      .post(`${baseUrl}/refresh`)
+      .send({ refreshToken: 'invalid-token-that-does-not-exist' });
+
+    expect(res.status).toBe(401);
+    expect(res.body).toMatchObject({
+      success: false,
+      message: 'Unauthorized',
+    });
+  });
+
+  it('POST /api/auth/logout -> 200 success true', async () => {
+    await registerUser('logout@example.com', 'password123');
+    const loginRes = await request(app)
+      .post(`${baseUrl}/login`)
+      .send({ email: 'logout@example.com', password: 'password123' });
+    const { refreshToken } = loginRes.body.data;
+
+    const res = await request(app)
+      .post(`${baseUrl}/logout`)
+      .send({ refreshToken });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      success: true,
+      data: { success: true },
+    });
+  });
+
+  it('POST /api/auth/refresh -> 401 after logout (token revoked)', async () => {
+    await registerUser('revoked@example.com', 'password123');
+    const loginRes = await request(app)
+      .post(`${baseUrl}/login`)
+      .send({ email: 'revoked@example.com', password: 'password123' });
+    const { refreshToken } = loginRes.body.data;
+
+    // Logout to revoke token
+    await request(app)
+      .post(`${baseUrl}/logout`)
+      .send({ refreshToken });
+
+    // Try to refresh with revoked token
+    const res = await request(app)
+      .post(`${baseUrl}/refresh`)
+      .send({ refreshToken });
+
+    expect(res.status).toBe(401);
+    expect(res.body).toMatchObject({
+      success: false,
+      message: 'Unauthorized',
+    });
+  });
 });
 

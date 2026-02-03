@@ -1,30 +1,42 @@
 // auth.service.js
-// Auth service for user registration and login
+// Auth service for user registration, login, refresh, and logout
 
+const crypto = require('crypto');
 const argon2 = require('argon2');
 const { AppError } = require('../utils/errors');
-const { JWT_SECRET, JWT_EXPIRES_IN } = require('../config/env');
+const { JWT_SECRET, JWT_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN_DAYS } = require('../config/env');
 const jwt = require('jsonwebtoken');
 
 function defaultIdGenerator() {
-  return require('crypto').randomUUID();
+  return crypto.randomUUID();
 }
 
 function defaultNowProvider() {
-  return new Date().toISOString();
+  return new Date();
 }
 
 function defaultJwtSigner(payload, options) {
   return jwt.sign(payload, JWT_SECRET, options);
 }
 
+function defaultRefreshTokenGenerator() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
 function createAuthService({
   usersRepository,
+  refreshTokensRepository,
   idGenerator = defaultIdGenerator,
   nowProvider = defaultNowProvider,
   jwtSigner = defaultJwtSigner,
+  refreshTokenGenerator = defaultRefreshTokenGenerator,
 } = {}) {
   if (!usersRepository) throw new Error('usersRepository is required');
+  if (!refreshTokensRepository) throw new Error('refreshTokensRepository is required');
 
   async function register(email, password) {
     // Minimal validation
@@ -37,13 +49,14 @@ function createAuthService({
     const normalizedEmail = email.trim().toLowerCase();
     const passwordHash = await argon2.hash(password);
     const now = nowProvider();
+    const nowISO = now.toISOString();
     const user = {
       userId: idGenerator(),
       email: normalizedEmail,
       passwordHash,
       role: 'customer',
-      createdAt: now,
-      updatedAt: now,
+      createdAt: nowISO,
+      updatedAt: nowISO,
     };
     try {
       await usersRepository.create(user);
@@ -80,16 +93,75 @@ function createAuthService({
     if (!valid) {
       throw new AppError('Invalid credentials', 401);
     }
+
+    // Generate access token
     const accessToken = jwtSigner(
       { sub: user.userId, role: user.role, email: user.email },
       { expiresIn: JWT_EXPIRES_IN }
     );
+
+    // Generate and store refresh token
+    const refreshToken = refreshTokenGenerator();
+    const tokenHash = hashToken(refreshToken);
+    const now = nowProvider();
+    const expiresAt = new Date(now.getTime() + REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000);
+
+    await refreshTokensRepository.create({
+      refreshTokenId: idGenerator(),
+      userId: user.userId,
+      tokenHash,
+      expiresAt,
+      createdAt: now,
+    });
+
+    return { accessToken, refreshToken };
+  }
+
+  async function refresh(refreshToken) {
+    if (!refreshToken || typeof refreshToken !== 'string') {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    const tokenHash = hashToken(refreshToken);
+    const tokenRecord = await refreshTokensRepository.findActiveByHash(tokenHash);
+
+    if (!tokenRecord) {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    // Get user to generate new access token
+    const user = await usersRepository.findById(tokenRecord.userId);
+    if (!user) {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    // Generate new access token
+    const accessToken = jwtSigner(
+      { sub: user.userId, role: user.role, email: user.email },
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
     return { accessToken };
+  }
+
+  async function logout(refreshToken) {
+    if (!refreshToken || typeof refreshToken !== 'string') {
+      // Still succeed even if no token provided
+      return { success: true };
+    }
+
+    const tokenHash = hashToken(refreshToken);
+    const now = nowProvider();
+    await refreshTokensRepository.revokeByHash(tokenHash, now);
+
+    return { success: true };
   }
 
   return {
     register,
     login,
+    refresh,
+    logout,
   };
 }
 module.exports = { createAuthService };
