@@ -7,11 +7,20 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS, 10) || 7;
+const REFRESH_TOKEN_PEPPER = process.env.REFRESH_TOKEN_PEPPER || '';
 
 // Fail fast in production if JWT_SECRET is missing
 if (NODE_ENV === 'production' && !JWT_SECRET) {
   throw new Error(
     'FATAL: JWT_SECRET environment variable is required in production.'
+  );
+}
+
+// Fail fast in production if REFRESH_TOKEN_PEPPER is missing
+if (NODE_ENV === 'production' && !REFRESH_TOKEN_PEPPER) {
+  throw new Error(
+    'FATAL: REFRESH_TOKEN_PEPPER environment variable is required in production. ' +
+    'Set it to a long random secret for refresh token hashing security.'
   );
 }
 
@@ -72,4 +81,5 @@ module.exports = {
   JWT_SECRET,
   JWT_EXPIRES_IN,
   REFRESH_TOKEN_EXPIRES_IN_DAYS,
+  REFRESH_TOKEN_PEPPER,
 };

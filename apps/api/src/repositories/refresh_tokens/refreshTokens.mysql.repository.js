@@ -74,6 +74,19 @@ class MySQLRefreshTokensRepository {
       .where('token_hash', tokenHash)
       .update({ revoked_at: revokedAt });
   }
+
+  /**
+   * Revokes all refresh tokens for a given user.
+   * @param {string} userId
+   * @param {Date} revokedAt
+   * @returns {Promise<void>}
+   */
+  async revokeAllByUserId(userId, revokedAt) {
+    await db(this.table)
+      .where('user_id', userId)
+      .whereNull('revoked_at')
+      .update({ revoked_at: revokedAt });
+  }
 }
 
 module.exports = { MySQLRefreshTokensRepository };

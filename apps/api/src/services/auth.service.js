@@ -4,7 +4,7 @@
 const crypto = require('crypto');
 const argon2 = require('argon2');
 const { AppError } = require('../utils/errors');
-const { JWT_SECRET, JWT_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN_DAYS } = require('../config/env');
+const { JWT_SECRET, JWT_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN_DAYS, REFRESH_TOKEN_PEPPER } = require('../config/env');
 const jwt = require('jsonwebtoken');
 
 function defaultIdGenerator() {
@@ -23,8 +23,8 @@ function defaultRefreshTokenGenerator() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-function hashToken(token) {
-  return crypto.createHash('sha256').update(token).digest('hex');
+function hashToken(token, pepper) {
+  return crypto.createHash('sha256').update(token + pepper).digest('hex');
 }
 
 function createAuthService({
@@ -34,6 +34,7 @@ function createAuthService({
   nowProvider = defaultNowProvider,
   jwtSigner = defaultJwtSigner,
   refreshTokenGenerator = defaultRefreshTokenGenerator,
+  refreshTokenPepper = REFRESH_TOKEN_PEPPER,
 } = {}) {
   if (!usersRepository) throw new Error('usersRepository is required');
   if (!refreshTokensRepository) throw new Error('refreshTokensRepository is required');
@@ -102,7 +103,7 @@ function createAuthService({
 
     // Generate and store refresh token
     const refreshToken = refreshTokenGenerator();
-    const tokenHash = hashToken(refreshToken);
+    const tokenHash = hashToken(refreshToken, refreshTokenPepper);
     const now = nowProvider();
     const expiresAt = new Date(now.getTime() + REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000);
 
@@ -122,26 +123,40 @@ function createAuthService({
       throw new AppError('Unauthorized', 401);
     }
 
-    const tokenHash = hashToken(refreshToken);
+    const tokenHash = hashToken(refreshToken, refreshTokenPepper);
     const tokenRecord = await refreshTokensRepository.findActiveByHash(tokenHash);
 
     if (!tokenRecord) {
       throw new AppError('Unauthorized', 401);
     }
 
-    // Get user to generate new access token
     const user = await usersRepository.findById(tokenRecord.userId);
     if (!user) {
       throw new AppError('Unauthorized', 401);
     }
 
-    // Generate new access token
+    const now = nowProvider();
+
+    await refreshTokensRepository.revokeByHash(tokenHash, now);
+
+    const newRefreshToken = refreshTokenGenerator();
+    const newTokenHash = hashToken(newRefreshToken, refreshTokenPepper);
+    const expiresAt = new Date(now.getTime() + REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000);
+
+    await refreshTokensRepository.create({
+      refreshTokenId: idGenerator(),
+      userId: user.userId,
+      tokenHash: newTokenHash,
+      expiresAt,
+      createdAt: now,
+    });
+
     const accessToken = jwtSigner(
       { sub: user.userId, role: user.role, email: user.email },
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    return { accessToken };
+    return { accessToken, refreshToken: newRefreshToken };
   }
 
   async function logout(refreshToken) {
@@ -150,9 +165,20 @@ function createAuthService({
       return { success: true };
     }
 
-    const tokenHash = hashToken(refreshToken);
+    const tokenHash = hashToken(refreshToken, refreshTokenPepper);
     const now = nowProvider();
     await refreshTokensRepository.revokeByHash(tokenHash, now);
+
+    return { success: true };
+  }
+
+  async function logoutAll(userId) {
+    if (!userId || typeof userId !== 'string') {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    const now = nowProvider();
+    await refreshTokensRepository.revokeAllByUserId(userId, now);
 
     return { success: true };
   }
@@ -162,6 +188,7 @@ function createAuthService({
     login,
     refresh,
     logout,
+    logoutAll,
   };
 }
 module.exports = { createAuthService };

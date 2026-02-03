@@ -92,6 +92,20 @@ class InMemoryRefreshTokensRepository {
   }
 
   /**
+   * Revokes all refresh tokens for a given user.
+   * @param {string} userId
+   * @param {Date} revokedAt
+   * @returns {Promise<void>}
+   */
+  async revokeAllByUserId(userId, revokedAt) {
+    for (const record of this.tokensById.values()) {
+      if (record.userId === userId && record.revokedAt === null) {
+        record.revokedAt = revokedAt;
+      }
+    }
+  }
+
+  /**
    * Clears all tokens. Used for testing.
    */
   clear() {

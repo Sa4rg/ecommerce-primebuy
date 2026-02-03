@@ -17,6 +17,11 @@ function deterministicJwtSigner(payload, options) {
   return jwt.sign(payload, TEST_SECRET, { ...options, algorithm: 'HS256' });
 }
 
+function createSequentialIdGenerator() {
+  let counter = 0;
+  return () => `id-${++counter}`;
+}
+
 describe('auth.service', () => {
   let usersRepository;
   let refreshTokensRepository;
@@ -31,6 +36,7 @@ describe('auth.service', () => {
       idGenerator: deterministicIdGenerator,
       nowProvider: deterministicNowProvider,
       jwtSigner: deterministicJwtSigner,
+      refreshTokenPepper: 'test-pepper',
     });
   });
 
@@ -95,19 +101,77 @@ describe('auth.service', () => {
       .rejects.toMatchObject({ message: 'Invalid credentials', statusCode: 401 });
   });
 
-  // 8) refresh should return new accessToken for valid refreshToken
-  it('should return new accessToken for valid refreshToken', async () => {
+  // 8) refresh should return new accessToken and new refreshToken for valid refreshToken
+  it('should return new accessToken and refreshToken for valid refreshToken', async () => {
     await authService.register('refresh@email.com', 'password123');
     const loginResult = await authService.login('refresh@email.com', 'password123');
-    const { refreshToken } = loginResult;
+    const { refreshToken: oldRefreshToken } = loginResult;
 
-    const result = await authService.refresh(refreshToken);
+    const result = await authService.refresh(oldRefreshToken);
 
     expect(result).toHaveProperty('accessToken');
     expect(typeof result.accessToken).toBe('string');
+    expect(result).toHaveProperty('refreshToken');
+    expect(typeof result.refreshToken).toBe('string');
+    expect(result.refreshToken.length).toBeGreaterThan(0);
+    expect(result.refreshToken).not.toBe(oldRefreshToken);
     // Verify JWT
     const decoded = jwt.verify(result.accessToken, TEST_SECRET);
     expect(decoded).toMatchObject({ sub: FIXED_ID, role: 'customer' });
+  });
+
+  // 8b) refresh should throw 401 when reusing the same refreshToken (rotation / single-use)
+  it('should throw 401 when reusing the same refreshToken after refresh (rotation)', async () => {
+    const sequentialIdGenerator = createSequentialIdGenerator();
+    const rotationAuthService = createAuthService({
+      usersRepository,
+      refreshTokensRepository,
+      idGenerator: sequentialIdGenerator,
+      nowProvider: deterministicNowProvider,
+      jwtSigner: deterministicJwtSigner,
+    });
+
+    await rotationAuthService.register('rotation@email.com', 'password123');
+    const loginResult = await rotationAuthService.login('rotation@email.com', 'password123');
+    const { refreshToken: refreshTokenA } = loginResult;
+
+    const refreshResult = await rotationAuthService.refresh(refreshTokenA);
+    const { refreshToken: refreshTokenB } = refreshResult;
+
+    expect(refreshTokenB).toBeDefined();
+    expect(refreshTokenB).not.toBe(refreshTokenA);
+
+    await expect(rotationAuthService.refresh(refreshTokenA))
+      .rejects.toMatchObject({ message: 'Unauthorized', statusCode: 401 });
+  });
+
+  // 8c) refresh should throw 401 if refresh token is verified with a different pepper
+  it('should throw 401 if refresh token is verified with a different pepper', async () => {
+    const sequentialIdGenerator = createSequentialIdGenerator();
+    const serviceWithPepperA = createAuthService({
+      usersRepository,
+      refreshTokensRepository,
+      idGenerator: sequentialIdGenerator,
+      nowProvider: deterministicNowProvider,
+      jwtSigner: deterministicJwtSigner,
+      refreshTokenPepper: 'pepper-A',
+    });
+
+    const serviceWithPepperB = createAuthService({
+      usersRepository,
+      refreshTokensRepository,
+      idGenerator: sequentialIdGenerator,
+      nowProvider: deterministicNowProvider,
+      jwtSigner: deterministicJwtSigner,
+      refreshTokenPepper: 'pepper-B',
+    });
+
+    await serviceWithPepperA.register('pepper-test@email.com', 'password123');
+    const loginResult = await serviceWithPepperA.login('pepper-test@email.com', 'password123');
+    const { refreshToken } = loginResult;
+
+    await expect(serviceWithPepperB.refresh(refreshToken))
+      .rejects.toMatchObject({ message: 'Unauthorized', statusCode: 401 });
   });
 
   // 9) refresh should throw 401 for invalid refreshToken
@@ -151,5 +215,49 @@ describe('auth.service', () => {
 
     await expect(authService.refresh(refreshToken))
       .rejects.toMatchObject({ message: 'Unauthorized', statusCode: 401 });
+  });
+
+  // 14) logoutAll should revoke all refresh tokens for the user
+  it('should revoke all refresh tokens for the user on logoutAll', async () => {
+    const sequentialIdGenerator = createSequentialIdGenerator();
+    const logoutAllAuthService = createAuthService({
+      usersRepository,
+      refreshTokensRepository,
+      idGenerator: sequentialIdGenerator,
+      nowProvider: deterministicNowProvider,
+      jwtSigner: deterministicJwtSigner,
+      refreshTokenPepper: 'test-pepper',
+    });
+
+    // Register and login to get refreshTokenA
+    const registerResult = await logoutAllAuthService.register('logoutall@email.com', 'password123');
+    const userId = registerResult.userId;
+
+    const loginResult = await logoutAllAuthService.login('logoutall@email.com', 'password123');
+    const { refreshToken: refreshTokenA } = loginResult;
+
+    // Rotate to get refreshTokenB
+    const refreshResult = await logoutAllAuthService.refresh(refreshTokenA);
+    const { refreshToken: refreshTokenB } = refreshResult;
+
+    // Call logoutAll
+    const result = await logoutAllAuthService.logoutAll(userId);
+
+    // Expect success
+    expect(result).toEqual({ success: true });
+
+    // Both tokens should now be rejected
+    await expect(logoutAllAuthService.refresh(refreshTokenA))
+      .rejects.toMatchObject({ message: 'Unauthorized', statusCode: 401 });
+
+    await expect(logoutAllAuthService.refresh(refreshTokenB))
+      .rejects.toMatchObject({ message: 'Unauthorized', statusCode: 401 });
+  });
+
+  // 15) logoutAll should succeed even if user has no active tokens
+  it('should succeed on logoutAll even if user has no active tokens', async () => {
+    const result = await authService.logoutAll('some-user-id-without-tokens');
+
+    expect(result).toEqual({ success: true });
   });
 });
