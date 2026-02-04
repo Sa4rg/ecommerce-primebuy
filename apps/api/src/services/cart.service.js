@@ -256,7 +256,32 @@ function createCartService(deps = {}) {
     return cart;
   }
 
-  return { createCart, getCart, addItem, updateItem, removeItem, updateMetadata };
+  async function assignCartToUser(cartId, userId) {
+  if (!userId || typeof userId !== "string") {
+    throw new AppError("Unauthorized", 401);
+  }
+
+  const cart = await cartRepository.findById(cartId);
+  if (!cart) {
+    throw new AppError("Cart not found", 404);
+  }
+
+  // If already owned by someone else, forbid
+  if (cart.userId && cart.userId !== userId) {
+    throw new AppError("Forbidden", 403);
+  }
+
+  // Claim if anonymous
+  if (!cart.userId) {
+    cart.userId = userId;
+    await cartRepository.save(cart);
+  }
+
+  return cart;
+}
+
+
+  return { createCart, getCart, addItem, updateItem, removeItem, updateMetadata, assignCartToUser };
 }
 
 // Default instance for the application (backward compatible)

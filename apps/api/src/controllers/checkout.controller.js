@@ -6,7 +6,9 @@ async function createCheckout(req, res, next) {
   try {
     const { cartId } = req.body;
 
-    const checkout = await checkoutService.createCheckout(cartId);
+    const userId = req.user?.userId;
+    const checkout = await checkoutService.createCheckout(cartId, userId);
+
 
     res.status(200);
     success(res, checkout, "Checkout created successfully");

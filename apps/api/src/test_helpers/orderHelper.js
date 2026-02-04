@@ -3,10 +3,10 @@
  *
  * Provides utilities for creating orders in various states.
  */
-
+import app from "../app.js";
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
-import { registerAndLogin } from './authHelper.js';
+import { registerAndLogin } from '../test_helpers/authHelper.js';
 
 /**
  * Generate an admin JWT token for test purposes
@@ -17,6 +17,10 @@ function adminToken() {
     process.env.JWT_SECRET,
     { expiresIn: '1h' }
   );
+}
+
+async function customerToken() {
+  return registerAndLogin(app, "customer-payments");
 }
 
 /**
@@ -49,7 +53,11 @@ async function createConfirmedUsdOrder(app, prefix = 'order') {
     .send({ productId, quantity: 2 });
 
   // 4) Create checkout
-  const checkoutRes = await request(app).post('/api/checkout').send({ cartId });
+  const checkoutRes = await request(app)
+  .post('/api/checkout')
+  .set('Authorization', `Bearer ${await customerToken()}`)
+  .send({ cartId });
+  expect(checkoutRes.status).toBe(200);
   const checkoutId = checkoutRes.body.data.checkoutId;
 
   // 5) Create payment

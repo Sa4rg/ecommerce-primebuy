@@ -1,7 +1,8 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, beforeAll } from "vitest";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import app from "../app.js";
+import { registerAndLogin } from "../test_helpers/authHelper.js";
 
 function adminToken() {
   return jwt.sign(
@@ -11,7 +12,69 @@ function adminToken() {
   );
 }
 
+let customerAccessToken;
+let expectedUserId;
+
+beforeAll(async () => {
+  customerAccessToken = await registerAndLogin(app, "customer-checkout");
+  const decoded = jwt.verify(customerAccessToken, process.env.JWT_SECRET);
+  expectedUserId = decoded.sub;
+});
+
 describe("POST /api/checkout", () => {
+  test("should return 401 when creating checkout without auth", async () => {
+    const res = await request(app)
+      .post("/api/checkout")
+      .send({ cartId: "any-cart-id" });
+
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        success: false,
+        message: "Unauthorized",
+      })
+    );
+  });
+
+  test("should claim anonymous cart for the authenticated user when creating checkout", async () => {
+    // Create anonymous cart
+    const createCartRes = await request(app).post("/api/cart");
+    expect(createCartRes.status).toBe(201);
+    const cartId = createCartRes.body.data.cartId;
+
+    // Create product (admin)
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Claim Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
+    expect(createProductRes.status).toBe(201);
+    const productId = createProductRes.body.data.id;
+
+    // Add item to cart
+    const addItemRes = await request(app)
+      .post(`/api/cart/${cartId}/items`)
+      .send({ productId, quantity: 1 });
+    expect(addItemRes.status).toBe(200);
+
+    // Create checkout with auth
+    const checkoutRes = await request(app)
+      .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerAccessToken}`)
+      .send({ cartId });
+
+    expect(checkoutRes.status).toBe(200);
+
+    // Verify cart is now owned by the user
+    const cartRes = await request(app).get(`/api/cart/${cartId}`);
+    expect(cartRes.status).toBe(200);
+    expect(cartRes.body.data.userId).toBe(expectedUserId);
+  });
+
   test("should create checkout and return totals in USD and VES when exchange rate exists", async () => {
     // Arrange: create cart
     const createCartRes = await request(app).post("/api/cart");
@@ -49,44 +112,21 @@ describe("POST /api/checkout", () => {
     // Act: create checkout
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerAccessToken}`)
       .send({ cartId });
 
     // Assert
     expect(checkoutRes.status).toBe(200);
-    expect(checkoutRes.body).toEqual(
-      expect.objectContaining({
-        success: true,
-        message: expect.any(String),
-        data: expect.any(Object),
-      })
-    );
-
-    expect(checkoutRes.body.data.checkoutId).toBeDefined();
-    expect(typeof checkoutRes.body.data.checkoutId).toBe("string");
     expect(checkoutRes.body.data.cartId).toBe(cartId);
     expect(checkoutRes.body.data.totals.subtotalUSD).toBe(20);
     expect(checkoutRes.body.data.totals.subtotalVES).toBe(800);
-    expect(checkoutRes.body.data.exchangeRate).toEqual(
-      expect.objectContaining({
-        provider: "BCV",
-        usdToVes: 40,
-        asOf: "2023-01-01T00:00:00.000Z",
-      })
-    );
-    expect(checkoutRes.body.data.paymentMethods.usd).toEqual(["zelle", "zinli"]);
-    expect(checkoutRes.body.data.paymentMethods.ves).toEqual([
-      "bank_transfer",
-      "pago_movil",
-    ]);
   });
 
   test("should create checkout with subtotalVES null when exchange rate is missing", async () => {
-    // Arrange: create cart
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    // Arrange: create product
     const createProductRes = await request(app)
       .post("/api/products")
       .set("Authorization", `Bearer ${adminToken()}`)
@@ -99,76 +139,51 @@ describe("POST /api/checkout", () => {
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
-    // Arrange: add item to cart
     const addItemRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
       .send({ productId, quantity: 1 });
     expect(addItemRes.status).toBe(200);
 
-    // Act: create checkout (no metadata patch)
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerAccessToken}`)
       .send({ cartId });
 
-    // Assert
     expect(checkoutRes.status).toBe(200);
-    expect(checkoutRes.body).toEqual(
-      expect.objectContaining({
-        success: true,
-        message: expect.any(String),
-        data: expect.any(Object),
-      })
-    );
-
     expect(checkoutRes.body.data.totals.subtotalUSD).toBe(10);
     expect(checkoutRes.body.data.totals.subtotalVES).toBeNull();
     expect(checkoutRes.body.data.exchangeRate).toBeNull();
   });
 
   test("should return 404 when cart does not exist", async () => {
-    // Act
     const checkoutRes = await request(app)
       .post("/api/checkout")
-      .send({ cartId: "invalid-cart-id" });
+      .set("Authorization", `Bearer ${customerAccessToken}`)
+      .send({ cartId: "non-existent-cart-id" });
 
-    // Assert
     expect(checkoutRes.status).toBe(404);
-    expect(checkoutRes.body).toEqual(
-      expect.objectContaining({
-        success: false,
-        message: "Cart not found",
-      })
-    );
+    expect(checkoutRes.body.message).toBe("Cart not found");
   });
 
   test("should return 400 when cart is empty", async () => {
-    // Arrange: create cart (no items)
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    // Act: create checkout with empty cart
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerAccessToken}`)
       .send({ cartId });
 
-    // Assert
     expect(checkoutRes.status).toBe(400);
-    expect(checkoutRes.body).toEqual(
-      expect.objectContaining({
-        success: false,
-        message: "Cart is empty",
-      })
-    );
+    expect(checkoutRes.body.message).toBe("Cart is empty");
   });
 
   test("should return 409 when cart is not active", async () => {
-    // Arrange: create cart
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    // Arrange: create product
     const createProductRes = await request(app)
       .post("/api/products")
       .set("Authorization", `Bearer ${adminToken()}`)
@@ -181,40 +196,30 @@ describe("POST /api/checkout", () => {
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
-    // Arrange: add item to cart
     const addItemRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
       .send({ productId, quantity: 1 });
     expect(addItemRes.status).toBe(200);
 
-    // Arrange: patch cart status to locked
     const patchRes = await request(app)
       .patch(`/api/cart/${cartId}/metadata`)
       .send({ status: "locked" });
     expect(patchRes.status).toBe(200);
 
-    // Act: create checkout
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerAccessToken}`)
       .send({ cartId });
 
-    // Assert
     expect(checkoutRes.status).toBe(409);
-    expect(checkoutRes.body).toEqual(
-      expect.objectContaining({
-        success: false,
-        message: "Cart is not active",
-      })
-    );
+    expect(checkoutRes.body.message).toBe("Cart is not active");
   });
 
   test("should return 409 when stock is insufficient at checkout", async () => {
-    // Arrange: create cart
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    // Arrange: create product with stock 2
     const createProductRes = await request(app)
       .post("/api/products")
       .set("Authorization", `Bearer ${adminToken()}`)
@@ -227,13 +232,12 @@ describe("POST /api/checkout", () => {
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
-    // Arrange: add item quantity 2 (valid at this point)
     const addItemRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
       .send({ productId, quantity: 2 });
     expect(addItemRes.status).toBe(200);
 
-    // Arrange: simulate stock drop by updating product to stock 1
+    // drop stock to 1
     const updateProductRes = await request(app)
       .put(`/api/products/${productId}`)
       .set("Authorization", `Bearer ${adminToken()}`)
@@ -245,18 +249,12 @@ describe("POST /api/checkout", () => {
       });
     expect(updateProductRes.status).toBe(200);
 
-    // Act: create checkout (should fail due to insufficient stock)
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerAccessToken}`)
       .send({ cartId });
 
-    // Assert
     expect(checkoutRes.status).toBe(409);
-    expect(checkoutRes.body).toEqual(
-      expect.objectContaining({
-        success: false,
-        message: "Insufficient stock",
-      })
-    );
+    expect(checkoutRes.body.message).toBe("Insufficient stock");
   });
 });

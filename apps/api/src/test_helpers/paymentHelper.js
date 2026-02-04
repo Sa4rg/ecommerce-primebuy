@@ -3,10 +3,12 @@
  *
  * Provides utilities for creating payments in various states.
  */
-
+import app from "../app.js";
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { expect } from 'vitest';
+import { registerAndLogin } from '../test_helpers/authHelper.js';
+
 
 /**
  * Generate an admin JWT token for test purposes
@@ -17,6 +19,10 @@ function adminToken() {
     process.env.JWT_SECRET,
     { expiresIn: '1h' }
   );
+}
+
+async function customerToken() {
+  return registerAndLogin(app, "customer-payments");
 }
 
 /**
@@ -63,7 +69,10 @@ async function createConfirmedUsdPayment(app, options = {}) {
   }
 
   // Create checkout
-  const checkoutRes = await request(app).post('/api/checkout').send({ cartId });
+  const checkoutRes = await request(app)
+  .post('/api/checkout')
+  .set('Authorization', `Bearer ${await customerToken()}`)
+  .send({ cartId });
   expect(checkoutRes.status).toBe(200);
   const checkoutId = checkoutRes.body.data.checkoutId;
 
@@ -121,7 +130,10 @@ async function createSubmittedPayment(app) {
   expect(addItemRes.status).toBe(200);
 
   // Create checkout
-  const checkoutRes = await request(app).post('/api/checkout').send({ cartId });
+  const checkoutRes = await request(app)
+  .post('/api/checkout')
+  .set('Authorization', `Bearer ${await customerToken()}`)
+  .send({ cartId });
   expect(checkoutRes.status).toBe(200);
   const checkoutId = checkoutRes.body.data.checkoutId;
 

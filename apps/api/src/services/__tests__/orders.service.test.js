@@ -3,6 +3,7 @@ import { createRequire } from "module";
 import { OrderStatus } from "../../constants/orderStatus.js";
 import { ShippingStatus } from "../../constants/shippingStatus.js";
 
+
 const require = createRequire(import.meta.url);
 
 // Test user ID for ownership tests
@@ -111,7 +112,7 @@ describe("createOrderFromPayment", () => {
       },
     });
 
-    const checkout = await checkoutService.createCheckout(cartId);
+    const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID );
     const checkoutId = checkout.checkoutId;
 
     const payment = await paymentsService.createPayment(checkoutId, "zelle");
@@ -218,7 +219,7 @@ describe("createOrderFromPayment", () => {
       customer: { email: "test@example.com", name: "Test", phone: "+123" },
     });
 
-    const checkout = await checkoutService.createCheckout(cartId);
+    const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID );
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
 
     // Act + Assert: payment is still pending
@@ -238,7 +239,7 @@ describe("createOrderFromPayment", () => {
       customer: { email: "test@example.com", name: "Test", phone: "+123" },
     });
 
-    const checkout = await checkoutService.createCheckout(cartId);
+    const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID );
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
@@ -265,7 +266,7 @@ describe("getOrderById", () => {
       customer: { email: "test@example.com", name: "Test", phone: "+123" },
     });
 
-    const checkout = await checkoutService.createCheckout(cartId);
+    const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID );
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
@@ -302,7 +303,7 @@ describe("fulfillment", () => {
       customer: { email: "test@example.com", name: "Test", phone: "+123" },
     });
 
-    const checkout = await checkoutService.createCheckout(cartId);
+    const checkout = await checkoutService.createCheckout(cartId,  TEST_USER_ID );
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
@@ -456,7 +457,7 @@ describe("shipping", () => {
       customer: { email: "test@example.com", name: "Test", phone: "+123" },
     });
 
-    const checkout = await checkoutService.createCheckout(cartId);
+    const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID);
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);

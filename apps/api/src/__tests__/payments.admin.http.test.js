@@ -45,6 +45,7 @@ async function createSubmittedPayment() {
   // Create checkout
   const checkoutRes = await request(app)
     .post("/api/checkout")
+    .set("Authorization", `Bearer ${await customerToken()}`)
     .send({ cartId });
   expect(checkoutRes.status).toBe(200);
   const checkoutId = checkoutRes.body.data.checkoutId;
@@ -59,6 +60,7 @@ async function createSubmittedPayment() {
   // Submit payment
   const submitRes = await request(app)
     .patch(`/api/payments/${paymentId}/submit`)
+    .set("Authorization", `Bearer ${await customerToken()}`)
     .send({ reference: "ABC123" });
   expect(submitRes.status).toBe(200);
   const previousUpdatedAt = submitRes.body.data.updatedAt;
@@ -179,6 +181,7 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
 
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${await customerToken()}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
@@ -309,6 +312,7 @@ describe("PATCH /api/payments/:paymentId/reject", () => {
 
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${await customerToken()}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;

@@ -42,8 +42,13 @@ function createCheckoutService(deps = {}) {
     checkoutRepository = new InMemoryCheckoutRepository();
   }
 
-  async function createCheckout(cartId) {
-    const cart = await cartService.getCart(cartId);
+  async function createCheckout(cartId, userId) {
+      if (!userId || typeof userId !== "string") {
+    throw new AppError("Unauthorized", 401);
+    }
+
+    // Claim cart or forbid if owned by someone else
+    const cart = await cartService.assignCartToUser(cartId, userId);
 
     if (cart.items.length === 0) {
       throw new AppError("Cart is empty", 400);

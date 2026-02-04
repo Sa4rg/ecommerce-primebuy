@@ -62,7 +62,7 @@ describe("createCheckout", () => {
     });
 
     // Act
-    const checkout = await checkoutService.createCheckout(cartId);
+    const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID);
 
     // Assert
     expect(checkout.checkoutId).toBe("checkout-1");
@@ -88,7 +88,7 @@ describe("createCheckout", () => {
     await cartService.addItem(cartId, "product-1", 1);
 
     // Act
-    const checkout = await checkoutService.createCheckout(cartId);
+    const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID);
 
     // Assert
     expect(checkout.totals.subtotalUSD).toBe(10);
@@ -99,7 +99,7 @@ describe("createCheckout", () => {
   test("should throw 404 when cart does not exist", async () => {
     // Act + Assert
     await expect(
-      checkoutService.createCheckout("invalid-cart")
+      checkoutService.createCheckout("invalid-cart", TEST_USER_ID)
     ).rejects.toMatchObject({
       statusCode: 404,
       message: "Cart not found",
@@ -112,7 +112,7 @@ describe("createCheckout", () => {
 
     // Act + Assert
     await expect(
-      checkoutService.createCheckout(cartId)
+      checkoutService.createCheckout(cartId , TEST_USER_ID)
     ).rejects.toMatchObject({
       statusCode: 400,
       message: "Cart is empty",
@@ -127,7 +127,7 @@ describe("createCheckout", () => {
 
     // Act + Assert
     await expect(
-      checkoutService.createCheckout(cartId)
+      checkoutService.createCheckout(cartId, TEST_USER_ID)
     ).rejects.toMatchObject({
       statusCode: 409,
       message: "Cart is not active",
@@ -153,7 +153,7 @@ describe("createCheckout", () => {
 
     // Act + Assert
     await expect(
-      checkoutService.createCheckout(cartId)
+      checkoutService.createCheckout(cartId, TEST_USER_ID)
     ).rejects.toMatchObject({
       statusCode: 409,
       message: "Insufficient stock",

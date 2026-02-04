@@ -3,6 +3,7 @@ import request from "supertest";
 import jwt from "jsonwebtoken";
 import app from "../app.js";
 import { PaymentStatus } from "../constants/paymentStatus.js";
+import { registerAndLogin } from "../test_helpers/authHelper.js";
 
 function adminToken() {
   return jwt.sign(
@@ -11,6 +12,11 @@ function adminToken() {
     { expiresIn: "1h" }
   );
 }
+
+async function customerToken() {
+  return registerAndLogin(app, "customer-payments");
+}
+
 
 describe("POST /api/payments", () => {
   test("should create a USD payment for zelle using checkout subtotalUSD", async () => {
@@ -41,6 +47,7 @@ describe("POST /api/payments", () => {
     // Arrange: create checkout
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${await customerToken()}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
@@ -109,6 +116,7 @@ describe("POST /api/payments", () => {
     // Arrange: create checkout
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${await customerToken()}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
@@ -159,6 +167,7 @@ describe("POST /api/payments", () => {
 
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${await customerToken()}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
@@ -219,6 +228,7 @@ describe("POST /api/payments", () => {
     // Create checkout WITHOUT patching metadata (subtotalVES will be null)
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${await customerToken()}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
@@ -265,6 +275,7 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
 
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${await customerToken()}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
@@ -339,6 +350,7 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
 
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${await customerToken()}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
@@ -394,6 +406,7 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
 
     const checkoutRes = await request(app)
       .post("/api/checkout")
+      .set("Authorization", `Bearer ${await customerToken()}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
