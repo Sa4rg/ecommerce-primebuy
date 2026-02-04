@@ -6,6 +6,7 @@ const {
   InMemoryPaymentsRepository,
 } = require("../repositories/payments/payments.memory.repository");
 
+const defaultCartService = require("./cart.service");
 const defaultCheckoutService = require("./checkout.service");
 
 /**
@@ -28,6 +29,7 @@ function createMapAdapter(map) {
 }
 
 function createPaymentsService(deps = {}) {
+  const cartService = deps.cartService || defaultCartService;
   const checkoutService = deps.checkoutService || defaultCheckoutService;
   const idGenerator = deps.idGenerator || (() => crypto.randomUUID());
 
@@ -45,8 +47,23 @@ function createPaymentsService(deps = {}) {
   const USD_METHODS = ["zelle", "zinli"];
   const VES_METHODS = ["pago_movil", "bank_transfer"];
 
-  async function createPayment(checkoutId, method) {
+  async function createPayment(checkoutId, method, userId) {
+    if (!userId || typeof userId !== "string") {
+      throw new AppError("Unauthorized", 401);
+    }
     const checkout = await checkoutService.getCheckoutById(checkoutId);
+
+    // ownership real: el cart del checkout debe ser de este usuario
+    const cart = await cartService.getCart(checkout.cartId);
+
+    if (!cart.userId) {
+      // checkout debería claimear el cart, pero por seguridad:
+      throw new AppError("Forbidden", 403);
+    }
+
+    if (cart.userId !== userId) {
+      throw new AppError("Forbidden", 403);
+    }
 
     if (!VALID_METHODS.includes(method)) {
       throw new AppError("Invalid payment method", 400);
@@ -71,6 +88,7 @@ function createPaymentsService(deps = {}) {
 
     const payment = {
       paymentId,
+      userId,
       checkoutId,
       method,
       currency,

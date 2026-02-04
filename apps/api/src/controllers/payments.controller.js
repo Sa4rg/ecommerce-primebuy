@@ -5,8 +5,9 @@ const paymentsService = services.paymentsService;
 async function createPayment(req, res, next) {
   try {
     const { checkoutId, method } = req.body;
+    const userId = req.user?.userId;
 
-    const payment = await paymentsService.createPayment(checkoutId, method);
+    const payment = await paymentsService.createPayment(checkoutId, method, userId);
 
     res.status(201);
     success(res, payment, "Payment created successfully");

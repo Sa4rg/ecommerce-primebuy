@@ -14,7 +14,6 @@ const cartModule = require("../cart.service");
 const checkoutModule = require("../checkout.service");
 const paymentsModule = require("../payments.service");
 const ordersModule = require("../orders.service");
-const { OrderStatus } = require("../../constants/orderStatus");
 
 let cartService;
 let checkoutService;
@@ -65,6 +64,7 @@ beforeEach(() => {
   // Create payments service with factory
   paymentsService = paymentsModule.createPaymentsService({
     checkoutService,
+    cartService,
     paymentsStore,
     idGenerator: () => "payment-1",
   });
@@ -115,7 +115,7 @@ describe("createOrderFromPayment", () => {
     const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID );
     const checkoutId = checkout.checkoutId;
 
-    const payment = await paymentsService.createPayment(checkoutId, "zelle");
+    const payment = await paymentsService.createPayment(checkoutId, "zelle", TEST_USER_ID);
     const paymentId = payment.paymentId;
 
     await paymentsService.submitPayment(paymentId, { reference: "ZELLE-REF-123" });
@@ -220,7 +220,7 @@ describe("createOrderFromPayment", () => {
     });
 
     const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID );
-    const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
+    const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
 
     // Act + Assert: payment is still pending
     await expect(ordersService.createOrderFromPayment(payment.paymentId, TEST_USER_ID)).rejects.toEqual(
@@ -240,7 +240,7 @@ describe("createOrderFromPayment", () => {
     });
 
     const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID );
-    const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
+    const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
 
@@ -267,7 +267,7 @@ describe("getOrderById", () => {
     });
 
     const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID );
-    const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
+    const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
 
@@ -304,7 +304,7 @@ describe("fulfillment", () => {
     });
 
     const checkout = await checkoutService.createCheckout(cartId,  TEST_USER_ID );
-    const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
+    const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
 
@@ -458,7 +458,7 @@ describe("shipping", () => {
     });
 
     const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID);
-    const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle");
+    const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
 

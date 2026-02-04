@@ -50,6 +50,7 @@ class MySQLPaymentsRepository {
     
     return {
       paymentId: String(row.payment_id),
+      userId: row.user_id ? String(row.user_id) : null,
       checkoutId: String(row.checkout_id),
       method: row.method,
       currency: row.currency,
@@ -69,6 +70,7 @@ class MySQLPaymentsRepository {
   _mapToDbFormat(payment) {
     const dbData = {
       payment_id: payment.paymentId,
+      user_id: payment.userId || null,
       checkout_id: payment.checkoutId,
       method: payment.method,
       currency: payment.currency,

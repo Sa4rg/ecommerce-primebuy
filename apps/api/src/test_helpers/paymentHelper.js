@@ -2,13 +2,12 @@
  * Payment Helper for HTTP Integration Tests
  *
  * Provides utilities for creating payments in various states.
+ * Each helper creates its own user token internally for ownership consistency.
  */
-import app from "../app.js";
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { expect } from 'vitest';
 import { registerAndLogin } from '../test_helpers/authHelper.js';
-
 
 /**
  * Generate an admin JWT token for test purposes
@@ -21,20 +20,23 @@ function adminToken() {
   );
 }
 
-async function customerToken() {
-  return registerAndLogin(app, "customer-payments");
-}
-
 /**
  * Create a confirmed USD payment through the full flow:
  * cart → product → add item → checkout → payment → submit → confirm
+ * 
+ * Creates its own user token internally for ownership consistency.
+ * 
  * @param {Express.Application} app - Express app instance
  * @param {Object} [options] - Optional configuration
  * @param {string} [options.customerEmail] - Customer email to associate with order
+ * @param {string} [options.prefix] - Unique prefix for user registration (default: 'payment-helper')
  * @returns {Promise<{ cartId: string, checkoutId: string, paymentId: string }>}
  */
 async function createConfirmedUsdPayment(app, options = {}) {
-  const { customerEmail } = options;
+  const { customerEmail, prefix = 'payment-helper' } = options;
+
+  // Create user token for this flow (same token for checkout, payment, submit)
+  const userToken = await registerAndLogin(app, `${prefix}-${Date.now()}`);
 
   // Create cart
   const createCartRes = await request(app).post('/api/cart');
@@ -68,24 +70,26 @@ async function createConfirmedUsdPayment(app, options = {}) {
     expect(metadataRes.status).toBe(200);
   }
 
-  // Create checkout
+  // Create checkout (requires auth)
   const checkoutRes = await request(app)
-  .post('/api/checkout')
-  .set('Authorization', `Bearer ${await customerToken()}`)
-  .send({ cartId });
+    .post('/api/checkout')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ cartId });
   expect(checkoutRes.status).toBe(200);
   const checkoutId = checkoutRes.body.data.checkoutId;
 
-  // Create payment
+  // Create payment (requires auth - same user)
   const paymentRes = await request(app)
     .post('/api/payments')
+    .set('Authorization', `Bearer ${userToken}`)
     .send({ checkoutId, method: 'zelle' });
   expect(paymentRes.status).toBe(201);
   const paymentId = paymentRes.body.data.paymentId;
 
-  // Submit payment
+  // Submit payment (requires auth - same user/owner)
   const submitRes = await request(app)
     .patch(`/api/payments/${paymentId}/submit`)
+    .set('Authorization', `Bearer ${userToken}`)
     .send({ reference: 'ABC123' });
   expect(submitRes.status).toBe(200);
 
@@ -101,10 +105,20 @@ async function createConfirmedUsdPayment(app, options = {}) {
 
 /**
  * Create a submitted (not confirmed) payment
+ * 
+ * Creates its own user token internally for ownership consistency.
+ * 
  * @param {Express.Application} app - Express app instance
+ * @param {Object} [options] - Optional configuration
+ * @param {string} [options.prefix] - Unique prefix for user registration (default: 'submitted-payment')
  * @returns {Promise<{ cartId: string, checkoutId: string, paymentId: string }>}
  */
-async function createSubmittedPayment(app) {
+async function createSubmittedPayment(app, options = {}) {
+  const { prefix = 'submitted-payment' } = options;
+
+  // Create user token for this flow (same token for checkout, payment, submit)
+  const userToken = await registerAndLogin(app, `${prefix}-${Date.now()}`);
+
   // Create cart
   const createCartRes = await request(app).post('/api/cart');
   expect(createCartRes.status).toBe(201);
@@ -129,24 +143,26 @@ async function createSubmittedPayment(app) {
     .send({ productId, quantity: 1 });
   expect(addItemRes.status).toBe(200);
 
-  // Create checkout
+  // Create checkout (requires auth)
   const checkoutRes = await request(app)
-  .post('/api/checkout')
-  .set('Authorization', `Bearer ${await customerToken()}`)
-  .send({ cartId });
+    .post('/api/checkout')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ cartId });
   expect(checkoutRes.status).toBe(200);
   const checkoutId = checkoutRes.body.data.checkoutId;
 
-  // Create payment
+  // Create payment (requires auth - same user)
   const paymentRes = await request(app)
     .post('/api/payments')
+    .set('Authorization', `Bearer ${userToken}`)
     .send({ checkoutId, method: 'zelle' });
   expect(paymentRes.status).toBe(201);
   const paymentId = paymentRes.body.data.paymentId;
 
-  // Submit payment (but DO NOT confirm)
+  // Submit payment (requires auth - same user/owner)
   const submitRes = await request(app)
     .patch(`/api/payments/${paymentId}/submit`)
+    .set('Authorization', `Bearer ${userToken}`)
     .send({ reference: 'REF-SUBMITTED' });
   expect(submitRes.status).toBe(200);
 

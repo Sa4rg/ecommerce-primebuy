@@ -13,19 +13,14 @@ function adminToken() {
   );
 }
 
-async function customerToken() {
-  return registerAndLogin(app, "customer-payments");
-}
-
-
 describe("POST /api/payments", () => {
   test("should create a USD payment for zelle using checkout subtotalUSD", async () => {
-    // Arrange: create cart
+    const token = await registerAndLogin(app, "payments-usd");
+
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    // Arrange: create product
     const createProductRes = await request(app)
       .post("/api/products")
       .set("Authorization", `Bearer ${adminToken()}`)
@@ -38,26 +33,23 @@ describe("POST /api/payments", () => {
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
-    // Arrange: add item to cart
     const addItemRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
       .send({ productId, quantity: 2 });
     expect(addItemRes.status).toBe(200);
 
-    // Arrange: create checkout
     const checkoutRes = await request(app)
       .post("/api/checkout")
-      .set("Authorization", `Bearer ${await customerToken()}`)
+      .set("Authorization", `Bearer ${token}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
 
-    // Act: create payment
     const paymentRes = await request(app)
       .post("/api/payments")
+      .set("Authorization", `Bearer ${token}`)
       .send({ checkoutId, method: "zelle" });
 
-    // Assert
     expect(paymentRes.status).toBe(201);
     expect(paymentRes.body).toEqual(
       expect.objectContaining({
@@ -80,12 +72,12 @@ describe("POST /api/payments", () => {
   });
 
   test("should create a VES payment for pago_movil using checkout subtotalVES", async () => {
-    // Arrange: create cart
+    const token = await registerAndLogin(app, "payments-ves");
+
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
 
-    // Arrange: create product
     const createProductRes = await request(app)
       .post("/api/products")
       .set("Authorization", `Bearer ${adminToken()}`)
@@ -98,13 +90,11 @@ describe("POST /api/payments", () => {
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
-    // Arrange: add item to cart
     const addItemRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
       .send({ productId, quantity: 2 });
     expect(addItemRes.status).toBe(200);
 
-    // Arrange: patch cart metadata to VES
     const patchRes = await request(app)
       .patch(`/api/cart/${cartId}/metadata`)
       .send({
@@ -113,21 +103,19 @@ describe("POST /api/payments", () => {
       });
     expect(patchRes.status).toBe(200);
 
-    // Arrange: create checkout
     const checkoutRes = await request(app)
       .post("/api/checkout")
-      .set("Authorization", `Bearer ${await customerToken()}`)
+      .set("Authorization", `Bearer ${token}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
     expect(checkoutRes.body.data.totals.subtotalVES).toBe(800);
 
-    // Act: create payment
     const paymentRes = await request(app)
       .post("/api/payments")
+      .set("Authorization", `Bearer ${token}`)
       .send({ checkoutId, method: "pago_movil" });
 
-    // Assert
     expect(paymentRes.status).toBe(201);
     expect(paymentRes.body).toEqual(
       expect.objectContaining({
@@ -143,8 +131,17 @@ describe("POST /api/payments", () => {
     expect(paymentRes.body.data.status).toBe(PaymentStatus.PENDING);
   });
 
+  test("should return 401 when creating payment without auth", async () => {
+    const paymentRes = await request(app)
+      .post("/api/payments")
+      .send({ checkoutId: "some-checkout", method: "zelle" });
+
+    expect(paymentRes.status).toBe(401);
+  });
+
   test("should return 400 when payment method is invalid", async () => {
-    // Arrange: create minimal valid checkout
+    const token = await registerAndLogin(app, "payments-invalid-method");
+
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
@@ -167,17 +164,16 @@ describe("POST /api/payments", () => {
 
     const checkoutRes = await request(app)
       .post("/api/checkout")
-      .set("Authorization", `Bearer ${await customerToken()}`)
+      .set("Authorization", `Bearer ${token}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
 
-    // Act: create payment with invalid method
     const paymentRes = await request(app)
       .post("/api/payments")
+      .set("Authorization", `Bearer ${token}`)
       .send({ checkoutId, method: "cash" });
 
-    // Assert
     expect(paymentRes.status).toBe(400);
     expect(paymentRes.body).toEqual(
       expect.objectContaining({
@@ -188,12 +184,13 @@ describe("POST /api/payments", () => {
   });
 
   test("should return 404 when checkout does not exist", async () => {
-    // Act
+    const token = await registerAndLogin(app, "payments-checkout-404");
+
     const paymentRes = await request(app)
       .post("/api/payments")
+      .set("Authorization", `Bearer ${token}`)
       .send({ checkoutId: "invalid-checkout-id", method: "zelle" });
 
-    // Assert
     expect(paymentRes.status).toBe(404);
     expect(paymentRes.body).toEqual(
       expect.objectContaining({
@@ -204,7 +201,8 @@ describe("POST /api/payments", () => {
   });
 
   test("should return 400 when VES method requires exchange rate but checkout has subtotalVES null", async () => {
-    // Arrange: create cart without VES configuration
+    const token = await registerAndLogin(app, "payments-ves-no-rate");
+
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
@@ -225,21 +223,19 @@ describe("POST /api/payments", () => {
       .post(`/api/cart/${cartId}/items`)
       .send({ productId, quantity: 1 });
 
-    // Create checkout WITHOUT patching metadata (subtotalVES will be null)
     const checkoutRes = await request(app)
       .post("/api/checkout")
-      .set("Authorization", `Bearer ${await customerToken()}`)
+      .set("Authorization", `Bearer ${token}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
     expect(checkoutRes.body.data.totals.subtotalVES).toBeNull();
 
-    // Act: try to create VES payment
     const paymentRes = await request(app)
       .post("/api/payments")
+      .set("Authorization", `Bearer ${token}`)
       .send({ checkoutId, method: "pago_movil" });
 
-    // Assert
     expect(paymentRes.status).toBe(400);
     expect(paymentRes.body).toEqual(
       expect.objectContaining({
@@ -252,7 +248,8 @@ describe("POST /api/payments", () => {
 
 describe("PATCH /api/payments/:paymentId/submit", () => {
   test("should submit a pending payment and set status submitted", async () => {
-    // Arrange: create valid checkout
+    const token = await registerAndLogin(app, "payments-submit");
+
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
@@ -275,25 +272,24 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
 
     const checkoutRes = await request(app)
       .post("/api/checkout")
-      .set("Authorization", `Bearer ${await customerToken()}`)
+      .set("Authorization", `Bearer ${token}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
 
-    // Arrange: create payment
     const paymentRes = await request(app)
       .post("/api/payments")
+      .set("Authorization", `Bearer ${token}`)
       .send({ checkoutId, method: "zelle" });
     expect(paymentRes.status).toBe(201);
     const paymentId = paymentRes.body.data.paymentId;
     const previousUpdatedAt = paymentRes.body.data.updatedAt;
 
-    // Act: submit payment
     const submitRes = await request(app)
       .patch(`/api/payments/${paymentId}/submit`)
+      .set("Authorization", `Bearer ${token}`)
       .send({ reference: "ABC123" });
 
-    // Assert
     expect(submitRes.status).toBe(200);
     expect(submitRes.body).toEqual(
       expect.objectContaining({
@@ -310,13 +306,68 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
     expect(submitRes.body.data.updatedAt).not.toBe(previousUpdatedAt);
   });
 
-  test("should return 404 when payment does not exist", async () => {
-    // Act
+  test("should return 401 when submitting without auth", async () => {
     const submitRes = await request(app)
-      .patch("/api/payments/invalid-payment-id/submit")
+      .patch("/api/payments/some-payment-id/submit")
       .send({ reference: "X" });
 
-    // Assert
+    expect(submitRes.status).toBe(401);
+  });
+
+  test("should return 403 when submitting payment owned by another user", async () => {
+    const ownerToken = await registerAndLogin(app, "payments-owner");
+    const otherToken = await registerAndLogin(app, "payments-other");
+
+    const createCartRes = await request(app).post("/api/cart");
+    expect(createCartRes.status).toBe(201);
+    const cartId = createCartRes.body.data.cartId;
+
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Ownership Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
+    expect(createProductRes.status).toBe(201);
+    const productId = createProductRes.body.data.id;
+
+    await request(app)
+      .post(`/api/cart/${cartId}/items`)
+      .send({ productId, quantity: 1 });
+
+    const checkoutRes = await request(app)
+      .post("/api/checkout")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ cartId });
+    expect(checkoutRes.status).toBe(200);
+    const checkoutId = checkoutRes.body.data.checkoutId;
+
+    const paymentRes = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ checkoutId, method: "zelle" });
+    expect(paymentRes.status).toBe(201);
+    const paymentId = paymentRes.body.data.paymentId;
+
+    const submitRes = await request(app)
+      .patch(`/api/payments/${paymentId}/submit`)
+      .set("Authorization", `Bearer ${otherToken}`)
+      .send({ reference: "STOLEN" });
+
+    expect(submitRes.status).toBe(403);
+  });
+
+  test("should return 404 when payment does not exist", async () => {
+    const token = await registerAndLogin(app, "payments-404");
+
+    const submitRes = await request(app)
+      .patch("/api/payments/invalid-payment-id/submit")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ reference: "X" });
+
     expect(submitRes.status).toBe(404);
     expect(submitRes.body).toEqual(
       expect.objectContaining({
@@ -327,7 +378,8 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
   });
 
   test("should return 409 when payment is not pending", async () => {
-    // Arrange: create checkout and payment
+    const token = await registerAndLogin(app, "payments-double-submit");
+
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
@@ -350,29 +402,29 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
 
     const checkoutRes = await request(app)
       .post("/api/checkout")
-      .set("Authorization", `Bearer ${await customerToken()}`)
+      .set("Authorization", `Bearer ${token}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
 
     const paymentRes = await request(app)
       .post("/api/payments")
+      .set("Authorization", `Bearer ${token}`)
       .send({ checkoutId, method: "zelle" });
     expect(paymentRes.status).toBe(201);
     const paymentId = paymentRes.body.data.paymentId;
 
-    // Arrange: submit once successfully
     const firstSubmit = await request(app)
       .patch(`/api/payments/${paymentId}/submit`)
+      .set("Authorization", `Bearer ${token}`)
       .send({ reference: "FIRST123" });
     expect(firstSubmit.status).toBe(200);
 
-    // Act: try to submit again
     const secondSubmit = await request(app)
       .patch(`/api/payments/${paymentId}/submit`)
+      .set("Authorization", `Bearer ${token}`)
       .send({ reference: "SECOND456" });
 
-    // Assert
     expect(secondSubmit.status).toBe(409);
     expect(secondSubmit.body).toEqual(
       expect.objectContaining({
@@ -383,7 +435,8 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
   });
 
   test("should return 400 when proof is invalid", async () => {
-    // Arrange: create checkout and payment
+    const token = await registerAndLogin(app, "payments-invalid-proof");
+
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
@@ -406,23 +459,23 @@ describe("PATCH /api/payments/:paymentId/submit", () => {
 
     const checkoutRes = await request(app)
       .post("/api/checkout")
-      .set("Authorization", `Bearer ${await customerToken()}`)
+      .set("Authorization", `Bearer ${token}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
 
     const paymentRes = await request(app)
       .post("/api/payments")
+      .set("Authorization", `Bearer ${token}`)
       .send({ checkoutId, method: "zelle" });
     expect(paymentRes.status).toBe(201);
     const paymentId = paymentRes.body.data.paymentId;
 
-    // Act: submit with empty proof (no reference)
     const submitRes = await request(app)
       .patch(`/api/payments/${paymentId}/submit`)
+      .set("Authorization", `Bearer ${token}`)
       .send({});
 
-    // Assert
     expect(submitRes.status).toBe(400);
     expect(submitRes.body).toEqual(
       expect.objectContaining({

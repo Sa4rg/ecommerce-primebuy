@@ -64,7 +64,7 @@ const refreshTokensRepository = createRefreshTokensRepository();
 const productsService = createProductsService({ productsRepository });
 const cartService = createCartService({ productsService, cartRepository });
 const checkoutService = createCheckoutService({ cartService, productsService, checkoutRepository });
-const paymentsService = createPaymentsService({ checkoutService, paymentsRepository });
+const paymentsService = createPaymentsService({ cartService, checkoutService, paymentsRepository });
 const ordersService = createOrdersService({ cartService, checkoutService, paymentsService, ordersRepository });
 const authService = createAuthService({ usersRepository, refreshTokensRepository });
 

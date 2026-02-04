@@ -9,13 +9,16 @@ const paymentsModule = require("../payments.service");
 
 let paymentsService;
 let checkoutService;
+let cartService;
 let paymentsStore;
 let checkoutsStore;
+let cartsStore;
 const TEST_USER_ID = "user-test-1";
 
 beforeEach(() => {
   // Stub checkoutService with DI
   checkoutsStore = new Map();
+  cartsStore = new Map();
   
   checkoutService = {
     getCheckoutById: async (checkoutId) => {
@@ -28,12 +31,33 @@ beforeEach(() => {
     },
   };
 
+  // Stub cartService for ownership verification
+  cartService = {
+    getCart: async (cartId) => {
+      const cart = cartsStore.get(cartId);
+      if (!cart) {
+        const { AppError } = require("../../utils/errors");
+        throw new AppError("Cart not found", 404);
+      }
+      return cart;
+    },
+  };
+
   // Create isolated paymentsStore
   paymentsStore = new Map();
+
+  // Add default cart for ownership verification
+  cartsStore.set("cart-1", {
+    cartId: "cart-1",
+    userId: TEST_USER_ID,
+    items: [],
+    metadata: {},
+  });
 
   // Create payments service with factory
   paymentsService = paymentsModule.createPaymentsService({
     checkoutService,
+    cartService,
     paymentsStore,
     idGenerator: () => "payment-1",
   });
@@ -52,7 +76,7 @@ describe("createPayment", () => {
     checkoutsStore.set("checkout-1", checkout);
 
     // Act
-    const payment = await paymentsService.createPayment("checkout-1", "zelle");
+    const payment = await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
 
     // Assert
     expect(payment.paymentId).toBe("payment-1");
@@ -79,7 +103,7 @@ describe("createPayment", () => {
     checkoutsStore.set("checkout-1", checkout);
 
     // Act
-    const payment = await paymentsService.createPayment("checkout-1", "pago_movil");
+    const payment = await paymentsService.createPayment("checkout-1", "pago_movil", TEST_USER_ID);
 
     // Assert
     expect(payment.method).toBe("pago_movil");
@@ -99,7 +123,7 @@ describe("createPayment", () => {
 
     // Act + Assert
     await expect(
-      paymentsService.createPayment("checkout-1", "cash")
+      paymentsService.createPayment("checkout-1", "cash", TEST_USER_ID)
     ).rejects.toMatchObject({
       statusCode: 400,
       message: "Invalid payment method",
@@ -109,7 +133,7 @@ describe("createPayment", () => {
   test("should throw 404 when checkout does not exist", async () => {
     // Act + Assert
     await expect(
-      paymentsService.createPayment("invalid-checkout", "zelle")
+      paymentsService.createPayment("invalid-checkout", "zelle", TEST_USER_ID)
     ).rejects.toMatchObject({
       statusCode: 404,
       message: "Checkout not found",
@@ -128,7 +152,7 @@ describe("createPayment", () => {
 
     // Act + Assert
     await expect(
-      paymentsService.createPayment("checkout-1", "pago_movil")
+      paymentsService.createPayment("checkout-1", "pago_movil", TEST_USER_ID)
     ).rejects.toMatchObject({
       statusCode: 400,
       message: "Exchange rate required",
@@ -146,7 +170,7 @@ describe("submitPayment", () => {
     };
     checkoutsStore.set("checkout-1", checkout);
 
-    const createdPayment = await paymentsService.createPayment("checkout-1", "zelle");
+    const createdPayment = await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
     const initialUpdatedAt = createdPayment.updatedAt;
 
     // Act
@@ -180,7 +204,7 @@ describe("submitPayment", () => {
     };
     checkoutsStore.set("checkout-1", checkout);
 
-    await paymentsService.createPayment("checkout-1", "zelle");
+    await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
     await paymentsService.submitPayment("payment-1", { reference: "ABC123" });
 
     // Act + Assert: try to submit again
@@ -201,7 +225,7 @@ describe("submitPayment", () => {
     };
     checkoutsStore.set("checkout-1", checkout);
 
-    await paymentsService.createPayment("checkout-1", "zelle");
+    await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
 
     // Act + Assert: submit with invalid proof (no reference)
     await expect(
@@ -223,7 +247,7 @@ describe("admin review", () => {
     };
     checkoutsStore.set("checkout-1", checkout);
 
-    await paymentsService.createPayment("checkout-1", "zelle");
+    await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
     const submittedPayment = await paymentsService.submitPayment("payment-1", {
       reference: "ABC123",
     });
@@ -248,7 +272,7 @@ describe("admin review", () => {
     };
     checkoutsStore.set("checkout-1", checkout);
 
-    await paymentsService.createPayment("checkout-1", "zelle");
+    await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
     const submittedPayment = await paymentsService.submitPayment("payment-1", {
       reference: "ABC123",
     });
@@ -282,7 +306,7 @@ describe("admin review", () => {
     };
     checkoutsStore.set("checkout-1", checkout);
 
-    await paymentsService.createPayment("checkout-1", "zelle");
+    await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
 
     // Act + Assert
     await expect(
@@ -302,7 +326,7 @@ describe("admin review", () => {
     };
     checkoutsStore.set("checkout-1", checkout);
 
-    await paymentsService.createPayment("checkout-1", "zelle");
+    await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
     await paymentsService.submitPayment("payment-1", { reference: "ABC123" });
 
     // Act + Assert
@@ -330,7 +354,7 @@ describe("admin review", () => {
     };
     checkoutsStore.set("checkout-1", checkout);
 
-    await paymentsService.createPayment("checkout-1", "zelle");
+    await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
     const submittedPayment = await paymentsService.submitPayment("payment-1", {
       reference: "ABC123",
     });
@@ -365,7 +389,7 @@ describe("admin review", () => {
     };
     checkoutsStore.set("checkout-1", checkout);
 
-    await paymentsService.createPayment("checkout-1", "zelle");
+    await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
 
     // Act + Assert
     await expect(
@@ -385,7 +409,7 @@ describe("admin review", () => {
     };
     checkoutsStore.set("checkout-1", checkout);
 
-    await paymentsService.createPayment("checkout-1", "zelle");
+    await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
     await paymentsService.submitPayment("payment-1", { reference: "ABC123" });
 
     // Act + Assert

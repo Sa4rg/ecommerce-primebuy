@@ -13,66 +13,48 @@ function adminToken() {
   );
 }
 
-async function customerToken() {
-  return registerAndLogin(app, "customer-payments");
-}
-
-
-async function createSubmittedPayment() {
-  // Create cart
-  const createCartRes = await request(app).post("/api/cart");
-  expect(createCartRes.status).toBe(201);
-  const cartId = createCartRes.body.data.cartId;
-
-  // Create product (requires admin)
-  const createProductRes = await request(app)
-    .post("/api/products")
-    .set("Authorization", `Bearer ${adminToken()}`)
-    .send({
-      name: "Admin Review Product",
-      priceUSD: 10,
-      stock: 5,
-      category: "Test",
-    });
-  expect(createProductRes.status).toBe(201);
-  const productId = createProductRes.body.data.id;
-
-  // Add item to cart
-  await request(app)
-    .post(`/api/cart/${cartId}/items`)
-    .send({ productId, quantity: 1 });
-
-  // Create checkout
-  const checkoutRes = await request(app)
-    .post("/api/checkout")
-    .set("Authorization", `Bearer ${await customerToken()}`)
-    .send({ cartId });
-  expect(checkoutRes.status).toBe(200);
-  const checkoutId = checkoutRes.body.data.checkoutId;
-
-  // Create payment
-  const paymentRes = await request(app)
-    .post("/api/payments")
-    .send({ checkoutId, method: "zelle" });
-  expect(paymentRes.status).toBe(201);
-  const paymentId = paymentRes.body.data.paymentId;
-
-  // Submit payment
-  const submitRes = await request(app)
-    .patch(`/api/payments/${paymentId}/submit`)
-    .set("Authorization", `Bearer ${await customerToken()}`)
-    .send({ reference: "ABC123" });
-  expect(submitRes.status).toBe(200);
-  const previousUpdatedAt = submitRes.body.data.updatedAt;
-
-  return { paymentId, previousUpdatedAt };
-}
-
 
 describe("PATCH /api/payments/:id/confirm - authorization", () => {
-    it("should return 401 without token", async () => {
-    const { paymentId } = await createSubmittedPayment();
+  test("should return 401 without token", async () => {
+    // Customer flow
+    const customerToken = await registerAndLogin(app, "confirm-401-test");
 
+    const createCartRes = await request(app).post("/api/cart");
+    expect(createCartRes.status).toBe(201);
+    const cartId = createCartRes.body.data.cartId;
+
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({ name: "Product 401", priceUSD: 10, stock: 5, category: "Test" });
+    expect(createProductRes.status).toBe(201);
+    const productId = createProductRes.body.data.id;
+
+    await request(app)
+      .post(`/api/cart/${cartId}/items`)
+      .send({ productId, quantity: 1 });
+
+    const checkoutRes = await request(app)
+      .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ cartId });
+    expect(checkoutRes.status).toBe(200);
+    const checkoutId = checkoutRes.body.data.checkoutId;
+
+    const paymentRes = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ checkoutId, method: "zelle" });
+    expect(paymentRes.status).toBe(201);
+    const paymentId = paymentRes.body.data.paymentId;
+
+    const submitRes = await request(app)
+      .patch(`/api/payments/${paymentId}/submit`)
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ reference: "ABC123" });
+    expect(submitRes.status).toBe(200);
+
+    // Act: confirm WITHOUT token
     const res = await request(app)
       .patch(`/api/payments/${paymentId}/confirm`)
       .send({ note: "ok" });
@@ -81,13 +63,49 @@ describe("PATCH /api/payments/:id/confirm - authorization", () => {
   });
 
 
-  it("should return 403 for non-admin token", async () => {
-    const token = await customerToken();
-    const { paymentId } = await createSubmittedPayment();
+  test("should return 403 for non-admin token", async () => {
+    // Customer flow
+    const customerToken = await registerAndLogin(app, "confirm-403-test");
 
+    const createCartRes = await request(app).post("/api/cart");
+    expect(createCartRes.status).toBe(201);
+    const cartId = createCartRes.body.data.cartId;
+
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({ name: "Product 403", priceUSD: 10, stock: 5, category: "Test" });
+    expect(createProductRes.status).toBe(201);
+    const productId = createProductRes.body.data.id;
+
+    await request(app)
+      .post(`/api/cart/${cartId}/items`)
+      .send({ productId, quantity: 1 });
+
+    const checkoutRes = await request(app)
+      .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ cartId });
+    expect(checkoutRes.status).toBe(200);
+    const checkoutId = checkoutRes.body.data.checkoutId;
+
+    const paymentRes = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ checkoutId, method: "zelle" });
+    expect(paymentRes.status).toBe(201);
+    const paymentId = paymentRes.body.data.paymentId;
+
+    const submitRes = await request(app)
+      .patch(`/api/payments/${paymentId}/submit`)
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ reference: "ABC123" });
+    expect(submitRes.status).toBe(200);
+
+    // Act: confirm with customer token (non-admin)
     const res = await request(app)
       .patch(`/api/payments/${paymentId}/confirm`)
-      .set("Authorization", `Bearer ${token}`)
+      .set("Authorization", `Bearer ${customerToken}`)
       .send({ note: "ok" });
 
     expect(res.status).toBe(403);
@@ -97,13 +115,49 @@ describe("PATCH /api/payments/:id/confirm - authorization", () => {
 
 describe("PATCH /api/payments/:paymentId/confirm", () => {
   test("should confirm a submitted payment and update updatedAt", async () => {
-    // Arrange
-    const { paymentId, previousUpdatedAt } = await createSubmittedPayment();
+    // Customer flow
+    const customerToken = await registerAndLogin(app, "confirm-success-test");
 
-    // Act
+    const createCartRes = await request(app).post("/api/cart");
+    expect(createCartRes.status).toBe(201);
+    const cartId = createCartRes.body.data.cartId;
+
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({ name: "Product Confirm", priceUSD: 10, stock: 5, category: "Test" });
+    expect(createProductRes.status).toBe(201);
+    const productId = createProductRes.body.data.id;
+
+    await request(app)
+      .post(`/api/cart/${cartId}/items`)
+      .send({ productId, quantity: 1 });
+
+    const checkoutRes = await request(app)
+      .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ cartId });
+    expect(checkoutRes.status).toBe(200);
+    const checkoutId = checkoutRes.body.data.checkoutId;
+
+    const paymentRes = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ checkoutId, method: "zelle" });
+    expect(paymentRes.status).toBe(201);
+    const paymentId = paymentRes.body.data.paymentId;
+
+    const submitRes = await request(app)
+      .patch(`/api/payments/${paymentId}/submit`)
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ reference: "ABC123" });
+    expect(submitRes.status).toBe(200);
+    const previousUpdatedAt = submitRes.body.data.updatedAt;
+
+    // Admin action
     const confirmRes = await request(app)
       .patch(`/api/payments/${paymentId}/confirm`)
-       .set("Authorization", `Bearer ${adminToken()}`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ note: "Confirmed in bank" });
 
     // Assert
@@ -124,14 +178,50 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
   });
 
   test("should confirm without note and set review.note null", async () => {
-    // Arrange
-    const { paymentId, previousUpdatedAt } = await createSubmittedPayment();
+    // Customer flow
+    const customerToken = await registerAndLogin(app, "confirm-no-note-test");
 
-    // Act
+    const createCartRes = await request(app).post("/api/cart");
+    expect(createCartRes.status).toBe(201);
+    const cartId = createCartRes.body.data.cartId;
+
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({ name: "Product No Note", priceUSD: 10, stock: 5, category: "Test" });
+    expect(createProductRes.status).toBe(201);
+    const productId = createProductRes.body.data.id;
+
+    await request(app)
+      .post(`/api/cart/${cartId}/items`)
+      .send({ productId, quantity: 1 });
+
+    const checkoutRes = await request(app)
+      .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ cartId });
+    expect(checkoutRes.status).toBe(200);
+    const checkoutId = checkoutRes.body.data.checkoutId;
+
+    const paymentRes = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ checkoutId, method: "zelle" });
+    expect(paymentRes.status).toBe(201);
+    const paymentId = paymentRes.body.data.paymentId;
+
+    const submitRes = await request(app)
+      .patch(`/api/payments/${paymentId}/submit`)
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ reference: "ABC123" });
+    expect(submitRes.status).toBe(200);
+    const previousUpdatedAt = submitRes.body.data.updatedAt;
+
+    // Admin action
     const confirmRes = await request(app)
       .patch(`/api/payments/${paymentId}/confirm`)
       .set("Authorization", `Bearer ${adminToken()}`)
-      .send({ note: null });  
+      .send({ note: null });
 
     // Assert
     expect(confirmRes.status).toBe(200);
@@ -144,7 +234,7 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
     // Act
     const confirmRes = await request(app)
       .patch("/api/payments/invalid-payment/confirm")
-       .set("Authorization", `Bearer ${adminToken()}`)
+      .set("Authorization", `Bearer ${adminToken()}`)
       .send({ note: "x" });
 
     // Assert
@@ -158,7 +248,9 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
   });
 
   test("should return 409 when payment is not submitted", async () => {
-    // Arrange: create pending payment (do NOT submit)
+    // Customer flow - create pending payment (do NOT submit)
+    const customerToken = await registerAndLogin(app, "confirm-409-test");
+
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
@@ -166,12 +258,7 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
     const createProductRes = await request(app)
       .post("/api/products")
       .set("Authorization", `Bearer ${adminToken()}`)
-      .send({
-        name: "Pending Product",
-        priceUSD: 10,
-        stock: 5,
-        category: "Test",
-      });
+      .send({ name: "Pending Product", priceUSD: 10, stock: 5, category: "Test" });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -181,13 +268,14 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
 
     const checkoutRes = await request(app)
       .post("/api/checkout")
-      .set("Authorization", `Bearer ${await customerToken()}`)
+      .set("Authorization", `Bearer ${customerToken}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
 
     const paymentRes = await request(app)
       .post("/api/payments")
+      .set("Authorization", `Bearer ${customerToken}`)
       .send({ checkoutId, method: "zelle" });
     expect(paymentRes.status).toBe(201);
     const paymentId = paymentRes.body.data.paymentId;
@@ -210,8 +298,43 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
   });
 
   test("should return 400 when note is invalid", async () => {
-    // Arrange
-    const { paymentId } = await createSubmittedPayment();
+    // Customer flow
+    const customerToken = await registerAndLogin(app, "confirm-400-note-test");
+
+    const createCartRes = await request(app).post("/api/cart");
+    expect(createCartRes.status).toBe(201);
+    const cartId = createCartRes.body.data.cartId;
+
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({ name: "Product Note Invalid", priceUSD: 10, stock: 5, category: "Test" });
+    expect(createProductRes.status).toBe(201);
+    const productId = createProductRes.body.data.id;
+
+    await request(app)
+      .post(`/api/cart/${cartId}/items`)
+      .send({ productId, quantity: 1 });
+
+    const checkoutRes = await request(app)
+      .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ cartId });
+    expect(checkoutRes.status).toBe(200);
+    const checkoutId = checkoutRes.body.data.checkoutId;
+
+    const paymentRes = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ checkoutId, method: "zelle" });
+    expect(paymentRes.status).toBe(201);
+    const paymentId = paymentRes.body.data.paymentId;
+
+    const submitRes = await request(app)
+      .patch(`/api/payments/${paymentId}/submit`)
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ reference: "ABC123" });
+    expect(submitRes.status).toBe(200);
 
     // Act + Assert: empty note
     const emptyNoteRes = await request(app)
@@ -245,10 +368,46 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
 
 describe("PATCH /api/payments/:paymentId/reject", () => {
   test("should reject a submitted payment and update updatedAt", async () => {
-    // Arrange
-    const { paymentId, previousUpdatedAt } = await createSubmittedPayment();
+    // Customer flow
+    const customerToken = await registerAndLogin(app, "reject-success-test");
 
-    // Act
+    const createCartRes = await request(app).post("/api/cart");
+    expect(createCartRes.status).toBe(201);
+    const cartId = createCartRes.body.data.cartId;
+
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({ name: "Product Reject", priceUSD: 10, stock: 5, category: "Test" });
+    expect(createProductRes.status).toBe(201);
+    const productId = createProductRes.body.data.id;
+
+    await request(app)
+      .post(`/api/cart/${cartId}/items`)
+      .send({ productId, quantity: 1 });
+
+    const checkoutRes = await request(app)
+      .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ cartId });
+    expect(checkoutRes.status).toBe(200);
+    const checkoutId = checkoutRes.body.data.checkoutId;
+
+    const paymentRes = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ checkoutId, method: "zelle" });
+    expect(paymentRes.status).toBe(201);
+    const paymentId = paymentRes.body.data.paymentId;
+
+    const submitRes = await request(app)
+      .patch(`/api/payments/${paymentId}/submit`)
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ reference: "ABC123" });
+    expect(submitRes.status).toBe(200);
+    const previousUpdatedAt = submitRes.body.data.updatedAt;
+
+    // Admin action
     const rejectRes = await request(app)
       .patch(`/api/payments/${paymentId}/reject`)
       .set("Authorization", `Bearer ${adminToken()}`)
@@ -289,7 +448,9 @@ describe("PATCH /api/payments/:paymentId/reject", () => {
   });
 
   test("should return 409 when payment is not submitted", async () => {
-    // Arrange: create pending payment (do NOT submit)
+    // Customer flow - create pending payment (do NOT submit)
+    const customerToken = await registerAndLogin(app, "reject-409-test");
+
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
@@ -297,12 +458,7 @@ describe("PATCH /api/payments/:paymentId/reject", () => {
     const createProductRes = await request(app)
       .post("/api/products")
       .set("Authorization", `Bearer ${adminToken()}`)
-      .send({
-        name: "Pending Reject Product",
-        priceUSD: 10,
-        stock: 5,
-        category: "Test",
-      });
+      .send({ name: "Pending Reject Product", priceUSD: 10, stock: 5, category: "Test" });
     expect(createProductRes.status).toBe(201);
     const productId = createProductRes.body.data.id;
 
@@ -312,13 +468,14 @@ describe("PATCH /api/payments/:paymentId/reject", () => {
 
     const checkoutRes = await request(app)
       .post("/api/checkout")
-      .set("Authorization", `Bearer ${await customerToken()}`)
+      .set("Authorization", `Bearer ${customerToken}`)
       .send({ cartId });
     expect(checkoutRes.status).toBe(200);
     const checkoutId = checkoutRes.body.data.checkoutId;
 
     const paymentRes = await request(app)
       .post("/api/payments")
+      .set("Authorization", `Bearer ${customerToken}`)
       .send({ checkoutId, method: "zelle" });
     expect(paymentRes.status).toBe(201);
     const paymentId = paymentRes.body.data.paymentId;
@@ -340,8 +497,43 @@ describe("PATCH /api/payments/:paymentId/reject", () => {
   });
 
   test("should return 400 when reason is invalid", async () => {
-    // Arrange
-    const { paymentId } = await createSubmittedPayment();
+    // Customer flow
+    const customerToken = await registerAndLogin(app, "reject-400-reason-test");
+
+    const createCartRes = await request(app).post("/api/cart");
+    expect(createCartRes.status).toBe(201);
+    const cartId = createCartRes.body.data.cartId;
+
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({ name: "Product Reason Invalid", priceUSD: 10, stock: 5, category: "Test" });
+    expect(createProductRes.status).toBe(201);
+    const productId = createProductRes.body.data.id;
+
+    await request(app)
+      .post(`/api/cart/${cartId}/items`)
+      .send({ productId, quantity: 1 });
+
+    const checkoutRes = await request(app)
+      .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ cartId });
+    expect(checkoutRes.status).toBe(200);
+    const checkoutId = checkoutRes.body.data.checkoutId;
+
+    const paymentRes = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ checkoutId, method: "zelle" });
+    expect(paymentRes.status).toBe(201);
+    const paymentId = paymentRes.body.data.paymentId;
+
+    const submitRes = await request(app)
+      .patch(`/api/payments/${paymentId}/submit`)
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ reference: "ABC123" });
+    expect(submitRes.status).toBe(200);
 
     // Act + Assert: empty reason
     const emptyReasonRes = await request(app)

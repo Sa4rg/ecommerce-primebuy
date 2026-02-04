@@ -2,9 +2,11 @@ const express = require("express");
 const router = express.Router();
 const paymentsController = require("../controllers/payments.controller");
 const { requireAuth, requireRole } = require("../middlewares/auth.middleware");
+const { requirePaymentOwnerOrAdmin } = require("../middlewares/payments-ownership.middleware");
 
-router.post("/", paymentsController.createPayment);
-router.patch("/:paymentId/submit", paymentsController.submitPayment);
+// Owner (customer) routes
+router.post("/", requireAuth, paymentsController.createPayment);
+router.patch("/:paymentId/submit", requireAuth, requirePaymentOwnerOrAdmin(), paymentsController.submitPayment);
 
 // Admin only
 router.patch("/:paymentId/confirm", requireAuth, requireRole("admin"), paymentsController.confirmPayment);
