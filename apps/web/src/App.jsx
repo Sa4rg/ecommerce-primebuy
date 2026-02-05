@@ -1,45 +1,62 @@
-import { useState } from 'react'
-import './App.css'
+import { useEffect, useState } from "react";
+import "./App.css";
+import { fetchProducts } from "./api/products";
+import { ProductCard } from "./components/ProductCard";
 
 function App() {
-  const [products, setProducts] = useState([])
-  const [error, setError] = useState('')
+  const [products, setProducts] = useState([]);
+  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+  const [error, setError] = useState("");
 
-  const loadProducts = async () => {
-    try {
-      setError('')
-      const res = await fetch('http://localhost:3000/api/products')
-      const data = await res.json()
+  useEffect(() => {
+    let cancelled = false;
 
-      if (!data?.success) {
-        setError('Failed to load products')
-        return
+    async function load() {
+      try {
+        setStatus("loading");
+        setError("");
+
+        const data = await fetchProducts();
+        if (cancelled) return;
+
+        setProducts(data);
+        setStatus("success");
+      } catch (err) {
+        if (cancelled) return;
+        setStatus("error");
+        setError(err?.message || "Unknown error");
       }
-
-      setProducts(data.data ?? [])
-    } catch (err) {
-      console.error('Failed to load products:', err)
-      setError('Failed to load products')
     }
-  }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
-    <div className="app">
-      <h1>E-commerce Web</h1>
-      <button onClick={loadProducts}>Load products</button>
+    <div className="page">
+      <header className="page__header">
+        <h1>Catalog</h1>
+        <p className="page__subtitle">Products available</p>
+      </header>
 
-      {error ? <p className="error">{error}</p> : null}
+      {status === "loading" && <p>Loading products...</p>}
 
-      <ul>
-        {products.map((product) => (
-          <li key={product.id}>
-            {product.name} - ${product.priceUSD} - Stock: {product.stock}
-          </li>
-        ))}
-      </ul>
+      {status === "error" && <p className="error">Error: {error}</p>}
+
+      {status === "success" && products.length === 0 && <p>No products available.</p>}
+
+      {status === "success" && products.length > 0 && (
+        <section className="grid">
+          {products.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </section>
+      )}
     </div>
-  )
+  );
 }
 
-export default App
-
+export default App;
