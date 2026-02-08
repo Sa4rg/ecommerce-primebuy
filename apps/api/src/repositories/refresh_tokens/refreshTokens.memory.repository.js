@@ -3,13 +3,18 @@
  *
  * In-memory implementation of the RefreshTokensRepository contract.
  * Used for unit tests and development.
+ *
+ * @param {object} options
+ * @param {function(): Date} [options.nowProvider] - Function that returns the current date (for testing)
  */
 class InMemoryRefreshTokensRepository {
-  constructor() {
+  constructor({ nowProvider = () => new Date() } = {}) {
     /** @type {Map<string, object>} Store by refreshTokenId */
     this.tokensById = new Map();
     /** @type {Map<string, string>} Map tokenHash -> refreshTokenId for uniqueness */
     this.hashIndex = new Map();
+    /** @type {function(): Date} */
+    this.nowProvider = nowProvider;
   }
 
   /**
@@ -65,7 +70,7 @@ class InMemoryRefreshTokensRepository {
     }
 
     // Check if expired
-    const now = new Date();
+    const now = this.nowProvider();
     if (record.expiresAt <= now) {
       return null;
     }

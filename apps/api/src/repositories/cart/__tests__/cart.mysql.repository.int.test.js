@@ -41,14 +41,14 @@ describe('MySQLCartRepository - Integration Tests', () => {
         items: [
           {
             productId: '1',
-            productName: 'Laptop',
+            name: 'Laptop',
             unitPriceUSD: 1000,
             quantity: 2,
             lineTotalUSD: 2000,
           },
           {
             productId: '2',
-            productName: 'Mouse',
+            name: 'Mouse',
             unitPriceUSD: 20,
             quantity: 1,
             lineTotalUSD: 20,
@@ -95,7 +95,7 @@ describe('MySQLCartRepository - Integration Tests', () => {
       // Verify items
       expect(found.items).toHaveLength(2);
       expect(found.items[0].productId).toBe('1');
-      expect(found.items[0].productName).toBe('Laptop');
+      expect(found.items[0].name).toBe('Laptop');
       expect(found.items[0].unitPriceUSD).toBe(1000);
       expect(found.items[0].quantity).toBe(2);
       expect(found.items[0].lineTotalUSD).toBe(2000);
@@ -133,7 +133,7 @@ describe('MySQLCartRepository - Integration Tests', () => {
         items: [
           {
             productId: '1',
-            productName: 'Laptop',
+            name: 'Laptop',
             unitPriceUSD: 1000,
             quantity: 1,
             lineTotalUSD: 1000,
@@ -174,7 +174,7 @@ describe('MySQLCartRepository - Integration Tests', () => {
       cart.items[0].lineTotalUSD = 3000;
       cart.items.push({
         productId: '2',
-        productName: 'Mouse',
+        name: 'Mouse',
         unitPriceUSD: 25,
         quantity: 2,
         lineTotalUSD: 50,
@@ -195,7 +195,7 @@ describe('MySQLCartRepository - Integration Tests', () => {
       expect(updated.items[0].quantity).toBe(3);
       expect(updated.items[0].lineTotalUSD).toBe(3000);
       expect(updated.items[1].productId).toBe('2');
-      expect(updated.items[1].productName).toBe('Mouse');
+      expect(updated.items[1].name).toBe('Mouse');
       expect(updated.items[1].quantity).toBe(2);
       expect(updated.summary.itemsCount).toBe(5);
       expect(updated.summary.subtotalUSD).toBe(3050);

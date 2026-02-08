@@ -40,6 +40,12 @@ describe("POST /api/cart/:cartId/items", () => {
       .post(`/api/cart/${cartId}/items`)
       .send({ productId, quantity: 2 });
 
+    const getRes = await request(app).get(`/api/cart/${cartId}`);
+      expect(getRes.status).toBe(200);
+      expect(getRes.body.data.items).toHaveLength(1);
+      expect(getRes.body.data.items[0].productId).toBe(productId);
+
+
     // Assert
     expect(addRes.status).toBe(200);
     expect(addRes.body).toEqual(

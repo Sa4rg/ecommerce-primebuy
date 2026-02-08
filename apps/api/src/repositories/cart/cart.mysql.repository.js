@@ -48,7 +48,7 @@ class MySQLCartRepository {
     return items.map(item => ({
       cart_id: cartId,
       product_id: item.productId,
-      name: item.productName,
+      name: item.name,
       unit_price_usd: item.unitPriceUSD,
       quantity: item.quantity,
       line_total_usd: item.lineTotalUSD,
@@ -66,7 +66,7 @@ class MySQLCartRepository {
 
     const items = itemRows.map(item => ({
       productId: item.product_id,
-      productName: item.name,
+      name: item.name,
       unitPriceUSD: parseFloat(item.unit_price_usd),
       quantity: item.quantity,
       lineTotalUSD: parseFloat(item.line_total_usd),

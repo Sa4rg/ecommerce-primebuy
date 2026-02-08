@@ -29,7 +29,7 @@ describe('auth.service', () => {
 
   beforeEach(() => {
     usersRepository = new UsersMemoryRepository();
-    refreshTokensRepository = new InMemoryRefreshTokensRepository();
+    refreshTokensRepository = new InMemoryRefreshTokensRepository({ nowProvider: deterministicNowProvider });
     authService = createAuthService({
       usersRepository,
       refreshTokensRepository,

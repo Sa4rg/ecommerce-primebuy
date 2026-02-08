@@ -141,6 +141,7 @@ function createCartService(deps = {}) {
     }
 
     recalcSummary(cart);
+    await cartRepository.save(cart);
     return cart;
   }
 
@@ -164,6 +165,7 @@ function createCartService(deps = {}) {
     existingItem.lineTotalUSD = existingItem.unitPriceUSD * quantity;
 
     recalcSummary(cart);
+    await cartRepository.save(cart);
     return cart;
 }
 
@@ -180,6 +182,7 @@ function createCartService(deps = {}) {
     cart.items = cart.items.filter(i => i.productId !== productId);
 
     recalcSummary(cart);
+    await cartRepository.save(cart);
     return cart;
 
   }
@@ -252,7 +255,7 @@ function createCartService(deps = {}) {
 
     // Update updatedAt
     cart.metadata.updatedAt = nextUpdatedAt(cart.metadata.updatedAt);
-
+    await cartRepository.save(cart);
     return cart;
   }
 
