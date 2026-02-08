@@ -6,13 +6,12 @@ export function CartItem({ item }) {
   const [isUpdating, setIsUpdating] = useState(false);
 
   async function changeQuantity(nextQuantity) {
+    if (isUpdating) return;  
     if (nextQuantity < 1) return;
 
     try {
       setIsUpdating(true);
-      console.log("CartItem item", item);
       await updateQuantity({ productId: item.productId, quantity: nextQuantity });
-           console.log("CartItem item", item);
     } catch (err) {
     } finally {
       setIsUpdating(false);
@@ -20,6 +19,7 @@ export function CartItem({ item }) {
   }
 
   async function handleRemove() {
+    if (isUpdating) return;
     try {
       setIsUpdating(true);
       await removeItem({ productId: item.productId });

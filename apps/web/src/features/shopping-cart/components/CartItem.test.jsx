@@ -72,4 +72,58 @@ describe("CartItem quantity controls", () => {
       expect(screen.getByText((content) => content.includes("Qty:") && content.includes("3"))).toBeInTheDocument();
     });
   });
+
+    it("does not send two requests when clicking + twice quickly", async () => {
+    let resolveFetch;
+    const pending = new Promise((resolve) => {
+        resolveFetch = resolve;
+    });
+
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(() => pending);
+
+    render(
+        <CartProvider>
+        <CartItemFromContext />
+        </CartProvider>
+    );
+
+    const user = userEvent.setup();
+    const plus = screen.getByRole("button", { name: "+" });
+
+    await user.click(plus);
+    await user.click(plus);
+
+    // Guard should prevent the second request before the first finishes
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    // Finish the first request to avoid hanging test
+    resolveFetch({
+        ok: true,
+        status: 200,
+        json: async () => ({
+        success: true,
+        message: "Updated",
+        data: {
+            cartId: "cart-1",
+            items: [
+            {
+                productId: "p-1",
+                name: "Patch Product",
+                unitPriceUSD: 10,
+                quantity: 3,
+                lineTotalUSD: 30,
+            },
+            ],
+            summary: { itemsCount: 3, subtotalUSD: 30 },
+        },
+        }),
+    });
+
+    await waitFor(() => {
+        expect(
+        screen.getByText((content) => content.includes("Qty:") && content.includes("3"))
+        ).toBeInTheDocument();
+    });
+    });
+
 });
