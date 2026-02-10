@@ -153,7 +153,7 @@ function createOrdersService(deps = {}) {
     }
 
     // 3) Load checkout
-    const checkout = await checkoutService.getCheckoutById(payment.checkoutId);
+    const checkout = await checkoutService.findById(payment.checkoutId);
 
     // 4) Load cart
     const cart = await cartService.getCart(checkout.cartId);

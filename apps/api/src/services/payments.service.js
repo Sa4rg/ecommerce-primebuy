@@ -51,7 +51,7 @@ function createPaymentsService(deps = {}) {
     if (!userId || typeof userId !== "string") {
       throw new AppError("Unauthorized", 401);
     }
-    const checkout = await checkoutService.getCheckoutById(checkoutId);
+    const checkout = await checkoutService.findById(checkoutId);
 
     // ownership real: el cart del checkout debe ser de este usuario
     const cart = await cartService.getCart(checkout.cartId);

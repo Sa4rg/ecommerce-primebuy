@@ -1,5 +1,5 @@
 import React from "react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { CartIndicator } from "./CartIndicator";
 import { CartProvider, useCart } from "../../context/CartContext.jsx";

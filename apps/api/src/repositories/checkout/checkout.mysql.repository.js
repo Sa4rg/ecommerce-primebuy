@@ -31,6 +31,7 @@ class MySQLCheckoutRepository {
     return {
       checkout_id: checkout.checkoutId,
       cart_id: checkout.cartId,
+      items_json: JSON.stringify(checkout.items || []),
       totals_json: JSON.stringify(checkout.totals),
       exchange_rate_json: checkout.exchangeRate ? JSON.stringify(checkout.exchangeRate) : null,
       payment_methods_json: JSON.stringify(checkout.paymentMethods),
@@ -50,6 +51,10 @@ class MySQLCheckoutRepository {
     const totals = typeof row.totals_json === 'string'
       ? JSON.parse(row.totals_json)
       : row.totals_json;
+
+    const items = row.items_json
+      ? (typeof row.items_json === "string" ? JSON.parse(row.items_json) : row.items_json)
+      : []; 
     
     let exchangeRate = null;
     if (row.exchange_rate_json !== null) {
@@ -65,6 +70,7 @@ class MySQLCheckoutRepository {
     return {
       checkoutId: row.checkout_id,
       cartId: row.cart_id,
+      items,
       totals,
       exchangeRate,
       paymentMethods,
@@ -93,6 +99,19 @@ class MySQLCheckoutRepository {
   async findById(checkoutId) {
     const row = await db(this.table)
       .where({ checkout_id: checkoutId })
+      .first();
+    
+    return this._mapToCheckout(row);
+  }
+
+  /**
+   * Finds a pending checkout by cartId
+   * @param {string} cartId
+   * @returns {Promise<Object|null>}
+   */
+  async findPendingByCartId(cartId) {
+    const row = await db(this.table)
+      .where({ cart_id: cartId, status: 'pending' })
       .first();
     
     return this._mapToCheckout(row);

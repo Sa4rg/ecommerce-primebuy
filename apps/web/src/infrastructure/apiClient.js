@@ -1,26 +1,39 @@
 import { API_BASE_URL } from "../config";
-
+import { getAccessToken } from "../features/auth/authStorage";
 
 async function request(path, options = {}) {
+  const token = getAccessToken();
+
+  // 1) Partimos de headers del caller (si existen)
+  const mergedHeaders = {
+    ...(options.headers || {}),
+  };
+
+  // 2) Aseguramos JSON por defecto (si el caller no lo puso)
+  if (!mergedHeaders["Content-Type"]) {
+    mergedHeaders["Content-Type"] = "application/json";
+  }
+
+  // 3) SOLO ponemos Authorization si el caller no lo mandó
+  const hasAuth =
+    mergedHeaders.Authorization || mergedHeaders.authorization;
+
+  if (!hasAuth && token) {
+    mergedHeaders.Authorization = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
     ...options,
+    headers: mergedHeaders,
   });
 
   let body = null;
-
   try {
     body = await res.json();
-  } catch {
-    // Response has no JSON body
-  }
+  } catch {}
 
   if (!res.ok) {
-    const message =
-      body?.message || `HTTP error ${res.status}`;
+    const message = body?.message || `HTTP error ${res.status}`;
     throw new Error(message);
   }
 
@@ -31,24 +44,25 @@ async function request(path, options = {}) {
   return body?.data;
 }
 
-
 export const apiClient = {
-  get(path) {
-    return request(path, { method: "GET" });
+  get(path, options = {}) {
+    return request(path, { ...options, method: "GET" });
   },
-  post(path, payload) {
+  post(path, payload, options = {}) {
     return request(path, {
+      ...options,
       method: "POST",
       body: payload ? JSON.stringify(payload) : undefined,
     });
   },
-  patch(path, payload) {
+  patch(path, payload, options = {}) {
     return request(path, {
+      ...options,
       method: "PATCH",
       body: payload ? JSON.stringify(payload) : undefined,
     });
   },
-  delete(path) {
-    return request(path, { method: "DELETE" });
+  delete(path, options = {}) {
+    return request(path, { ...options, method: "DELETE" });
   },
 };

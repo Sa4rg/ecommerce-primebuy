@@ -41,6 +41,20 @@ class InMemoryCheckoutRepository {
     const checkoutId = checkout.checkoutId;
     this.checkoutsById.set(checkoutId, checkout);
   }
+
+  /**
+   * Finds a pending checkout by cartId.
+   * @param {string} cartId
+   * @returns {Promise<Object|null>}
+   */
+  async findPendingByCartId(cartId) {
+    for (const checkout of this.checkoutsById.values()) {
+      if (checkout.cartId === cartId && checkout.status === "pending") {
+        return checkout;
+      }
+    }
+    return null;
+  }
 }
 
 module.exports = { InMemoryCheckoutRepository };

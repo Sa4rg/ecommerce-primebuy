@@ -21,6 +21,7 @@ beforeAll(async () => {
   expectedUserId = decoded.sub;
 });
 
+
 describe("POST /api/checkout", () => {
   test("should return 401 when creating checkout without auth", async () => {
     const res = await request(app)
@@ -256,5 +257,84 @@ describe("POST /api/checkout", () => {
 
     expect(checkoutRes.status).toBe(409);
     expect(checkoutRes.body.message).toBe("Insufficient stock");
+  });
+});
+
+describe("GET /api/checkout/:checkoutId", () => {
+  test("should return 401 when getting checkout without auth", async () => {
+    const res = await request(app).get("/api/checkout/any-id");
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        success: false,
+        message: "Unauthorized",
+      })
+    );
+  });
+
+  test("should return 404 when checkout does not exist", async () => {
+    const res = await request(app)
+      .get("/api/checkout/non-existent-checkout")
+      .set("Authorization", `Bearer ${customerAccessToken}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe("Checkout not found");
+  });
+
+  test("should return 200 and the checkout when it exists", async () => {
+    // Arrange: create anonymous cart
+    const createCartRes = await request(app).post("/api/cart");
+    expect(createCartRes.status).toBe(201);
+    const cartId = createCartRes.body.data.cartId;
+
+    // Arrange: create product (admin)
+    const createProductRes = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        name: "Get Checkout Product",
+        priceUSD: 10,
+        stock: 5,
+        category: "Test",
+      });
+    expect(createProductRes.status).toBe(201);
+    const productId = createProductRes.body.data.id;
+
+    // Arrange: add item
+    const addItemRes = await request(app)
+      .post(`/api/cart/${cartId}/items`)
+      .send({ productId, quantity: 2 });
+    expect(addItemRes.status).toBe(200);
+
+    // Act 1: create checkout (auth)
+    const createCheckoutRes = await request(app)
+      .post("/api/checkout")
+      .set("Authorization", `Bearer ${customerAccessToken}`)
+      .send({ cartId });
+
+    expect(createCheckoutRes.status).toBe(200);
+    const checkoutId = createCheckoutRes.body.data.checkoutId;
+
+    // Act 2: fetch checkout by id (auth)
+    const getRes = await request(app)
+      .get(`/api/checkout/${checkoutId}`)
+      .set("Authorization", `Bearer ${customerAccessToken}`);
+
+    // Assert
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.data.checkoutId).toBe(checkoutId);
+    expect(getRes.body.data.cartId).toBe(cartId);
+    expect(getRes.body.data.status).toBe("pending");
+    expect(getRes.body.data.totals.subtotalUSD).toBe(20);
+
+    // Si ya estás incluyendo snapshot items en checkout:
+    expect(getRes.body.data.items).toHaveLength(1);
+    expect(getRes.body.data.items[0]).toEqual(
+      expect.objectContaining({
+        productId,
+        quantity: 2,
+        lineTotalUSD: 20,
+      })
+    );
   });
 });

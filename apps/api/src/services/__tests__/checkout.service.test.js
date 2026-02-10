@@ -159,4 +159,19 @@ describe("createCheckout", () => {
       message: "Insufficient stock",
     });
   });
+
+  test("should return existing pending checkout when called twice (idempotency)", async () => {
+    // Arrange: create cart with items
+    const { cartId } = await cartService.createCart(TEST_USER_ID);
+    await cartService.addItem(cartId, "product-1", 1);
+
+    // Act: call createCheckout twice
+    const checkout1 = await checkoutService.createCheckout(cartId, TEST_USER_ID);
+    const checkout2 = await checkoutService.createCheckout(cartId, TEST_USER_ID);
+
+    // Assert: both calls return the same checkout
+    expect(checkout1.checkoutId).toBe(checkout2.checkoutId);
+    expect(checkout1.cartId).toBe(checkout2.cartId);
+    expect(checkoutsStore.size).toBe(1);
+  });
 });

@@ -1,8 +1,9 @@
 import React from "react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { CartProvider } from "../../../context/CartContext.jsx";
 import { CartView } from "./CartView";
+import { MemoryRouter } from "react-router-dom";
 
 describe("CartView error UX", () => {
   it("shows an error banner when status is error", () => {
@@ -18,7 +19,9 @@ describe("CartView error UX", () => {
           },
         }}
       >
-        <CartView />
+        <MemoryRouter initialEntries={["/cart"]}>
+          <CartView />
+        </MemoryRouter>
       </CartProvider>
     );
 

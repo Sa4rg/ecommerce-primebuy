@@ -21,7 +21,7 @@ beforeEach(() => {
   cartsStore = new Map();
   
   checkoutService = {
-    getCheckoutById: async (checkoutId) => {
+    findById: async (checkoutId) => {
       const checkout = checkoutsStore.get(checkoutId);
       if (!checkout) {
         const { AppError } = require("../../utils/errors");

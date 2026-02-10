@@ -16,5 +16,19 @@ async function createCheckout(req, res, next) {
     return next(error);
   }
 }
+  
+async function getCheckoutById(req, res, next) {
+  try {
+    const { checkoutId } = req.params;
+    const userId = req.user?.userId;
+    const checkout = await checkoutService.getCheckoutById(checkoutId, userId);
 
-module.exports = { createCheckout };
+    res.status(200);
+    success(res, checkout, "Checkout retrieved successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+
+module.exports = { createCheckout, getCheckoutById };

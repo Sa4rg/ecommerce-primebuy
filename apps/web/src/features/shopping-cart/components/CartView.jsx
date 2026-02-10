@@ -3,9 +3,11 @@ import { useCart } from "../../../context/CartContext.jsx";
 import { CartItem } from "./CartItem";
 import { CartSummary } from "./CartSummary";
 import { CartError } from "./CartError";
+import { useNavigate } from "react-router-dom";
 
 export function CartView() {
   const { cart, status, error, initializeCart } = useCart();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (status === "idle") {
@@ -30,6 +32,14 @@ export function CartView() {
       ))}
 
       <CartSummary summary={cart.summary} />
+
+      <button 
+      type="button" 
+      onClick={() => navigate("/checkout")}
+       disabled={cart.items.length === 0}
+       >
+        Finalize purchase
+      </button>
     </section>
   );
 }
