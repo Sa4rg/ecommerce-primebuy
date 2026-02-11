@@ -55,10 +55,12 @@ function createCheckoutService(deps = {}) {
     throw new AppError("Unauthorized", 401);
     }
 
-    // Idempotency: return existing pending checkout if exists
+    // Cancel any existing pending checkout for this cart (user modified cart)
     const existingCheckout = await checkoutRepository.findPendingByCartId(cartId);
     if (existingCheckout) {
-      return existingCheckout;
+      existingCheckout.status = CheckoutStatus.CANCELLED;
+      existingCheckout.updatedAt = new Date().toISOString();
+      await checkoutRepository.save(existingCheckout);
     }
 
     // Claim cart or forbid if owned by someone else
@@ -123,6 +125,13 @@ function createCheckoutService(deps = {}) {
       },
       exchangeRate,
       paymentMethods,
+      shippingAddress: null,
+      billingAddress: null,
+      customer: {
+        name: null,
+        email: null,
+        phone: null,
+      },
       createdAt: now,
       updatedAt: now,
     };
@@ -169,7 +178,117 @@ function createCheckoutService(deps = {}) {
     return checkout;
   }
 
-  return { createCheckout, findById, getCheckoutById };
+  function isNonEmptyString(v) {
+  return typeof v === "string" && v.trim().length > 0;
+}
+
+  function validateShippingPatch(patch) {
+    if (!patch || typeof patch !== "object") {
+      throw new AppError("Invalid shipping", 400);
+    }
+
+    if (patch.method !== undefined && patch.method !== null) {
+      if (!["delivery", "pickup"].includes(patch.method)) {
+        throw new AppError("Invalid shipping method", 400);
+      }
+    }
+
+    if (patch.method === "pickup") {
+      return {
+        method: "pickup",
+        address: null,
+      };
+    }
+
+    if (patch.address !== undefined && patch.address !== null) {
+      const a = patch.address;
+
+      const required = ["recipientName", "phone", "state", "city", "line1"];
+      for (const key of required) {
+        if (typeof a[key] !== "string" || a[key].trim() === "") {
+          throw new AppError("Invalid shipping address", 400);
+        }
+      }
+
+      if (a.reference !== undefined && a.reference !== null && typeof a.reference !== "string") {
+        throw new AppError("Invalid shipping address", 400);
+      }
+
+      return {
+        method: patch.method || "delivery",
+        address: {
+          recipientName: a.recipientName.trim(),
+          phone: a.phone.trim(),
+          state: a.state.trim(),
+          city: a.city.trim(),
+          line1: a.line1.trim(),
+          reference: a.reference ? a.reference.trim() : null,
+        },
+      };
+    }
+
+    throw new AppError("Invalid shipping", 400);
+  }
+
+  async function updateShipping(checkoutId, userId, patch) {
+    const checkout = await getCheckoutById(checkoutId, userId);
+
+    if (checkout.status !== CheckoutStatus.PENDING) {
+      throw new AppError("Checkout is not editable", 409);
+    }
+
+    const normalized = validateShippingPatch(patch);
+
+    checkout.shipping = normalized;
+    checkout.updatedAt = new Date().toISOString();
+    await checkoutRepository.save(checkout);
+
+    return checkout;
+  }
+
+  function validateCustomerPatch(patch) {
+    if (patch.email !== undefined) {
+      if (typeof patch.email !== "string" || !patch.email.includes("@")) {
+        throw new AppError("Invalid customer", 400);
+      }
+    }
+    if (patch.name !== undefined) {
+      if (typeof patch.name !== "string") {
+        throw new AppError("Invalid customer", 400);
+      }
+    }
+    if (patch.phone !== undefined) {
+      if (typeof patch.phone !== "string") {
+        throw new AppError("Invalid customer", 400);
+      }
+    }
+  }
+
+  async function updateCustomer(checkoutId, userId, patch) {
+  // auth + ownership
+  const checkout = await getCheckoutById(checkoutId, userId);
+
+  // editable rule mínima (si quieres desde ya):
+  if (checkout.status !== CheckoutStatus.PENDING) {
+    throw new AppError("Checkout is not editable", 409);
+  }
+
+  validateCustomerPatch(patch);
+
+  checkout.customer = {
+    ...(checkout.customer || { name: null, email: null, phone: null }),
+    ...patch,
+  };
+
+  checkout.updatedAt = new Date().toISOString();
+  await checkoutRepository.save(checkout);
+
+  return checkout;
+}
+
+
+
+  return { createCheckout, findById, getCheckoutById, updateShipping, updateCustomer };
 }
 
 const checkoutService = createCheckoutService();

@@ -16,3 +16,13 @@ export async function getCheckoutById(checkoutId) {
   if (!checkoutId) throw new Error("checkoutId is required");
   return apiClient.get(`/api/checkout/${checkoutId}`);
 }
+
+export function updateCheckoutCustomer(checkoutId, patch) {
+  if (!checkoutId) throw new Error("checkoutId is required");
+  return apiClient.patch(`/api/checkout/${checkoutId}/customer`, patch);
+}
+
+export function updateCheckoutShipping(checkoutId, patch) {
+  if (!checkoutId) throw new Error("checkoutId is required");
+  return apiClient.patch(`/api/checkout/${checkoutId}/shipping`, patch);
+}

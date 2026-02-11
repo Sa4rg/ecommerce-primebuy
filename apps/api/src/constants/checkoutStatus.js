@@ -6,6 +6,7 @@
 
 const CheckoutStatus = {
   PENDING: "pending",
+  CANCELLED: "cancelled",
 };
 
 module.exports = { CheckoutStatus };

@@ -74,6 +74,8 @@ describe("createCheckout", () => {
       usdToVes: 40,
       asOf: "2023-01-01T00:00:00.000Z",
     });
+    expect(checkout.shippingAddress).toBeNull();
+    expect(checkout.billingAddress).toBeNull();
     expect(checkout.paymentMethods.usd).toEqual(["zelle", "zinli"]);
     expect(checkout.paymentMethods.ves).toEqual(["bank_transfer", "pago_movil"]);
     expect(checkoutsStore.get("checkout-1")).toMatchObject({
@@ -94,6 +96,8 @@ describe("createCheckout", () => {
     expect(checkout.totals.subtotalUSD).toBe(10);
     expect(checkout.totals.subtotalVES).toBeNull();
     expect(checkout.exchangeRate).toBeNull();
+    expect(checkout.shippingAddress).toBeNull();
+    expect(checkout.billingAddress).toBeNull();
   });
 
   test("should throw 404 when cart does not exist", async () => {
@@ -158,20 +162,5 @@ describe("createCheckout", () => {
       statusCode: 409,
       message: "Insufficient stock",
     });
-  });
-
-  test("should return existing pending checkout when called twice (idempotency)", async () => {
-    // Arrange: create cart with items
-    const { cartId } = await cartService.createCart(TEST_USER_ID);
-    await cartService.addItem(cartId, "product-1", 1);
-
-    // Act: call createCheckout twice
-    const checkout1 = await checkoutService.createCheckout(cartId, TEST_USER_ID);
-    const checkout2 = await checkoutService.createCheckout(cartId, TEST_USER_ID);
-
-    // Assert: both calls return the same checkout
-    expect(checkout1.checkoutId).toBe(checkout2.checkoutId);
-    expect(checkout1.cartId).toBe(checkout2.cartId);
-    expect(checkoutsStore.size).toBe(1);
   });
 });

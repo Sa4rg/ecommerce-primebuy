@@ -34,6 +34,8 @@ class MySQLCheckoutRepository {
       items_json: JSON.stringify(checkout.items || []),
       totals_json: JSON.stringify(checkout.totals),
       exchange_rate_json: checkout.exchangeRate ? JSON.stringify(checkout.exchangeRate) : null,
+      shipping_json: checkout.shipping ? JSON.stringify(checkout.shipping) : null,
+      customer_json: checkout.customer ? JSON.stringify(checkout.customer) : null,
       payment_methods_json: JSON.stringify(checkout.paymentMethods),
       status: checkout.status || 'pending',
       created_at: isoToMySQLDatetime(checkout.createdAt),
@@ -62,6 +64,17 @@ class MySQLCheckoutRepository {
         ? JSON.parse(row.exchange_rate_json)
         : row.exchange_rate_json;
     }
+
+    let shipping = null;
+    if (row.shipping_json !== null) {
+      shipping = typeof row.shipping_json === "string" ? JSON.parse(row.shipping_json) : row.shipping_json;
+    }
+
+    let customer = null;
+    if (row.customer_json !== null) {
+      customer = typeof row.customer_json === "string" ? JSON.parse(row.customer_json) : row.customer_json;
+    }
+
     
     const paymentMethods = typeof row.payment_methods_json === 'string'
       ? JSON.parse(row.payment_methods_json)
@@ -73,6 +86,8 @@ class MySQLCheckoutRepository {
       items,
       totals,
       exchangeRate,
+      shipping,
+      customer,
       paymentMethods,
       createdAt: mysqlDatetimeToISO(row.created_at),
       updatedAt: mysqlDatetimeToISO(row.updated_at),
@@ -115,6 +130,18 @@ class MySQLCheckoutRepository {
       .first();
     
     return this._mapToCheckout(row);
+  }
+
+  /**
+   * Updates an existing checkout
+   * @param {Object} checkout
+   * @returns {Promise<void>}
+   */
+  async save(checkout) {
+    const dbData = this._mapToDbFormat(checkout);
+    await db(this.table)
+      .where({ checkout_id: checkout.checkoutId })
+      .update(dbData);
   }
 }
 

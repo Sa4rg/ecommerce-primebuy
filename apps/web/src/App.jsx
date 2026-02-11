@@ -5,6 +5,8 @@ import { CartView } from "./features/shopping-cart/components/CartView.jsx";
 import { ProductCatalogView } from "./features/product-catalog/ProductCatalogView.jsx";
 import { CheckoutView } from "./features/checkout/components/CheckoutView.jsx";
 import { CheckoutStart } from "./features/checkout/components/CheckoutStart.jsx";
+import { LoginView } from "./features/auth/components/LoginView.jsx";
+import { RegisterView } from "./features/auth/components/RegisterView.jsx";
 
 function getHeaderContent(pathname) {
   if (pathname === "/cart") {
@@ -54,6 +56,8 @@ function App() {
         <Route path="/cart" element={<CartView />} />
         <Route path="/checkout" element={<CheckoutStart />} />
         <Route path="/checkout/:checkoutId" element={<CheckoutView />} />
+        <Route path="/login" element={<LoginView />} />
+        <Route path="/register" element={<RegisterView />} />
       </Routes>
     </div>
   );

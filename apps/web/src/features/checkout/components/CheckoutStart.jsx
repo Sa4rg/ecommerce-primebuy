@@ -19,6 +19,8 @@ export function CheckoutStart() {
         setStatus("loading");
         setError("");
 
+        clearCheckoutId();
+
         // 1) Reusar checkout si ya existe en storage
         const existingCheckoutId = getCheckoutId();
         if (existingCheckoutId) {
@@ -39,7 +41,6 @@ export function CheckoutStart() {
         if (cancelled) return;
         setStatus("error");
         setError(err?.message || "Unknown error");
-        clearCheckoutId();
       }
     }
 
