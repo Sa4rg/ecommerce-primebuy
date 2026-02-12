@@ -17,13 +17,12 @@ function adminToken() {
 describe("POST /api/orders", () => {
   test("should create an order from a confirmed payment and return 201", async () => {
     // Arrange
-    const token = await registerAndLogin(app, 'order');
-    const { cartId, checkoutId, paymentId } = await createConfirmedUsdPayment(app);
+    const { cartId, checkoutId, paymentId, userToken } = await createConfirmedUsdPayment(app);
 
     // Act
     const res = await request(app)
       .post("/api/orders")
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', `Bearer ${userToken}`)
       .send({ paymentId });
 
     // Assert response structure
@@ -103,13 +102,12 @@ describe("POST /api/orders", () => {
 
   test("should return 409 when payment is not confirmed", async () => {
     // Arrange: create payment but only submit (not confirm)
-    const token = await registerAndLogin(app, 'order');
-    const { paymentId } = await createSubmittedPayment(app);
+    const { paymentId, userToken } = await createSubmittedPayment(app);
 
     // Act
     const res = await request(app)
       .post("/api/orders")
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', `Bearer ${userToken}`)
       .send({ paymentId });
 
     // Assert
@@ -124,20 +122,19 @@ describe("POST /api/orders", () => {
 
   test("should return 409 when order already exists for payment", async () => {
     // Arrange
-    const token = await registerAndLogin(app, 'order');
-    const { paymentId } = await createConfirmedUsdPayment(app);
+    const { paymentId, userToken } = await createConfirmedUsdPayment(app);
 
     // Create order first time
     const firstRes = await request(app)
       .post("/api/orders")
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', `Bearer ${userToken}`)
       .send({ paymentId });
     expect(firstRes.status).toBe(201);
 
     // Act: try to create order again with same paymentId
     const res = await request(app)
       .post("/api/orders")
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', `Bearer ${userToken}`)
       .send({ paymentId });
 
     // Assert
@@ -149,17 +146,35 @@ describe("POST /api/orders", () => {
       })
     );
   });
+
+  test("should return 403 when trying to create order with a payment owned by another user", async () => {
+    const intruderToken = await registerAndLogin(app, "order-intruder");
+
+    // Create confirmed payment owned by a DIFFERENT internal user
+    const { paymentId } = await createConfirmedUsdPayment(app);
+
+    const res = await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${intruderToken}`)
+      .send({ paymentId });
+
+    expect(res.status).toBe(403);
+    expect(res.body).toMatchObject({
+      success: false,
+      message: "Forbidden",
+    });
+  });
+
 });
 
 describe("GET /api/orders/:orderId", () => {
   test("should return 200 and the order when orderId exists (owner can view)", async () => {
-    // Arrange: create user and payment with matching customer email
-    const { token, email } = await registerAndLoginWithEmail(app, 'order');
-    const { paymentId } = await createConfirmedUsdPayment(app, { customerEmail: email });
+    // Arrange: create confirmed payment (helper creates its own user)
+    const { paymentId, userToken } = await createConfirmedUsdPayment(app);
 
     const createOrderRes = await request(app)
       .post("/api/orders")
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', `Bearer ${userToken}`)
       .send({ paymentId });
     expect(createOrderRes.status).toBe(201);
     const orderId = createOrderRes.body.data.orderId;
@@ -167,7 +182,7 @@ describe("GET /api/orders/:orderId", () => {
     // Act - Owner can view their own order
     const res = await request(app)
       .get(`/api/orders/${orderId}`)
-      .set("Authorization", `Bearer ${token}`);
+      .set("Authorization", `Bearer ${userToken}`);
 
     // Assert
     expect(res.status).toBe(200);

@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const { AppError } = require("../utils/errors");
 const { PaymentStatus } = require("../constants/paymentStatus");
+const { CheckoutStatus } = require("../constants/checkoutStatus");
 const { nextUpdatedAt } = require("../utils/updatedAt");
 const {
   InMemoryPaymentsRepository,
@@ -25,6 +26,15 @@ function createMapAdapter(map) {
     async save(payment) {
       map.set(payment.paymentId, payment);
     },
+    async findByCheckoutId(checkoutId) {
+      const payments = [];
+      for (const payment of map.values()) {
+        if (payment.checkoutId === checkoutId) {
+          payments.push(payment);
+        }
+      }
+      return payments;
+    },
   };
 }
 
@@ -47,7 +57,7 @@ function createPaymentsService(deps = {}) {
   const USD_METHODS = ["zelle", "zinli"];
   const VES_METHODS = ["pago_movil", "bank_transfer"];
 
-  async function createPayment(checkoutId, method, userId) {
+  async function createPayment(checkoutId, method, userId, proofReference) {
     if (!userId || typeof userId !== "string") {
       throw new AppError("Unauthorized", 401);
     }
@@ -67,6 +77,13 @@ function createPaymentsService(deps = {}) {
 
     if (!VALID_METHODS.includes(method)) {
       throw new AppError("Invalid payment method", 400);
+    }
+    if (checkout.status !== CheckoutStatus.PENDING) {
+      throw new AppError("Checkout is not pending", 409);
+    }
+
+    if (!checkout.customer || !checkout.shipping) {
+      throw new AppError("Checkout incomplete", 400);
     }
 
     let currency;
@@ -94,7 +111,8 @@ function createPaymentsService(deps = {}) {
       currency,
       amount,
       status: PaymentStatus.PENDING,
-      proof: null,
+      proof: proofReference ? { reference: proofReference } : null,
+      review: undefined,
       createdAt: now,
       updatedAt: now,
     };
@@ -124,6 +142,10 @@ function createPaymentsService(deps = {}) {
     payment.updatedAt = nextUpdatedAt(payment.updatedAt);
 
     await paymentsRepository.save(payment);
+
+    // Lock the cart to prevent further modifications
+    const checkout = await checkoutService.findById(payment.checkoutId);
+    await cartService.lockCart(checkout.cartId);
 
     return payment;
   }
@@ -188,7 +210,32 @@ function createPaymentsService(deps = {}) {
     return payment;
   }
 
-  return { createPayment, submitPayment, confirmPayment, rejectPayment, getPaymentById };
+  async function getPaymentsByCheckoutId(checkoutId) {
+    return await paymentsRepository.findByCheckoutId(checkoutId);
+  }
+
+  /**
+   * Check if checkout has any payment with status SUBMITTED or higher
+   * (SUBMITTED, CONFIRMED, REJECTED - states after proof submission)
+   * @param {string} checkoutId
+   * @returns {Promise<boolean>}
+   */
+  async function hasSubmittedPayments(checkoutId) {
+    const payments = await paymentsRepository.findByCheckoutId(checkoutId);
+    const lockedStatuses = [PaymentStatus.SUBMITTED, PaymentStatus.CONFIRMED, PaymentStatus.REJECTED];
+    return payments.some(p => lockedStatuses.includes(p.status));
+  }
+
+  /**
+   * List all payments with optional filters (admin only)
+   * @param {Object} filters - { status: string }
+   * @returns {Promise<Object[]>}
+   */
+  async function listPayments(filters = {}) {
+    return await paymentsRepository.findAll(filters);
+  }
+
+  return { createPayment, submitPayment, confirmPayment, rejectPayment, getPaymentById, getPaymentsByCheckoutId, hasSubmittedPayments, listPayments };
 }
 
 const paymentsService = createPaymentsService();

@@ -63,7 +63,12 @@ const refreshTokensRepository = createRefreshTokensRepository();
 // Services (explicitly injected dependencies)
 const productsService = createProductsService({ productsRepository });
 const cartService = createCartService({ productsService, cartRepository });
-const checkoutService = createCheckoutService({ cartService, productsService, checkoutRepository });
+const checkoutService = createCheckoutService({
+  cartService,
+  productsService,
+  checkoutRepository,
+  paymentsRepository,
+});
 const paymentsService = createPaymentsService({ cartService, checkoutService, paymentsRepository });
 const ordersService = createOrdersService({ cartService, checkoutService, paymentsService, ordersRepository });
 const authService = createAuthService({ usersRepository, refreshTokensRepository });

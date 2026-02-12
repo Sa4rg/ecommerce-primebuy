@@ -42,6 +42,7 @@ async function createConfirmedUsdOrder(app, options = {}) {
   const cartRes = await request(app).post('/api/cart');
   expect(cartRes.status).toBe(201);
   const cartId = cartRes.body.data.cartId;
+  const cartSecret = cartRes.body.data.cartSecret;
 
   // 2) Create product (requires admin)
   const productRes = await request(app)
@@ -56,9 +57,10 @@ async function createConfirmedUsdOrder(app, options = {}) {
   expect(productRes.status).toBe(201);
   const productId = productRes.body.data.id;
 
-  // 3) Add item to cart (cart is still anonymous)
+  // 3) Add item to cart (cart is still anonymous, requires secret)
   const addItemRes = await request(app)
     .post(`/api/cart/${cartId}/items`)
+    .set('X-Cart-Secret', cartSecret)
     .send({ productId, quantity: 2 });
   expect(addItemRes.status).toBe(200);
 
@@ -69,6 +71,30 @@ async function createConfirmedUsdOrder(app, options = {}) {
     .send({ cartId });
   expect(checkoutRes.status).toBe(200);
   const checkoutId = checkoutRes.body.data.checkoutId;
+
+  // 4.5) Set customer info (required before payment)
+  const customerRes = await request(app)
+    .patch(`/api/checkout/${checkoutId}/customer`)
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ name: 'Test User', email: 'test@example.com', phone: '0414-1234567' });
+  expect(customerRes.status).toBe(200);
+
+  // 4.6) Set shipping info (required before payment)
+  const shippingRes = await request(app)
+    .patch(`/api/checkout/${checkoutId}/shipping`)
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({
+      method: 'delivery',
+      address: {
+        recipientName: 'Test User',
+        phone: '0414-1234567',
+        state: 'Carabobo',
+        city: 'Valencia',
+        line1: 'Av Principal',
+        reference: 'Near the park',
+      },
+    });
+  expect(shippingRes.status).toBe(200);
 
   // 5) Create payment (requires auth - same user owns the checkout)
   const paymentRes = await request(app)

@@ -3,7 +3,7 @@ import request from "supertest";
 import app from "../app.js";
 
 describe("POST /api/cart", () => {
-  test("should return 201 and a cartId", async () => {
+  test("should return 201 and a cartId with cartSecret", async () => {
     const response = await request(app)
       .post("/api/cart");
 
@@ -12,10 +12,14 @@ describe("POST /api/cart", () => {
       expect.objectContaining({
         success: true,
         message: expect.any(String),
-        data: { cartId: expect.any(String) }
+        data: {
+          cartId: expect.any(String),
+          cartSecret: expect.any(String),
+        }
       })
     );
 
     expect(response.body.data.cartId.length).toBeGreaterThan(0);
+    expect(response.body.data.cartSecret.length).toBeGreaterThan(0);
   });
 });

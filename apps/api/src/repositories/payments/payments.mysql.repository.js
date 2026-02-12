@@ -139,6 +139,15 @@ class MySQLPaymentsRepository {
       .where({ payment_id: payment.paymentId })
       .update(dbData);
   }
+
+  async findByCheckoutId(checkoutId) {
+    const rows = await db(this.table)
+      .where({ checkout_id: checkoutId });
+    
+    return rows.map(row => this._mapToPayment(row));
+  }
 }
+
+
 
 module.exports = { MySQLPaymentsRepository };

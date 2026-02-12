@@ -13,12 +13,15 @@ function adminToken() {
 
 /**
  * Helper to create a new cart
- * @returns {Promise<string>} cartId
+ * @returns {Promise<{cartId: string, cartSecret: string}>}
  */
 async function createCart() {
   const res = await request(app).post("/api/cart");
   expect(res.status).toBe(201);
-  return res.body.data.cartId;
+  return {
+    cartId: res.body.data.cartId,
+    cartSecret: res.body.data.cartSecret,
+  };
 }
 
 /**
@@ -42,10 +45,12 @@ async function createProduct() {
 /**
  * Helper to lock a cart
  * @param {string} cartId
+ * @param {string} cartSecret
  */
-async function lockCart(cartId) {
+async function lockCart(cartId, cartSecret) {
   const res = await request(app)
     .patch(`/api/cart/${cartId}/metadata`)
+    .set("X-Cart-Secret", cartSecret)
     .send({ status: "locked" });
   expect(res.status).toBe(200);
 }
@@ -53,10 +58,12 @@ async function lockCart(cartId) {
 /**
  * Helper to set cart status to checked_out
  * @param {string} cartId
+ * @param {string} cartSecret
  */
-async function checkoutCart(cartId) {
+async function checkoutCart(cartId, cartSecret) {
   const res = await request(app)
     .patch(`/api/cart/${cartId}/metadata`)
+    .set("X-Cart-Secret", cartSecret)
     .send({ status: "checked_out" });
   expect(res.status).toBe(200);
 }
@@ -64,13 +71,14 @@ async function checkoutCart(cartId) {
 describe("Cart lock enforcement", () => {
   test("POST items should return 409 when cart is locked", async () => {
     // Arrange
-    const cartId = await createCart();
+    const { cartId, cartSecret } = await createCart();
     const productId = await createProduct();
-    await lockCart(cartId);
+    await lockCart(cartId, cartSecret);
 
     // Act
     const res = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 1 });
 
     // Assert
@@ -85,13 +93,14 @@ describe("Cart lock enforcement", () => {
 
   test("POST items should return 409 when cart is checked_out", async () => {
     // Arrange
-    const cartId = await createCart();
+    const { cartId, cartSecret } = await createCart();
     const productId = await createProduct();
-    await checkoutCart(cartId);
+    await checkoutCart(cartId, cartSecret);
 
     // Act
     const res = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 1 });
 
     // Assert
@@ -106,20 +115,22 @@ describe("Cart lock enforcement", () => {
 
   test("PATCH item should return 409 when cart is locked", async () => {
     // Arrange
-    const cartId = await createCart();
+    const { cartId, cartSecret } = await createCart();
     const productId = await createProduct();
 
     // Add item while cart is active
     const addRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 1 });
     expect(addRes.status).toBe(200);
 
-    await lockCart(cartId);
+    await lockCart(cartId, cartSecret);
 
     // Act
     const res = await request(app)
       .patch(`/api/cart/${cartId}/items/${productId}`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ quantity: 2 });
 
     // Assert
@@ -134,20 +145,22 @@ describe("Cart lock enforcement", () => {
 
   test("PATCH item should return 409 when cart is checked_out", async () => {
     // Arrange
-    const cartId = await createCart();
+    const { cartId, cartSecret } = await createCart();
     const productId = await createProduct();
 
     // Add item while cart is active
     const addRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 1 });
     expect(addRes.status).toBe(200);
 
-    await checkoutCart(cartId);
+    await checkoutCart(cartId, cartSecret);
 
     // Act
     const res = await request(app)
       .patch(`/api/cart/${cartId}/items/${productId}`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ quantity: 2 });
 
     // Assert
@@ -162,19 +175,22 @@ describe("Cart lock enforcement", () => {
 
   test("DELETE item should return 409 when cart is locked", async () => {
     // Arrange
-    const cartId = await createCart();
+    const { cartId, cartSecret } = await createCart();
     const productId = await createProduct();
 
     // Add item while cart is active
     const addRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 1 });
     expect(addRes.status).toBe(200);
 
-    await lockCart(cartId);
+    await lockCart(cartId, cartSecret);
 
     // Act
-    const res = await request(app).delete(`/api/cart/${cartId}/items/${productId}`);
+    const res = await request(app)
+      .delete(`/api/cart/${cartId}/items/${productId}`)
+      .set("X-Cart-Secret", cartSecret);
 
     // Assert
     expect(res.status).toBe(409);
@@ -188,19 +204,22 @@ describe("Cart lock enforcement", () => {
 
   test("DELETE item should return 409 when cart is checked_out", async () => {
     // Arrange
-    const cartId = await createCart();
+    const { cartId, cartSecret } = await createCart();
     const productId = await createProduct();
 
     // Add item while cart is active
     const addRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 1 });
     expect(addRes.status).toBe(200);
 
-    await checkoutCart(cartId);
+    await checkoutCart(cartId, cartSecret);
 
     // Act
-    const res = await request(app).delete(`/api/cart/${cartId}/items/${productId}`);
+    const res = await request(app)
+      .delete(`/api/cart/${cartId}/items/${productId}`)
+      .set("X-Cart-Secret", cartSecret);
 
     // Assert
     expect(res.status).toBe(409);

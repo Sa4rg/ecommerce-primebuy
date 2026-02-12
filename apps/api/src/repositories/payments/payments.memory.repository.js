@@ -41,6 +41,37 @@ class InMemoryPaymentsRepository {
     const paymentId = payment.paymentId;
     this.paymentsById.set(paymentId, payment);
   }
+
+  /**
+   * Finds all payments for a given checkout.
+   * @param {string} checkoutId
+   * @returns {Promise<Object[]>}
+   */
+  async findByCheckoutId(checkoutId) {
+    const payments = [];
+    for (const payment of this.paymentsById.values()) {
+      if (payment.checkoutId === checkoutId) {
+        payments.push(payment);
+      }
+    }
+    return payments;
+  }
+
+  /**
+   * Finds all payments, optionally filtered by status.
+   * @param {Object} filters - Optional filters { status: string }
+   * @returns {Promise<Object[]>}
+   */
+  async findAll(filters = {}) {
+    const payments = [];
+    for (const payment of this.paymentsById.values()) {
+      if (filters.status && payment.status !== filters.status) {
+        continue;
+      }
+      payments.push(payment);
+    }
+    return payments;
+  }
 }
 
 module.exports = { InMemoryPaymentsRepository };

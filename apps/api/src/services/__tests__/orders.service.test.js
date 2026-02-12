@@ -115,6 +115,24 @@ describe("createOrderFromPayment", () => {
     const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID );
     const checkoutId = checkout.checkoutId;
 
+    // Complete checkout with customer and shipping (required for payment)
+    await checkoutService.updateCustomer(checkoutId, TEST_USER_ID, {
+      name: "Test User",
+      email: "test@example.com",
+      phone: "+1234567890",
+    });
+    await checkoutService.updateShipping(checkoutId, TEST_USER_ID, {
+      method: "delivery",
+      address: {
+        recipientName: "Test User",
+        phone: "+1234567890",
+        state: "Test State",
+        city: "Test City",
+        line1: "123 Test St",
+        reference: "Near the park",
+      },
+    });
+
     const payment = await paymentsService.createPayment(checkoutId, "zelle", TEST_USER_ID);
     const paymentId = payment.paymentId;
 
@@ -220,6 +238,22 @@ describe("createOrderFromPayment", () => {
     });
 
     const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID );
+    await checkoutService.updateCustomer(checkout.checkoutId, TEST_USER_ID, {
+      name: "Test User",
+      email: "test@example.com",
+      phone: "+1234567890",
+    });
+    await checkoutService.updateShipping(checkout.checkoutId, TEST_USER_ID, {
+      method: "delivery",
+      address: {
+        recipientName: "Test User",
+        phone: "+1234567890",
+        state: "Test State",
+        city: "Test City",
+        line1: "123 Test St",
+        reference: "Near the park",
+      },
+    });
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
 
     // Act + Assert: payment is still pending
@@ -240,6 +274,22 @@ describe("createOrderFromPayment", () => {
     });
 
     const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID );
+    await checkoutService.updateCustomer(checkout.checkoutId, TEST_USER_ID, {
+      name: "Test User",
+      email: "test@example.com",
+      phone: "+1234567890",
+    });
+    await checkoutService.updateShipping(checkout.checkoutId, TEST_USER_ID, {
+      method: "delivery",
+      address: {
+        recipientName: "Test User",
+        phone: "+1234567890",
+        state: "Test State",
+        city: "Test City",
+        line1: "123 Test St",
+        reference: "Near the park",
+      },
+    });
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
@@ -267,6 +317,22 @@ describe("getOrderById", () => {
     });
 
     const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID );
+    await checkoutService.updateCustomer(checkout.checkoutId, TEST_USER_ID, {
+      name: "Test User",
+      email: "test@example.com",
+      phone: "+1234567890",
+    });
+    await checkoutService.updateShipping(checkout.checkoutId, TEST_USER_ID, {
+      method: "delivery",
+      address: {
+        recipientName: "Test User",
+        phone: "+1234567890",
+        state: "Test State",
+        city: "Test City",
+        line1: "123 Test St",
+        reference: "Near the park",
+      },
+    });
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
@@ -304,6 +370,22 @@ describe("fulfillment", () => {
     });
 
     const checkout = await checkoutService.createCheckout(cartId,  TEST_USER_ID );
+    await checkoutService.updateCustomer(checkout.checkoutId, TEST_USER_ID, {
+      name: "Test User",
+      email: "test@example.com",
+      phone: "+1234567890",
+    });
+    await checkoutService.updateShipping(checkout.checkoutId, TEST_USER_ID, {
+      method: "delivery",
+      address: {
+        recipientName: "Test User",
+        phone: "+1234567890",
+        state: "Test State",
+        city: "Test City",
+        line1: "123 Test St",
+        reference: "Near the park",
+      },
+    });
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);
@@ -458,6 +540,22 @@ describe("shipping", () => {
     });
 
     const checkout = await checkoutService.createCheckout(cartId, TEST_USER_ID);
+    await checkoutService.updateCustomer(checkout.checkoutId, TEST_USER_ID, {
+      name: "Test User",
+      email: "test@example.com",
+      phone: "+1234567890",
+    });
+    await checkoutService.updateShipping(checkout.checkoutId, TEST_USER_ID, {
+      method: "delivery",
+      address: {
+        recipientName: "Test User",
+        phone: "+1234567890",
+        state: "Test State",
+        city: "Test City",
+        line1: "123 Test St",
+        reference: "Near the park",
+      },
+    });
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
     await paymentsService.confirmPayment(payment.paymentId, null);

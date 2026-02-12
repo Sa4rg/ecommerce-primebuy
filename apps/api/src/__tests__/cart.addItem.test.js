@@ -18,6 +18,7 @@ describe("POST /api/cart/:cartId/items", () => {
     expect(createCartRes.status).toBe(201);
 
     const cartId = createCartRes.body.data.cartId;
+    const cartSecret = createCartRes.body.data.cartSecret;
     expect(cartId).toBeDefined();
 
     // Arrange: create product
@@ -38,6 +39,7 @@ describe("POST /api/cart/:cartId/items", () => {
     // Act: add item
     const addRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 2 });
 
     const getRes = await request(app).get(`/api/cart/${cartId}`);
@@ -110,6 +112,7 @@ describe("POST /api/cart/:cartId/items", () => {
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
+    const cartSecret = createCartRes.body.data.cartSecret;
 
     const createProductRes = await request(app)
       .post("/api/products")
@@ -126,6 +129,7 @@ describe("POST /api/cart/:cartId/items", () => {
 
     const res = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 0 });
 
     expect(res.status).toBe(400);
@@ -141,6 +145,7 @@ describe("POST /api/cart/:cartId/items", () => {
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
+    const cartSecret = createCartRes.body.data.cartSecret;
 
     const createProductRes = await request(app)
       .post("/api/products")
@@ -157,6 +162,7 @@ describe("POST /api/cart/:cartId/items", () => {
 
     const res = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 3 });
 
     expect(res.status).toBe(409);

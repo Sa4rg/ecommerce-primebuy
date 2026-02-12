@@ -8,6 +8,7 @@ const {
 const defaultCartService = require("./cart.service");
 const defaultProductsService = require("./products.service");
 
+
 /**
  * Adapter to wrap a raw Map as a repository-like interface.
  * Used for backward compatibility when deps.checkoutsStore is provided.
@@ -39,6 +40,7 @@ function createCheckoutService(deps = {}) {
   const cartService = deps.cartService || defaultCartService;
   const productsService = deps.productsService || defaultProductsService;
   const idGenerator = deps.idGenerator || (() => crypto.randomUUID());
+  const paymentsRepository = deps.paymentsRepository || null;
 
   // Support both new repository pattern and legacy checkoutsStore
   let checkoutRepository;
@@ -48,6 +50,30 @@ function createCheckoutService(deps = {}) {
     checkoutRepository = createMapAdapter(deps.checkoutsStore);
   } else {
     checkoutRepository = new InMemoryCheckoutRepository();
+  }
+
+  /**
+   * Guard: Ensures checkout is not locked by an active payment.
+   * Blocks editing if payment status is 'submitted' or 'confirmed'.
+   * Allows editing if payment is 'pending' or 'rejected'.
+   */
+  async function ensureCheckoutNotLockedByPayment(checkoutId) {
+    // If repository is not wired, do not silently allow editing in production.
+    // But to keep backward compatibility in isolated tests, we treat missing repo as "no payments".
+    if (!paymentsRepository || typeof paymentsRepository.findByCheckoutId !== "function") {
+      return;
+    }
+
+    const payments = await paymentsRepository.findByCheckoutId(checkoutId);
+
+    const hasActivePayment = payments.some(
+      (p) => p.status === "submitted" || p.status === "confirmed"
+    );
+
+    if (hasActivePayment) {
+      // Keep message consistent with existing API behavior
+      throw new AppError("Checkout is not editable", 409);
+    }
   }
 
   async function createCheckout(cartId, userId) {
@@ -237,6 +263,8 @@ function createCheckoutService(deps = {}) {
       throw new AppError("Checkout is not editable", 409);
     }
 
+    await ensureCheckoutNotLockedByPayment(checkoutId);
+
     const normalized = validateShippingPatch(patch);
 
     checkout.shipping = normalized;
@@ -265,30 +293,47 @@ function createCheckoutService(deps = {}) {
   }
 
   async function updateCustomer(checkoutId, userId, patch) {
-  // auth + ownership
-  const checkout = await getCheckoutById(checkoutId, userId);
+    // auth + ownership
+    const checkout = await getCheckoutById(checkoutId, userId);
 
-  // editable rule mínima (si quieres desde ya):
-  if (checkout.status !== CheckoutStatus.PENDING) {
-    throw new AppError("Checkout is not editable", 409);
+    // editable rule mínima (si quieres desde ya):
+    if (checkout.status !== CheckoutStatus.PENDING) {
+      throw new AppError("Checkout is not editable", 409);
+    }
+
+    await ensureCheckoutNotLockedByPayment(checkoutId);
+
+    validateCustomerPatch(patch);
+
+    checkout.customer = {
+      ...(checkout.customer || { name: null, email: null, phone: null }),
+      ...patch,
+    };
+
+    checkout.updatedAt = new Date().toISOString();
+    await checkoutRepository.save(checkout);
+
+    return checkout;
   }
 
-  validateCustomerPatch(patch);
+  async function cancelCheckout(checkoutId, userId) {
+    // auth + ownership
+    const checkout = await getCheckoutById(checkoutId, userId);
 
-  checkout.customer = {
-    ...(checkout.customer || { name: null, email: null, phone: null }),
-    ...patch,
-  };
+    // Can only cancel pending checkouts
+    if (checkout.status !== CheckoutStatus.PENDING) {
+      throw new AppError("Checkout is not editable", 409);
+    }
 
-  checkout.updatedAt = new Date().toISOString();
-  await checkoutRepository.save(checkout);
+    checkout.status = CheckoutStatus.CANCELLED;
+    checkout.updatedAt = new Date().toISOString();
+    await checkoutRepository.save(checkout);
 
-  return checkout;
-}
+    return checkout;
+  }
 
 
-
-  return { createCheckout, findById, getCheckoutById, updateShipping, updateCustomer };
+  return { createCheckout, findById, getCheckoutById, updateShipping, updateCustomer, cancelCheckout };
 }
 
 const checkoutService = createCheckoutService();

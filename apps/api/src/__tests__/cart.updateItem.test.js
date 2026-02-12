@@ -17,6 +17,7 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
+    const cartSecret = createCartRes.body.data.cartSecret;
 
     // Arrange: create product
     const createProductRes = await request(app)
@@ -34,6 +35,7 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
     // Arrange: add item (quantity 2)
     const addRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 2 });
 
     expect(addRes.status).toBe(200);
@@ -41,6 +43,7 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
     // Act: update item quantity to 3
     const patchRes = await request(app)
       .patch(`/api/cart/${cartId}/items/${productId}`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ quantity: 3 });
 
     // Assert
@@ -104,6 +107,7 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
+    const cartSecret = createCartRes.body.data.cartSecret;
 
     // create a product but do NOT add it to cart
     const createProductRes = await request(app)
@@ -120,6 +124,7 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
 
     const res = await request(app)
       .patch(`/api/cart/${cartId}/items/${productId}`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ quantity: 1 });
 
     expect(res.status).toBe(404);
@@ -135,6 +140,7 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
+    const cartSecret = createCartRes.body.data.cartSecret;
 
     const createProductRes = await request(app)
       .post("/api/products")
@@ -151,12 +157,14 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
     // add first
     const addRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 1 });
     expect(addRes.status).toBe(200);
 
     // invalid update
     const res = await request(app)
       .patch(`/api/cart/${cartId}/items/${productId}`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ quantity: 0 });
 
     expect(res.status).toBe(400);
@@ -172,6 +180,7 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
+    const cartSecret = createCartRes.body.data.cartSecret;
 
     const createProductRes = await request(app)
       .post("/api/products")
@@ -188,11 +197,13 @@ describe("PATCH /api/cart/:cartId/items/:productId", () => {
     // add first
     const addRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 1 });
     expect(addRes.status).toBe(200);
 
     const res = await request(app)
       .patch(`/api/cart/${cartId}/items/${productId}`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ quantity: 3 });
 
     expect(res.status).toBe(409);

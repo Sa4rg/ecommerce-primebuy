@@ -147,6 +147,10 @@ function createOrdersService(deps = {}) {
     // 1) Load payment
     const payment = await paymentsService.getPaymentById(paymentId);
 
+    if (payment.userId !== userId) {
+      throw new AppError("Forbidden", 403);
+    }
+
     // 2) Validate payment is confirmed
     if (payment.status !== "confirmed") {
       throw new AppError("Payment is not confirmed", 409);

@@ -8,6 +8,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { expect } from 'vitest';
 import { registerAndLogin } from '../test_helpers/authHelper.js';
+import { completeCheckout } from '../test_helpers/checkoutHelper.js';
 
 /**
  * Generate an admin JWT token for test purposes
@@ -42,6 +43,7 @@ async function createConfirmedUsdPayment(app, options = {}) {
   const createCartRes = await request(app).post('/api/cart');
   expect(createCartRes.status).toBe(201);
   const cartId = createCartRes.body.data.cartId;
+  const cartSecret = createCartRes.body.data.cartSecret;
 
   // Create product (requires admin)
   const createProductRes = await request(app)
@@ -59,6 +61,7 @@ async function createConfirmedUsdPayment(app, options = {}) {
   // Add item to cart (quantity 2 → total 20 USD)
   const addItemRes = await request(app)
     .post(`/api/cart/${cartId}/items`)
+    .set('X-Cart-Secret', cartSecret)
     .send({ productId, quantity: 2 });
   expect(addItemRes.status).toBe(200);
 
@@ -66,6 +69,7 @@ async function createConfirmedUsdPayment(app, options = {}) {
   if (customerEmail) {
     const metadataRes = await request(app)
       .patch(`/api/cart/${cartId}/metadata`)
+      .set('X-Cart-Secret', cartSecret)
       .send({ customer: { email: customerEmail } });
     expect(metadataRes.status).toBe(200);
   }
@@ -77,6 +81,9 @@ async function createConfirmedUsdPayment(app, options = {}) {
     .send({ cartId });
   expect(checkoutRes.status).toBe(200);
   const checkoutId = checkoutRes.body.data.checkoutId;
+
+  // Complete checkout with customer and shipping data
+  await completeCheckout(app, checkoutId, userToken);
 
   // Create payment (requires auth - same user)
   const paymentRes = await request(app)
@@ -100,7 +107,7 @@ async function createConfirmedUsdPayment(app, options = {}) {
     .send({ note: 'Confirmed' });
   expect(confirmRes.status).toBe(200);
 
-  return { cartId, checkoutId, paymentId };
+  return { cartId, checkoutId, paymentId, userToken };
 }
 
 /**
@@ -123,6 +130,7 @@ async function createSubmittedPayment(app, options = {}) {
   const createCartRes = await request(app).post('/api/cart');
   expect(createCartRes.status).toBe(201);
   const cartId = createCartRes.body.data.cartId;
+  const cartSecret = createCartRes.body.data.cartSecret;
 
   // Create product (requires admin)
   const createProductRes = await request(app)
@@ -140,6 +148,7 @@ async function createSubmittedPayment(app, options = {}) {
   // Add item to cart
   const addItemRes = await request(app)
     .post(`/api/cart/${cartId}/items`)
+    .set('X-Cart-Secret', cartSecret)
     .send({ productId, quantity: 1 });
   expect(addItemRes.status).toBe(200);
 
@@ -150,6 +159,9 @@ async function createSubmittedPayment(app, options = {}) {
     .send({ cartId });
   expect(checkoutRes.status).toBe(200);
   const checkoutId = checkoutRes.body.data.checkoutId;
+
+  // Complete checkout with customer and shipping data
+  await completeCheckout(app, checkoutId, userToken);
 
   // Create payment (requires auth - same user)
   const paymentRes = await request(app)
@@ -166,7 +178,7 @@ async function createSubmittedPayment(app, options = {}) {
     .send({ reference: 'REF-SUBMITTED' });
   expect(submitRes.status).toBe(200);
 
-  return { cartId, checkoutId, paymentId };
+  return { cartId, checkoutId, paymentId, userToken };
 }
 
 export {

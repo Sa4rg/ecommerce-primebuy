@@ -48,9 +48,11 @@ function createCartService(deps = {}) {
     // userId es opcional - null para carritos anónimos
     // Se asociará al usuario en checkout si está autenticado
     const cartId = idGenerator();
+    const cartSecret = crypto.randomBytes(24).toString("hex");
     const now = new Date().toISOString();
     const cart = {
       cartId,
+      cartSecret,
       userId,
       items: [],
       summary: { itemsCount: 0, subtotalUSD: 0 },
@@ -79,7 +81,7 @@ function createCartService(deps = {}) {
     };
 
     await cartRepository.create(cart);
-    return { cartId };
+    return { cartId, cartSecret };
   }
 
   async function getCart(cartId) {
@@ -284,7 +286,23 @@ function createCartService(deps = {}) {
 }
 
 
-  return { createCart, getCart, addItem, updateItem, removeItem, updateMetadata, assignCartToUser };
+  /**
+   * Lock a cart (internal use - called when payment is submitted)
+   * @param {string} cartId
+   */
+  async function lockCart(cartId) {
+    const cart = await cartRepository.findById(cartId);
+    if (!cart) {
+      throw new AppError("Cart not found", 404);
+    }
+
+    cart.metadata.status = "locked";
+    cart.metadata.updatedAt = nextUpdatedAt(cart.metadata.updatedAt);
+    await cartRepository.save(cart);
+    return cart;
+  }
+
+  return { createCart, getCart, addItem, updateItem, removeItem, updateMetadata, assignCartToUser, lockCart };
 }
 
 // Default instance for the application (backward compatible)

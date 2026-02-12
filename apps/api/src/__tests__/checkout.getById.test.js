@@ -25,6 +25,7 @@ describe("GET /api/checkout/:id", () => {
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
+    const cartSecret = createCartRes.body.data.cartSecret;
 
     // admin creates product
     const createProductRes = await request(app)
@@ -42,6 +43,7 @@ describe("GET /api/checkout/:id", () => {
     // add item to cart
     const addItemRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId, quantity: 1 });
     expect(addItemRes.status).toBe(200);
 

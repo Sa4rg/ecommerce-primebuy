@@ -4,10 +4,10 @@ const paymentsService = services.paymentsService;
 
 async function createPayment(req, res, next) {
   try {
-    const { checkoutId, method } = req.body;
+    const { checkoutId, method, proofReference } = req.body;
     const userId = req.user?.userId;
 
-    const payment = await paymentsService.createPayment(checkoutId, method, userId);
+    const payment = await paymentsService.createPayment(checkoutId, method, userId, proofReference);
 
     res.status(201);
     success(res, payment, "Payment created successfully");
@@ -58,4 +58,35 @@ async function rejectPayment(req, res, next) {
   }
 }
 
-module.exports = { createPayment, submitPayment, confirmPayment, rejectPayment };
+async function getPayment(req, res, next) {
+  try {
+    const { paymentId } = req.params;
+
+    const payment = await paymentsService.getPaymentById(paymentId);
+
+    res.status(200);
+    success(res, payment, "Payment retrieved successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function listPayments(req, res, next) {
+  try {
+    const { status } = req.query;
+    const filters = {};
+    
+    if (status) {
+      filters.status = status;
+    }
+
+    const payments = await paymentsService.listPayments(filters);
+
+    res.status(200);
+    success(res, payments, "Payments retrieved successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { createPayment, submitPayment, confirmPayment, rejectPayment, getPayment, listPayments };

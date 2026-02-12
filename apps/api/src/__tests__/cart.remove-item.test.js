@@ -17,6 +17,7 @@ describe("DELETE /api/cart/:cartId/items/:productId", () => {
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
+    const cartSecret = createCartRes.body.data.cartSecret;
 
     // Arrange: create two products
     const createProductARes = await request(app)
@@ -46,17 +47,20 @@ describe("DELETE /api/cart/:cartId/items/:productId", () => {
     // Arrange: add both items
     const addARes = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId: productAId, quantity: 2 });
     expect(addARes.status).toBe(200);
 
     const addBRes = await request(app)
       .post(`/api/cart/${cartId}/items`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ productId: productBId, quantity: 1 });
     expect(addBRes.status).toBe(200);
 
     // Act: delete product A
     const deleteRes = await request(app)
-      .delete(`/api/cart/${cartId}/items/${productAId}`);
+      .delete(`/api/cart/${cartId}/items/${productAId}`)
+      .set("X-Cart-Secret", cartSecret);
 
     // Assert
     expect(deleteRes.status).toBe(200);
@@ -131,6 +135,7 @@ describe("DELETE /api/cart/:cartId/items/:productId", () => {
     const createCartRes = await request(app).post("/api/cart");
     expect(createCartRes.status).toBe(201);
     const cartId = createCartRes.body.data.cartId;
+    const cartSecret = createCartRes.body.data.cartSecret;
 
     // Arrange: create product but do not add to cart
     const createProductRes = await request(app)
@@ -147,7 +152,8 @@ describe("DELETE /api/cart/:cartId/items/:productId", () => {
 
     // Act: delete item not in cart
     const res = await request(app)
-      .delete(`/api/cart/${cartId}/items/${productId}`);
+      .delete(`/api/cart/${cartId}/items/${productId}`)
+      .set("X-Cart-Secret", cartSecret);
 
     // Assert
     expect(res.status).toBe(404);

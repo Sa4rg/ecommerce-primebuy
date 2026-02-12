@@ -40,12 +40,11 @@ describe('Orders Auth', () => {
 
 
  it('POST /api/orders → 201 with valid token (happy path)', async () => {
-  const token = await registerAndLogin(app, 'auth');
-  const { paymentId } = await createConfirmedUsdPayment(app);
+  const { paymentId, userToken } = await createConfirmedUsdPayment(app);
 
   const res = await request(app)
     .post('/api/orders')
-    .set('Authorization', `Bearer ${token}`)
+    .set('Authorization', `Bearer ${userToken}`)
     .send({ paymentId });
 
   expect(res.status).toBe(201);

@@ -9,6 +9,7 @@ describe("PATCH /api/cart/:cartId/metadata", () => {
 
     expect(createResponse.status).toBe(201);
     const cartId = createResponse.body.data.cartId;
+    const cartSecret = createResponse.body.data.cartSecret;
 
     // Get cart to capture previousUpdatedAt
     const getResponse = await request(app).get(`/api/cart/${cartId}`);
@@ -19,6 +20,7 @@ describe("PATCH /api/cart/:cartId/metadata", () => {
     // Patch metadata
     const patchResponse = await request(app)
       .patch(`/api/cart/${cartId}/metadata`)
+      .set("X-Cart-Secret", cartSecret)
       .send({
         customer: { email: "test@example.com" },
         displayCurrency: "VES",
@@ -64,9 +66,11 @@ describe("PATCH /api/cart/:cartId/metadata", () => {
 
     expect(createResponse.status).toBe(201);
     const cartId = createResponse.body.data.cartId;
+    const cartSecret = createResponse.body.data.cartSecret;
 
     const response = await request(app)
       .patch(`/api/cart/${cartId}/metadata`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ displayCurrency: "EUR" });
 
     expect(response.status).toBe(400);
@@ -84,10 +88,12 @@ describe("PATCH /api/cart/:cartId/metadata", () => {
 
     expect(createResponse.status).toBe(201);
     const cartId = createResponse.body.data.cartId;
+    const cartSecret = createResponse.body.data.cartSecret;
 
     // Test missing exchangeRate
     let response = await request(app)
       .patch(`/api/cart/${cartId}/metadata`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ displayCurrency: "VES" });
 
     expect(response.status).toBe(400);
@@ -101,6 +107,7 @@ describe("PATCH /api/cart/:cartId/metadata", () => {
     // Test invalid exchangeRate
     response = await request(app)
       .patch(`/api/cart/${cartId}/metadata`)
+      .set("X-Cart-Secret", cartSecret)
       .send({ displayCurrency: "VES", exchangeRate: { usdToVes: 0 } });
 
     expect(response.status).toBe(400);

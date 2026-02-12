@@ -1,11 +1,27 @@
 import { describe, test, expect, beforeEach } from "vitest";
 import { createRequire } from "module";
 import { PaymentStatus } from "../../constants/paymentStatus.js";
+import { CheckoutStatus } from "../../constants/checkoutStatus.js";
 
 const require = createRequire(import.meta.url);
 
 // CommonJS modules from your backend
 const paymentsModule = require("../payments.service");
+
+// Helper to create a valid checkout with all required fields
+function createValidCheckout(overrides = {}) {
+  return {
+    checkoutId: "checkout-1",
+    cartId: "cart-1",
+    status: CheckoutStatus.PENDING,
+    totals: { subtotalUSD: 20, subtotalVES: 800 },
+    exchangeRate: { provider: "BCV", usdToVes: 40, asOf: "2023-01-01" },
+    paymentMethods: { usd: ["zelle", "zinli"], ves: ["pago_movil", "bank_transfer"] },
+    customer: { name: "Test User", email: "test@example.com", phone: "0414-123" },
+    shipping: { method: "delivery", address: { recipientName: "Test", phone: "0414", state: "S", city: "C", line1: "L1", reference: null } },
+    ...overrides,
+  };
+}
 
 let paymentsService;
 let checkoutService;
@@ -41,6 +57,15 @@ beforeEach(() => {
       }
       return cart;
     },
+    lockCart: async (cartId) => {
+      const cart = cartsStore.get(cartId);
+      if (!cart) {
+        const { AppError } = require("../../utils/errors");
+        throw new AppError("Cart not found", 404);
+      }
+      cart.metadata.status = "locked";
+      return cart;
+    },
   };
 
   // Create isolated paymentsStore
@@ -66,13 +91,7 @@ beforeEach(() => {
 describe("createPayment", () => {
   test("should create a USD payment for zelle using subtotalUSD", async () => {
     // Arrange: create a checkout with both USD and VES totals
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-      exchangeRate: { provider: "BCV", usdToVes: 40, asOf: "2023-01-01" },
-      paymentMethods: { usd: ["zelle", "zinli"], ves: ["pago_movil", "bank_transfer"] },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     // Act
@@ -93,13 +112,7 @@ describe("createPayment", () => {
 
   test("should create a VES payment for pago_movil using subtotalVES", async () => {
     // Arrange: create a checkout
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-      exchangeRate: { provider: "BCV", usdToVes: 40, asOf: "2023-01-01" },
-      paymentMethods: { usd: ["zelle", "zinli"], ves: ["pago_movil", "bank_transfer"] },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     // Act
@@ -114,11 +127,7 @@ describe("createPayment", () => {
 
   test("should throw 400 when method is invalid", async () => {
     // Arrange
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     // Act + Assert
@@ -142,12 +151,7 @@ describe("createPayment", () => {
 
   test("should throw 400 when VES method requires exchange rate but subtotalVES is null", async () => {
     // Arrange: checkout without exchange rate (subtotalVES is null)
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: null },
-      exchangeRate: null,
-    };
+    const checkout = createValidCheckout({ totals: { subtotalUSD: 20, subtotalVES: null }, exchangeRate: null });
     checkoutsStore.set("checkout-1", checkout);
 
     // Act + Assert
@@ -163,11 +167,7 @@ describe("createPayment", () => {
 describe("submitPayment", () => {
   test("should submit a pending payment and set status submitted + store proof", async () => {
     // Arrange: create checkout and payment
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     const createdPayment = await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
@@ -197,11 +197,7 @@ describe("submitPayment", () => {
 
   test("should throw 409 when payment is not pending", async () => {
     // Arrange: create and submit payment
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
@@ -218,11 +214,7 @@ describe("submitPayment", () => {
 
   test("should throw 400 when proof is invalid", async () => {
     // Arrange: create payment
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
@@ -240,11 +232,7 @@ describe("submitPayment", () => {
 describe("admin review", () => {
   test("confirmPayment should confirm a submitted payment and update updatedAt", async () => {
     // Arrange: create checkout and payment
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
@@ -265,11 +253,7 @@ describe("admin review", () => {
 
   test("confirmPayment should allow null/undefined note and still confirm", async () => {
     // Arrange: create checkout and payment
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
@@ -299,11 +283,7 @@ describe("admin review", () => {
 
   test("confirmPayment should throw 409 when payment is not submitted", async () => {
     // Arrange: create payment (still pending)
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
@@ -319,11 +299,7 @@ describe("admin review", () => {
 
   test("confirmPayment should throw 400 when note is invalid", async () => {
     // Arrange: create and submit payment
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
@@ -347,11 +323,7 @@ describe("admin review", () => {
 
   test("rejectPayment should reject a submitted payment and update updatedAt", async () => {
     // Arrange: create checkout and payment
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
@@ -382,11 +354,7 @@ describe("admin review", () => {
 
   test("rejectPayment should throw 409 when payment is not submitted", async () => {
     // Arrange: create payment (still pending)
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
@@ -402,11 +370,7 @@ describe("admin review", () => {
 
   test("rejectPayment should throw 400 when reason is invalid", async () => {
     // Arrange: create and submit payment
-    const checkout = {
-      checkoutId: "checkout-1",
-      cartId: "cart-1",
-      totals: { subtotalUSD: 20, subtotalVES: 800 },
-    };
+    const checkout = createValidCheckout();
     checkoutsStore.set("checkout-1", checkout);
 
     await paymentsService.createPayment("checkout-1", "zelle", TEST_USER_ID);
@@ -428,3 +392,4 @@ describe("admin review", () => {
     });
   });
 });
+

@@ -1,6 +1,8 @@
 const { success } = require("../utils/response");
+const { AppError } = require("../utils/errors");
 const { services } = require("../composition/root");
 const checkoutService = services.checkoutService;
+const paymentsService = services.paymentsService;
 
 async function createCheckout(req, res, next) {
   try {
@@ -36,6 +38,12 @@ async function updateShipping(req, res, next) {
     const userId = req.user?.userId;
     const patch = req.body;
 
+    // Check if checkout is locked (payment submitted or higher)
+    const isLocked = await paymentsService.hasSubmittedPayments(checkoutId);
+    if (isLocked) {
+      throw new AppError("Checkout is not editable", 409);
+    }
+
     const updated = await checkoutService.updateShipping(checkoutId, userId, patch);
 
     res.status(200);
@@ -50,6 +58,12 @@ async function updateCustomer(req, res, next) {
     const { checkoutId } = req.params;
     const userId = req.user?.userId;
 
+    // Check if checkout is locked (payment submitted or higher)
+    const isLocked = await paymentsService.hasSubmittedPayments(checkoutId);
+    if (isLocked) {
+      throw new AppError("Checkout is not editable", 409);
+    }
+
     const updated = await checkoutService.updateCustomer(checkoutId, userId, req.body);
 
     res.status(200);
@@ -59,7 +73,27 @@ async function updateCustomer(req, res, next) {
   }
 }
 
+async function cancelCheckout(req, res, next) {
+  try {
+    const { checkoutId } = req.params;
+    const userId = req.user?.userId;
+
+    // Check if checkout is locked (payment submitted or higher)
+    const isLocked = await paymentsService.hasSubmittedPayments(checkoutId);
+    if (isLocked) {
+      throw new AppError("Checkout is not editable", 409);
+    }
+
+    const cancelled = await checkoutService.cancelCheckout(checkoutId, userId);
+
+    res.status(200);
+    success(res, cancelled, "Checkout cancelled successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
 
 
 
-module.exports = { createCheckout, getCheckoutById, updateShipping, updateCustomer };
+
+module.exports = { createCheckout, getCheckoutById, updateShipping, updateCustomer, cancelCheckout };
