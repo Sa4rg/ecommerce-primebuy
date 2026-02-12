@@ -32,6 +32,7 @@ class MySQLCartRepository {
   _mapCartToDbFormat(cart) {
     return {
       cart_id: cart.cartId,
+      cart_secret: cart.cartSecret || null,
       user_id: cart.userId,
       status: cart.metadata.status,
       metadata_json: JSON.stringify(cart.metadata),
@@ -80,6 +81,7 @@ class MySQLCartRepository {
 
     return {
       cartId: cartRow.cart_id,
+      cartSecret: cartRow.cart_secret || null,
       userId: cartRow.user_id,
       items,
       summary,
