@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate  } from "react-router-dom";
 import { useCart } from "../../../context/CartContext.jsx";
 import { getCheckoutById } from "../checkoutQuery";
 import { updateCheckoutCustomer, updateCheckoutShipping } from "../checkoutCommand";
@@ -22,6 +22,7 @@ function isDeliveryShippingInvalid(shipping) {
 export function CheckoutView() {
   const { itemsCount } = useCart();
   const { checkoutId } = useParams();
+  const navigate = useNavigate();
 
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
@@ -126,7 +127,7 @@ export function CheckoutView() {
     setSaveError("");
     setSaved(false);
 
-    const updatedCustomer = await updateCheckoutCustomer(checkoutId, form.customer);
+    const updatedCustomer = await updateCheckoutCustomer(checkoutId, shippingPayload);
 
     // ✅ Si pickup, enviamos solo method (address opcional)
     const shippingPayload =
@@ -191,6 +192,10 @@ export function CheckoutView() {
               <li>USD: {(checkout.paymentMethods?.usd || []).join(", ") || "—"}</li>
               <li>VES: {(checkout.paymentMethods?.ves || []).join(", ") || "—"}</li>
             </ul>
+
+            <button onClick={() => navigate(`/checkout/${checkoutId}/payment`)}>
+              Proceed to payment
+            </button>
 
           <h3>Customer</h3>
           <label>

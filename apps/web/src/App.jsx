@@ -7,6 +7,10 @@ import { CheckoutView } from "./features/checkout/components/CheckoutView.jsx";
 import { CheckoutStart } from "./features/checkout/components/CheckoutStart.jsx";
 import { LoginView } from "./features/auth/components/LoginView.jsx";
 import { RegisterView } from "./features/auth/components/RegisterView.jsx";
+import { PaymentMethodPage } from "./features/payment/components/PaymentMethodPage.jsx";
+import { PaymentStatusPage } from "./features/payment/components/PaymentStatusPage.jsx";
+import { OrderDetailPage } from "./features/orders/components/OrderDetailPage.jsx";
+
 
 function getHeaderContent(pathname) {
   if (pathname === "/cart") {
@@ -56,6 +60,9 @@ function App() {
         <Route path="/cart" element={<CartView />} />
         <Route path="/checkout" element={<CheckoutStart />} />
         <Route path="/checkout/:checkoutId" element={<CheckoutView />} />
+        <Route path="/checkout/:checkoutId/payment" element={<PaymentMethodPage />} />
+        <Route path="/payments/:paymentId" element={<PaymentStatusPage />} />
+        <Route path="/orders/:orderId" element={<OrderDetailPage />} />
         <Route path="/login" element={<LoginView />} />
         <Route path="/register" element={<RegisterView />} />
       </Routes>
