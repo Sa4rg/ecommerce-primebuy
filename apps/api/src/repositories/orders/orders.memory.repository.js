@@ -60,6 +60,35 @@ class InMemoryOrdersRepository {
   async findAll() {
     return Array.from(this.ordersById.values());
   }
+
+  /**
+   * Find order by payment ID
+   * @param {string} paymentId
+   * @returns {Promise<Object|null>}
+   */
+  async findByPaymentId(paymentId) {
+    for (const order of this.ordersById.values()) {
+      if (order.paymentId === paymentId) {
+        return order;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Find all orders for a specific user
+   * @param {string} userId
+   * @returns {Promise<Object[]>}
+   */
+  async findByUserId(userId) {
+    const orders = [];
+    for (const order of this.ordersById.values()) {
+      if (order.userId === userId) {
+        orders.push(order);
+      }
+    }
+    return orders;
+  }
 }
 
 module.exports = { InMemoryOrdersRepository };

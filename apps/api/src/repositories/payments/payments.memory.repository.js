@@ -72,6 +72,21 @@ class InMemoryPaymentsRepository {
     }
     return payments;
   }
+
+  /**
+   * Finds all payments for a specific user
+   * @param {string} userId
+   * @returns {Promise<Object[]>}
+   */
+  async findByUserId(userId) {
+    const payments = [];
+    for (const payment of this.paymentsById.values()) {
+      if (payment.userId === userId) {
+        payments.push(payment);
+      }
+    }
+    return payments;
+  }
 }
 
 module.exports = { InMemoryPaymentsRepository };

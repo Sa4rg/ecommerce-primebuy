@@ -92,6 +92,9 @@ beforeEach(() => {
     ordersStore,
     idGenerator: () => "order-1",
   });
+
+  // Inject ordersService into paymentsService (required for confirmPayment compensation)
+  paymentsService.setOrdersService(ordersService);
 });
 
 describe("createOrderFromPayment", () => {
@@ -137,12 +140,11 @@ describe("createOrderFromPayment", () => {
     const paymentId = payment.paymentId;
 
     await paymentsService.submitPayment(paymentId, { reference: "ZELLE-REF-123" });
-    await paymentsService.confirmPayment(paymentId, "Verified payment");
+    
+    // confirmPayment now automatically creates the order
+    const { order } = await paymentsService.confirmPayment(paymentId, "Verified payment");
 
-    // Act
-    const order = await ordersService.createOrderFromPayment(paymentId, TEST_USER_ID);
-
-    // Assert
+    // Assert - order is created automatically by confirmPayment
     expect(order.orderId).toBe("order-1");
     expect(order.paymentId).toBe(paymentId);
     expect(order.checkoutId).toBe(checkoutId);
@@ -266,7 +268,7 @@ describe("createOrderFromPayment", () => {
   });
 
   test("should throw 409 when order already exists for payment", async () => {
-    // Arrange: create confirmed payment
+    // Arrange: create confirmed payment (order is created automatically by confirmPayment)
     const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.addItem(cartId, "product-1", 1);
     await cartService.updateMetadata(cartId, {
@@ -292,12 +294,10 @@ describe("createOrderFromPayment", () => {
     });
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
+    // Order is created automatically when confirming payment
     await paymentsService.confirmPayment(payment.paymentId, null);
 
-    // Create order once
-    await ordersService.createOrderFromPayment(payment.paymentId, TEST_USER_ID);
-
-    // Act + Assert: try to create again
+    // Act + Assert: try to create order manually (should fail, order already exists)
     await expect(ordersService.createOrderFromPayment(payment.paymentId, TEST_USER_ID)).rejects.toEqual(
       expect.objectContaining({
         statusCode: 409,
@@ -309,7 +309,7 @@ describe("createOrderFromPayment", () => {
 
 describe("getOrderById", () => {
   test("should return an existing order", async () => {
-    // Arrange: create confirmed payment and order
+    // Arrange: create confirmed payment (order is created automatically)
     const { cartId } = await cartService.createCart(TEST_USER_ID);
     await cartService.addItem(cartId, "product-1", 1);
     await cartService.updateMetadata(cartId, {
@@ -335,9 +335,8 @@ describe("getOrderById", () => {
     });
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
-    await paymentsService.confirmPayment(payment.paymentId, null);
-
-    const createdOrder = await ordersService.createOrderFromPayment(payment.paymentId, TEST_USER_ID);
+    // Order is created automatically when confirming payment
+    const { order: createdOrder } = await paymentsService.confirmPayment(payment.paymentId, null);
     const orderId = createdOrder.orderId;
 
     // Act
@@ -388,9 +387,8 @@ describe("fulfillment", () => {
     });
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
-    await paymentsService.confirmPayment(payment.paymentId, null);
-
-    const order = await ordersService.createOrderFromPayment(payment.paymentId, TEST_USER_ID);
+    // Order is created automatically when confirming payment
+    const { order } = await paymentsService.confirmPayment(payment.paymentId, null);
     return order;
   }
 
@@ -558,9 +556,8 @@ describe("shipping", () => {
     });
     const payment = await paymentsService.createPayment(checkout.checkoutId, "zelle", TEST_USER_ID);
     await paymentsService.submitPayment(payment.paymentId, { reference: "REF-123" });
-    await paymentsService.confirmPayment(payment.paymentId, null);
-
-    const order = await ordersService.createOrderFromPayment(payment.paymentId, TEST_USER_ID);
+    // Order is created automatically when confirming payment
+    const { order } = await paymentsService.confirmPayment(payment.paymentId, null);
     return order;
   }
 

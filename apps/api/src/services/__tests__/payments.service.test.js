@@ -242,13 +242,15 @@ describe("admin review", () => {
     const previousUpdatedAt = submittedPayment.updatedAt;
 
     // Act
-    const confirmedPayment = await paymentsService.confirmPayment("payment-1", "Confirmed in bank");
+    const result = await paymentsService.confirmPayment("payment-1", "Confirmed in bank");
 
     // Assert
-    expect(confirmedPayment.status).toBe(PaymentStatus.CONFIRMED);
-    expect(confirmedPayment.review.note).toBe("Confirmed in bank");
-    expect(confirmedPayment.updatedAt).not.toBe(previousUpdatedAt);
-    expect(typeof confirmedPayment.updatedAt).toBe("string");
+    expect(result.payment.status).toBe(PaymentStatus.CONFIRMED);
+    expect(result.payment.review.note).toBe("Confirmed in bank");
+    expect(result.payment.updatedAt).not.toBe(previousUpdatedAt);
+    expect(typeof result.payment.updatedAt).toBe("string");
+    // order is null in unit tests (no ordersService injected)
+    expect(result.order).toBeNull();
   });
 
   test("confirmPayment should allow null/undefined note and still confirm", async () => {
@@ -263,12 +265,12 @@ describe("admin review", () => {
     const previousUpdatedAt = submittedPayment.updatedAt;
 
     // Act
-    const confirmedPayment = await paymentsService.confirmPayment("payment-1");
+    const result = await paymentsService.confirmPayment("payment-1");
 
     // Assert
-    expect(confirmedPayment.status).toBe(PaymentStatus.CONFIRMED);
-    expect(confirmedPayment.review.note).toBeNull();
-    expect(confirmedPayment.updatedAt).not.toBe(previousUpdatedAt);
+    expect(result.payment.status).toBe(PaymentStatus.CONFIRMED);
+    expect(result.payment.review.note).toBeNull();
+    expect(result.payment.updatedAt).not.toBe(previousUpdatedAt);
   });
 
   test("confirmPayment should throw 404 when payment not found", async () => {

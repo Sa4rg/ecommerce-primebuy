@@ -1,12 +1,13 @@
 // src/features/payment/pages/PaymentStatusPage.jsx
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { paymentService } from "../paymentService";
-import { orderService } from "../../orders/orderService";
+import { useCart } from "../../../context/CartContext.jsx";
 
 export function PaymentStatusPage() {
   const { paymentId } = useParams();
   const nav = useNavigate();
+  const { resetCart } = useCart();
 
   const [payment, setPayment] = useState(null);
   const [reference, setReference] = useState("");
@@ -26,7 +27,7 @@ export function PaymentStatusPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentId]);
 
-  // Polling solo mientras submitted/pending
+  // Polling solo mientras pending/submitted
   useEffect(() => {
     if (!status) return;
     if (!["pending", "submitted"].includes(status)) return;
@@ -48,27 +49,23 @@ export function PaymentStatusPage() {
     return null;
   }, [payment]);
 
+  function continueShopping() {
+    // ✅ siempre limpiamos carrito local para evitar quedar pegados a uno locked
+    resetCart();
+    nav("/", { replace: true });
+  }
+
   async function onSubmitProof() {
     setErr("");
     setLoading(true);
     try {
       const updated = await paymentService.submitPayment({ paymentId, reference });
       setPayment(updated);
+
+      // ✅ Opción B: backend lockea el carrito al submit, reseteamos el front
+      resetCart();
     } catch (e) {
       setErr(e.message || "Failed to submit proof");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function onCreateOrder() {
-    setErr("");
-    setLoading(true);
-    try {
-      const order = await orderService.createOrder({ paymentId });
-      nav(`/orders/${order.orderId}`);
-    } catch (e) {
-      setErr(e.message || "Failed to create order");
     } finally {
       setLoading(false);
     }
@@ -86,7 +83,7 @@ export function PaymentStatusPage() {
       <p><b>Status:</b> {payment.status}</p>
 
       {instructions && (
-        <div style={{ padding: 12, border: "1px solid #333", borderRadius: 8 }}>
+        <div style={{ padding: 12, border: "1px solid #333", borderRadius: 8, marginTop: 8 }}>
           <b>Instructions</b>
           <p>{instructions}</p>
         </div>
@@ -105,16 +102,29 @@ export function PaymentStatusPage() {
       )}
 
       {status === "submitted" && (
-        <p style={{ marginTop: 16 }}>
-          Submitted. Waiting for admin confirmation...
-        </p>
+        <div style={{ marginTop: 16 }}>
+          <p>Submitted. Waiting for admin confirmation...</p>
+          <button type="button" onClick={continueShopping}>
+            Continue shopping
+          </button>
+        </div>
       )}
 
       {status === "confirmed" && (
         <div style={{ marginTop: 16 }}>
-          <button onClick={onCreateOrder} disabled={loading}>
-            {loading ? "Creating order..." : "Create order"}
-          </button>
+          <p style={{ color: "lightgreen" }}>Payment confirmed!</p>
+
+          {payment.orderId && (
+            <div style={{ marginTop: 8 }}>
+              <Link to={`/orders/${payment.orderId}`}>View your order</Link>
+            </div>
+          )}
+
+          <div style={{ marginTop: 12 }}>
+            <button type="button" onClick={continueShopping}>
+              Continue shopping
+            </button>
+          </div>
         </div>
       )}
 
@@ -124,9 +134,16 @@ export function PaymentStatusPage() {
             Rejected: {payment.review?.reason || "No reason provided"}
           </p>
           <p>You can go back and create a new payment method.</p>
+
           <button onClick={() => nav(`/checkout/${payment.checkoutId}/payment`)}>
             Choose another method
           </button>
+
+          <div style={{ marginTop: 12 }}>
+            <button type="button" onClick={continueShopping}>
+              Continue shopping
+            </button>
+          </div>
         </div>
       )}
     </div>

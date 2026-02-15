@@ -321,6 +321,38 @@ class MySQLOrdersRepository {
 
     return orders;
   }
+
+  /**
+   * Find order by payment ID
+   * @param {string} paymentId
+   * @returns {Promise<Object|null>}
+   */
+  async findByPaymentId(paymentId) {
+    const orderRow = await db(this.ordersTable)
+      .where({ payment_id: paymentId })
+      .first();
+
+    if (!orderRow) return null;
+    return this.findById(orderRow.order_id);
+  }
+
+  /**
+   * Find all orders for a specific user
+   * @param {string} userId
+   * @returns {Promise<Object[]>}
+   */
+  async findByUserId(userId) {
+    const orderRows = await db(this.ordersTable)
+      .where({ user_id: userId })
+      .orderBy('created_at', 'desc');
+
+    const orders = [];
+    for (const orderRow of orderRows) {
+      const order = await this.findById(orderRow.order_id);
+      if (order) orders.push(order);
+    }
+    return orders;
+  }
 }
 
 module.exports = { MySQLOrdersRepository };

@@ -146,6 +146,34 @@ class MySQLPaymentsRepository {
     
     return rows.map(row => this._mapToPayment(row));
   }
+
+  /**
+   * Finds all payments, optionally filtered by status.
+   * @param {Object} filters - Optional filters { status: string }
+   * @returns {Promise<Object[]>}
+   */
+  async findAll(filters = {}) {
+    let query = db(this.table);
+    
+    if (filters.status) {
+      query = query.where({ status: filters.status });
+    }
+    
+    const rows = await query.orderBy('created_at', 'desc');
+    return rows.map(row => this._mapToPayment(row));
+  }
+
+  /**
+   * Finds all payments for a specific user
+   * @param {string} userId
+   * @returns {Promise<Object[]>}
+   */
+  async findByUserId(userId) {
+    const rows = await db(this.table)
+      .where({ user_id: userId })
+      .orderBy('created_at', 'desc');
+    return rows.map(row => this._mapToPayment(row));
+  }
 }
 
 

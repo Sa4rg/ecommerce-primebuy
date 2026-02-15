@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { login } from "../authCommand";
-import { setAccessToken } from "../authStorage";
+import { useNavigate, Link, useLocation  } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext.jsx";
 
 export function LoginView() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("idle");
@@ -17,11 +19,11 @@ export function LoginView() {
       setStatus("loading");
       setError("");
 
-      const data = await login({ email, password });
-      setAccessToken(data.accessToken);
+      await login({ email, password });
 
       setStatus("success");
-      navigate("/checkout", { replace: true });
+      const from = location.state?.from || "/checkout";
+      navigate(from, { replace: true });
     } catch (err) {
       setStatus("error");
       setError(err?.message || "Unknown error");

@@ -33,12 +33,12 @@ async function submitPayment(req, res, next) {
 async function confirmPayment(req, res, next) {
   try {
     const { paymentId } = req.params;
-    const { note } = req.body;
+    const { note } = req.body || {};
 
-    const payment = await paymentsService.confirmPayment(paymentId, note);
+    const result = await paymentsService.confirmPayment(paymentId, note);
 
     res.status(200);
-    success(res, payment, "Payment confirmed successfully");
+    success(res, result, "Payment confirmed and order created");
   } catch (error) {
     return next(error);
   }
@@ -47,7 +47,7 @@ async function confirmPayment(req, res, next) {
 async function rejectPayment(req, res, next) {
   try {
     const { paymentId } = req.params;
-    const { reason } = req.body;
+    const { reason } = req.body || {};
 
     const payment = await paymentsService.rejectPayment(paymentId, reason);
 

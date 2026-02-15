@@ -21,7 +21,7 @@ function SeedCart() {
         },
       ],
       summary: { itemsCount: 2, subtotalUSD: 20 },
-      metadata: { market: "VE", baseCurrency: "USD" },
+      metadata: { market: "VE", baseCurrency: "USD", status: "active" },
     });
   }, [setCart]);
 

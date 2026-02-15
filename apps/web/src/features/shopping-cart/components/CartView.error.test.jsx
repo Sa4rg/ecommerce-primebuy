@@ -16,6 +16,7 @@ describe("CartView error UX", () => {
             cartId: "cart-1",
             items: [],
             summary: { itemsCount: 0, subtotalUSD: 0 },
+            metadata: { status: "active" }, // Prevent "not active" banner
           },
         }}
       >

@@ -21,7 +21,7 @@ app.use(requestLogger);
 // Rate limiter configuration (disabled in test environment)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Max 100 requests per IP per window
+  max: NODE_ENV === 'development' ? 1000 : 100, // Higher limit in dev (StrictMode doubles requests)
   standardHeaders: true, // Return rate limit info in RateLimit-* headers
   legacyHeaders: false, // Disable X-RateLimit-* headers
   message: 'Too many requests from this IP, please try again later',
@@ -34,11 +34,21 @@ const limiter = rateLimit({
 //}
 
 // CORS configuration based on environment
-const corsOrigin = NODE_ENV === 'production' 
-  ? FRONTEND_ORIGIN 
-  : 'http://localhost:5173';
+const cookieParser = require("cookie-parser");
 
-app.use(cors({ origin: corsOrigin }));
+// CORS configuration based on environment
+const corsOrigin =
+  NODE_ENV === "production" ? FRONTEND_ORIGIN : "http://localhost:5173";
+
+// ✅ IMPORTANTE: credentials: true para que el browser envíe cookies
+app.use(
+  cors({
+    origin: corsOrigin,
+    credentials: true,
+  })
+);
+
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 

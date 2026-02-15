@@ -71,6 +71,10 @@ const checkoutService = createCheckoutService({
 });
 const paymentsService = createPaymentsService({ cartService, checkoutService, paymentsRepository });
 const ordersService = createOrdersService({ cartService, checkoutService, paymentsService, ordersRepository });
+
+// Lazy injection to avoid circular dependency
+paymentsService.setOrdersService(ordersService);
+
 const authService = createAuthService({ usersRepository, refreshTokensRepository });
 
 // ============================================================================

@@ -100,14 +100,15 @@ async function createConfirmedUsdPayment(app, options = {}) {
     .send({ reference: 'ABC123' });
   expect(submitRes.status).toBe(200);
 
-  // Confirm payment (requires admin)
+  // Confirm payment (requires admin) - order is auto-created
   const confirmRes = await request(app)
     .patch(`/api/payments/${paymentId}/confirm`)
     .set('Authorization', `Bearer ${adminToken()}`)
     .send({ note: 'Confirmed' });
   expect(confirmRes.status).toBe(200);
+  const orderId = confirmRes.body.data.order?.orderId;
 
-  return { cartId, checkoutId, paymentId, userToken };
+  return { cartId, checkoutId, paymentId, orderId, userToken };
 }
 
 /**

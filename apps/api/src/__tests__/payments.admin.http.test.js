@@ -160,11 +160,14 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
       })
     );
 
-    expect(confirmRes.body.data.paymentId).toBe(paymentId);
-    expect(confirmRes.body.data.status).toBe(PaymentStatus.CONFIRMED);
-    expect(confirmRes.body.data.review.note).toBe("Confirmed in bank");
-    expect(typeof confirmRes.body.data.updatedAt).toBe("string");
-    expect(confirmRes.body.data.updatedAt).not.toBe(previousUpdatedAt);
+    expect(confirmRes.body.data.payment.paymentId).toBe(paymentId);
+    expect(confirmRes.body.data.payment.status).toBe(PaymentStatus.CONFIRMED);
+    expect(confirmRes.body.data.payment.review.note).toBe("Confirmed in bank");
+    expect(typeof confirmRes.body.data.payment.updatedAt).toBe("string");
+    expect(confirmRes.body.data.payment.updatedAt).not.toBe(previousUpdatedAt);
+    // Order should be auto-created
+    expect(confirmRes.body.data.order).toBeDefined();
+    expect(confirmRes.body.data.order.orderId).toBeDefined();
   });
 
   test("should confirm without note and set review.note null", async () => {
@@ -178,9 +181,10 @@ describe("PATCH /api/payments/:paymentId/confirm", () => {
 
     // Assert
     expect(confirmRes.status).toBe(200);
-    expect(confirmRes.body.data.status).toBe(PaymentStatus.CONFIRMED);
-    expect(confirmRes.body.data.review.note).toBeNull();
-    expect(confirmRes.body.data.updatedAt).not.toBe(previousUpdatedAt);
+    expect(confirmRes.body.data.payment.status).toBe(PaymentStatus.CONFIRMED);
+    expect(confirmRes.body.data.payment.review.note).toBeNull();
+    expect(confirmRes.body.data.payment.updatedAt).not.toBe(previousUpdatedAt);
+    expect(confirmRes.body.data.order).toBeDefined();
   });
 
   test("should return 404 when payment not found", async () => {

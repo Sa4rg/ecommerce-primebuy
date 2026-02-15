@@ -1,0 +1,161 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { AdminPaymentsPage } from "./AdminPaymentsPage.jsx";
+import { adminService } from "../adminService";
+
+vi.mock("../adminService");
+
+describe("AdminPaymentsPage", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    // Mock window.confirm and window.alert
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    vi.spyOn(window, "alert").mockImplementation(() => {});
+  });
+
+  it("shows loading state initially, then displays payments table", async () => {
+    const mockPayments = [
+      {
+        paymentId: "pay-123-abc",
+        method: "zelle",
+        amountUSD: 50.00,
+        currency: "USD",
+        reference: "REF-001",
+        status: "submitted",
+        submittedAt: "2026-01-15T10:00:00Z",
+      },
+    ];
+
+    adminService.listPayments.mockResolvedValue(mockPayments);
+
+    render(<AdminPaymentsPage />);
+
+    // Initially shows loading
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+
+    // After load, shows payment data
+    await waitFor(() => {
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/pay-123/i)).toBeInTheDocument();
+    expect(screen.getByText(/zelle/i)).toBeInTheDocument();
+    expect(screen.getByText(/\$50\.00 USD/i)).toBeInTheDocument();
+    expect(screen.getByText(/REF-001/i)).toBeInTheDocument();
+  });
+
+  it("shows error message when loading fails", async () => {
+    adminService.listPayments.mockRejectedValue(new Error("Network error"));
+
+    render(<AdminPaymentsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/network error/i)).toBeInTheDocument();
+    });
+  });
+
+  it("shows 'No payments found' when list is empty", async () => {
+    adminService.listPayments.mockResolvedValue([]);
+
+    render(<AdminPaymentsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/no payments found/i)).toBeInTheDocument();
+    });
+  });
+
+  it("calls confirmPayment when Confirm button is clicked", async () => {
+    const mockPayments = [
+      {
+        paymentId: "pay-to-confirm",
+        method: "zelle",
+        amountUSD: 100.00,
+        currency: "USD",
+        status: "submitted",
+      },
+    ];
+
+    adminService.listPayments.mockResolvedValue(mockPayments);
+    adminService.confirmPayment.mockResolvedValue({ 
+      paymentId: "pay-to-confirm", 
+      status: "confirmed",
+      order: { orderId: "order-123" }
+    });
+
+    render(<AdminPaymentsPage />);
+
+    // Wait for table to render
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /confirm/i })).toBeInTheDocument();
+    });
+
+    // Click confirm
+    fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+    await waitFor(() => {
+      expect(adminService.confirmPayment).toHaveBeenCalledWith("pay-to-confirm");
+    });
+
+    // Alert should show order created
+    expect(window.alert).toHaveBeenCalledWith(expect.stringContaining("order-123"));
+  });
+
+  it("opens reject modal and submits rejection with reason", async () => {
+    const mockPayments = [
+      {
+        paymentId: "pay-to-reject",
+        method: "pago_movil",
+        amountVES: 500.00,
+        currency: "VES",
+        status: "submitted",
+      },
+    ];
+
+    adminService.listPayments.mockResolvedValue(mockPayments);
+    adminService.rejectPayment.mockResolvedValue({ paymentId: "pay-to-reject", status: "rejected" });
+
+    render(<AdminPaymentsPage />);
+
+    // Wait for table
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /reject/i })).toBeInTheDocument();
+    });
+
+    // Click reject to open modal
+    fireEvent.click(screen.getByRole("button", { name: /reject/i }));
+
+    // Modal should appear
+    await waitFor(() => {
+      expect(screen.getByText(/please provide a reason/i)).toBeInTheDocument();
+    });
+
+    // Fill reason and submit
+    const textarea = screen.getByPlaceholderText(/reason for rejection/i);
+    fireEvent.change(textarea, { target: { value: "Invalid reference number" } });
+
+    const rejectButton = screen.getByRole("button", { name: /reject payment/i });
+    fireEvent.click(rejectButton);
+
+    await waitFor(() => {
+      expect(adminService.rejectPayment).toHaveBeenCalledWith("pay-to-reject", "Invalid reference number");
+    });
+  });
+
+  it("changes filter and reloads payments", async () => {
+    adminService.listPayments.mockResolvedValue([]);
+
+    render(<AdminPaymentsPage />);
+
+    await waitFor(() => {
+      expect(adminService.listPayments).toHaveBeenCalledWith({ status: "submitted" });
+    });
+
+    // Change filter to "confirmed"
+    const select = screen.getByRole("combobox");
+    fireEvent.change(select, { target: { value: "confirmed" } });
+
+    await waitFor(() => {
+      expect(adminService.listPayments).toHaveBeenCalledWith({ status: "confirmed" });
+    });
+  });
+});

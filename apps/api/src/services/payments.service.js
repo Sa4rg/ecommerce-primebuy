@@ -43,6 +43,9 @@ function createPaymentsService(deps = {}) {
   const checkoutService = deps.checkoutService || defaultCheckoutService;
   const idGenerator = deps.idGenerator || (() => crypto.randomUUID());
 
+  // Lazy injection to avoid circular dependency
+  let ordersService = deps.ordersService || null;
+
   // Support both new repository pattern and legacy paymentsStore
   let paymentsRepository;
   if (deps.paymentsRepository) {
@@ -167,13 +170,36 @@ function createPaymentsService(deps = {}) {
       }
     }
 
+    // 1) Update to confirmed (tentative)
     payment.status = PaymentStatus.CONFIRMED;
     payment.review = { note: note ? note.trim() : null };
     payment.updatedAt = nextUpdatedAt(payment.updatedAt);
 
     await paymentsRepository.save(payment);
 
-    return payment;
+    // 2) If ordersService is not available (unit tests), return without order
+    if (!ordersService) {
+      return { payment, order: null };
+    }
+
+    // 3) Try to create order
+    try {
+      const order = await ordersService.createOrderFromPayment(paymentId, payment.userId);
+      return { payment, order };
+    } catch (err) {
+      // 4) Compensation: revert payment to SUBMITTED
+      payment.status = PaymentStatus.SUBMITTED;
+      payment.updatedAt = nextUpdatedAt(payment.updatedAt);
+      payment.review = {
+        ...(payment.review || {}),
+        orderCreationFailed: true,
+      };
+
+      await paymentsRepository.save(payment);
+
+      // Propagate error
+      throw new AppError("Order creation failed after payment confirmation", 500);
+    }
   }
 
   async function rejectPayment(paymentId, reason) {
@@ -207,6 +233,14 @@ function createPaymentsService(deps = {}) {
       throw new AppError("Payment not found", 404);
     }
     
+    // Include orderId if payment is confirmed
+    if (payment.status === PaymentStatus.CONFIRMED && ordersService) {
+      const order = await ordersService.getOrderByPaymentId(paymentId);
+      if (order) {
+        return { ...payment, orderId: order.orderId };
+      }
+    }
+    
     return payment;
   }
 
@@ -235,7 +269,24 @@ function createPaymentsService(deps = {}) {
     return await paymentsRepository.findAll(filters);
   }
 
-  return { createPayment, submitPayment, confirmPayment, rejectPayment, getPaymentById, getPaymentsByCheckoutId, hasSubmittedPayments, listPayments };
+  /**
+   * Setter for lazy injection of ordersService (avoids circular dependency)
+   * @param {Object} service
+   */
+  function setOrdersService(service) {
+    ordersService = service;
+  }
+
+  /**
+   * Get all payments for a specific user
+   * @param {string} userId
+   * @returns {Promise<Object[]>}
+   */
+  async function getPaymentsByUserId(userId) {
+    return paymentsRepository.findByUserId(userId);
+  }
+
+  return { createPayment, submitPayment, confirmPayment, rejectPayment, getPaymentById, getPaymentsByCheckoutId, getPaymentsByUserId, hasSubmittedPayments, listPayments, setOrdersService };
 }
 
 const paymentsService = createPaymentsService();

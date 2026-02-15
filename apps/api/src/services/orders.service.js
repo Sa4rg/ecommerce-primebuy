@@ -346,9 +346,24 @@ function createOrdersService(deps = {}) {
     return order;
   }
 
+  async function getOrderByPaymentId(paymentId) {
+    return await ordersRepository.findByPaymentId(paymentId);
+  }
+
+  /**
+   * Get all orders for a specific user
+   * @param {string} userId
+   * @returns {Promise<Object[]>}
+   */
+  async function getOrdersByUserId(userId) {
+    return await ordersRepository.findByUserId(userId);
+  }
+
   return {
     createOrderFromPayment,
     getOrderById,
+    getOrderByPaymentId,
+    getOrdersByUserId,
     processOrder,
     completeOrder,
     cancelOrder,

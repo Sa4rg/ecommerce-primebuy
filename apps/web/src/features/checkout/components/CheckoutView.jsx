@@ -127,7 +127,8 @@ export function CheckoutView() {
     setSaveError("");
     setSaved(false);
 
-    const updatedCustomer = await updateCheckoutCustomer(checkoutId, shippingPayload);
+    // Update customer info
+    const updatedCustomer = await updateCheckoutCustomer(checkoutId, form.customer);
 
     // ✅ Si pickup, enviamos solo method (address opcional)
     const shippingPayload =
@@ -135,8 +136,7 @@ export function CheckoutView() {
         ? { method: "pickup" }
         : form.shipping;
 
-
-    const updatedShipping = await updateCheckoutShipping(checkoutId, form.shipping);
+    const updatedShipping = await updateCheckoutShipping(checkoutId, shippingPayload);
 
     setCheckout((prev) => ({
       ...prev,

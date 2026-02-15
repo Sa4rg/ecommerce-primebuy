@@ -39,15 +39,18 @@ describe('Orders Auth', () => {
  });
 
 
- it('POST /api/orders → 201 with valid token (happy path)', async () => {
-  const { paymentId, userToken } = await createConfirmedUsdPayment(app);
+ it('POST /api/orders → 409 since order is auto-created on confirmation', async () => {
+  // Order is auto-created during payment confirmation
+  const { paymentId, orderId, userToken } = await createConfirmedUsdPayment(app);
 
+  // Trying to create order manually should fail - already exists
   const res = await request(app)
     .post('/api/orders')
     .set('Authorization', `Bearer ${userToken}`)
     .send({ paymentId });
 
-  expect(res.status).toBe(201);
+  expect(res.status).toBe(409);
+  expect(orderId).toBeDefined();
  });
 
 });

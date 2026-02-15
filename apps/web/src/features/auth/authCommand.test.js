@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { login, logout } from "./authCommand";
-import { getAccessToken } from "./authStorage";
+import { login } from "./authCommand";
 
 describe("authCommand", () => {
   beforeEach(() => {
@@ -8,7 +7,7 @@ describe("authCommand", () => {
     localStorage.clear();
   });
 
-  it("stores accessToken after login", async () => {
+  it("returns accessToken from backend on successful login", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       status: 200,
@@ -19,14 +18,14 @@ describe("authCommand", () => {
       }),
     });
 
-    await login({ email: "a@a.com", password: "pass" });
+    const result = await login({ email: "a@a.com", password: "pass" });
 
-    expect(getAccessToken()).toBe("token-abc");
+    // login() returns the data from API (token storage is handled by AuthContext)
+    expect(result.accessToken).toBe("token-abc");
   });
 
-  it("logout clears accessToken", () => {
-    localStorage.setItem("accessToken", "token-xyz");
-    logout();
-    expect(getAccessToken()).toBe("");
+  it("throws error when email or password is missing", async () => {
+    await expect(login({ email: "", password: "pass" })).rejects.toThrow("email and password are required");
+    await expect(login({ email: "a@a.com", password: "" })).rejects.toThrow("email and password are required");
   });
 });

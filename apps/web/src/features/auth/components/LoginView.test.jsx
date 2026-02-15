@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, render, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "../../../context/AuthContext.jsx";
 import { LoginView } from "./LoginView";
 
 describe("LoginView", () => {
@@ -22,12 +23,14 @@ describe("LoginView", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/login"]}>
-        <Routes>
-          <Route path="/login" element={<LoginView />} />
-          <Route path="/checkout" element={<h2>Checkout</h2>} />
-        </Routes>
-      </MemoryRouter>
+      <AuthProvider>
+        <MemoryRouter initialEntries={["/login"]}>
+          <Routes>
+            <Route path="/login" element={<LoginView />} />
+            <Route path="/checkout" element={<h2>Checkout</h2>} />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>
     );
 
     const user = userEvent.setup();

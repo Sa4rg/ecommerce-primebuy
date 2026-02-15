@@ -8,5 +8,6 @@ router.use('/checkout', require('./checkout.routes'));
 router.use('/payments', require('./payments.routes'));
 router.use('/orders', require('./orders.routes'));
 router.use('/auth', require('./auth.routes'));
+router.use('/me', require('./user.routes'));
 
 module.exports = router;
