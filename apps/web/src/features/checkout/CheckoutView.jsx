@@ -21,6 +21,53 @@ function isNonEmpty(v) {
   return typeof v === "string" && v.trim().length > 0;
 }
 
+function Field({ id, label, value, onChangeValue, type = "text", placeholder, disabled }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label htmlFor={id} className="block text-sm font-medium mb-1.5 opacity-70">
+        {label}
+      </label>
+      <input
+        id={id}
+        name={id}
+        disabled={disabled}
+        type={type}
+        value={value ?? ""}
+        onChange={(e) => onChangeValue(e.target.value)}
+        placeholder={placeholder}
+        className="w-full bg-orange-500/5 border border-orange-500/20 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500/40 focus:border-transparent transition-all outline-none disabled:opacity-60"
+      />
+    </div>
+  );
+}
+
+function PaymentOption({ value, label, selected, onSelect }) {
+  return (
+    <label
+      className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${
+        selected ? "border-orange-500 bg-[#0f0a06]/30" : "border-orange-500/10 bg-[#0f0a06]/10 hover:border-orange-500/40"
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <span className={`${selected ? "opacity-100" : "opacity-70"} font-bold`}>{label}</span>
+      </div>
+      <div
+        className={`w-5 h-5 rounded-full ${
+          selected ? "border-4 border-orange-500 bg-orange-500" : "border-2 border-orange-500/20"
+        }`}
+      />
+      <input
+        className="hidden"
+        type="radio"
+        name="payment_method"
+        value={value}
+        checked={selected}
+        onChange={() => onSelect(value)}
+      />
+    </label>
+  );
+}
+
 export function CheckoutView() {
   const { itemsCount } = useCart();
   const { checkoutId } = useParams();
@@ -134,12 +181,12 @@ export function CheckoutView() {
   async function onSave() {
     if (saving) return;
 
-    // Validación mínima para delivery (Stitch asume shipping siempre)
     const a = form.shipping.address || {};
     const missing =
       !isNonEmpty(form.customer.name) ||
       !isNonEmpty(a.line1) ||
       !isNonEmpty(a.city) ||
+      !isNonEmpty(a.state) ||
       !isNonEmpty(form.customer.phone);
 
     if (missing) {
@@ -152,14 +199,12 @@ export function CheckoutView() {
       setSaveError("");
       setSaved(false);
 
-      // Customer PATCH
       const updatedCustomer = await updateCheckoutCustomer(checkoutId, {
         name: form.customer.name,
         email: form.customer.email,
         phone: form.customer.phone,
       });
 
-      // Shipping PATCH
       const shippingPayload = {
         method: "delivery",
         address: {
@@ -199,54 +244,6 @@ export function CheckoutView() {
     navigate(`/checkout/${id}/payment`);
   }
 
-  function Field({ id, label, value, onChangeValue, type = "text", placeholder }) {
-    return (
-      <div className="flex flex-col gap-2">
-        <label htmlFor={id} className="block text-sm font-medium mb-1.5 opacity-70">
-          {label}
-        </label>
-        <input
-          id={id}
-          name={id}
-          disabled={saving}
-          type={type}
-          value={value ?? ""}
-          onChange={(e) => onChangeValue(e.target.value)}
-          placeholder={placeholder}
-          className="w-full bg-orange-500/5 border border-orange-500/20 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500/40 focus:border-transparent transition-all outline-none disabled:opacity-60"
-        />
-      </div>
-    );
-  }
-
-  function PaymentOption({ value, label }) {
-    const selected = form.payment.method === value;
-    return (
-      <label
-        className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${
-          selected ? "border-orange-500 bg-[#0f0a06]/30" : "border-orange-500/10 bg-[#0f0a06]/10 hover:border-orange-500/40"
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <span className={`${selected ? "opacity-100" : "opacity-70"} font-bold`}>{label}</span>
-        </div>
-        <div
-          className={`w-5 h-5 rounded-full ${
-            selected ? "border-4 border-orange-500 bg-orange-500" : "border-2 border-orange-500/20"
-          }`}
-        />
-        <input
-          className="hidden"
-          type="radio"
-          name="payment_method"
-          value={value}
-          checked={selected}
-          onChange={(e) => onChangePaymentMethod(e.target.value)}
-        />
-      </label>
-    );
-  }
-
   return (
     <section className="min-h-screen bg-[#0f0a06]">
       <div className="mx-auto max-w-6xl px-4 pt-8">
@@ -282,7 +279,6 @@ export function CheckoutView() {
         <CheckoutLayout
           left={
             <div className="space-y-10">
-              {/* Shipping Information */}
               <section className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <span className="w-8 h-8 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold">
@@ -299,6 +295,7 @@ export function CheckoutView() {
                       value={form.customer.name}
                       onChangeValue={(v) => onChangeCustomer("name", v)}
                       placeholder="Alexander Wright"
+                      disabled={saving}
                     />
                   </div>
 
@@ -310,6 +307,7 @@ export function CheckoutView() {
                       onChangeValue={(v) => onChangeCustomer("email", v)}
                       placeholder="your@email.com"
                       type="email"
+                      disabled={saving}
                     />
                   </div>
 
@@ -319,6 +317,16 @@ export function CheckoutView() {
                     value={form.shipping.address?.city}
                     onChangeValue={(v) => onChangeShippingAddress("city", v)}
                     placeholder="Toronto"
+                    disabled={saving}
+                  />
+
+                  <Field
+                    id="state"
+                    label="State"
+                    value={form.shipping.address?.state}
+                    onChangeValue={(v) => onChangeShippingAddress("state", v)}
+                    placeholder="Carabobo"
+                    disabled={saving}
                   />
 
                   <Field
@@ -328,6 +336,7 @@ export function CheckoutView() {
                     onChangeValue={(v) => onChangeCustomer("phone", v)}
                     placeholder="+1 (555) 000-0000"
                     type="tel"
+                    disabled={saving}
                   />
 
                   <div className="md:col-span-2">
@@ -337,6 +346,7 @@ export function CheckoutView() {
                       value={form.shipping.address?.line1}
                       onChangeValue={(v) => onChangeShippingAddress("line1", v)}
                       placeholder="123 Logistics Way, Suite 400"
+                      disabled={saving}
                     />
                   </div>
                 </div>
@@ -354,9 +364,7 @@ export function CheckoutView() {
                   {saved && <span className="text-sm text-green-400">Saved</span>}
                 </div>
 
-                {dirtyWarning && (
-                  <p className="mt-3 text-xs text-center text-slate-400">{dirtyWarning}</p>
-                )}
+                {dirtyWarning && <p className="mt-3 text-xs text-center text-slate-400">{dirtyWarning}</p>}
 
                 {saveError && (
                   <div role="alert" className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
@@ -365,7 +373,6 @@ export function CheckoutView() {
                 )}
               </section>
 
-              {/* Payment Method */}
               <section className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <span className="w-8 h-8 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold">
@@ -375,10 +382,30 @@ export function CheckoutView() {
                 </div>
 
                 <div className="space-y-4">
-                  <PaymentOption value="zelle" label="Zelle" />
-                  <PaymentOption value="zinli" label="Zinli" />
-                  <PaymentOption value="transferencia" label="Transferencia Bancaria" />
-                  <PaymentOption value="pago_movil" label="Pago Móvil" />
+                  <PaymentOption
+                    value="zelle"
+                    label="Zelle"
+                    selected={form.payment.method === "zelle"}
+                    onSelect={onChangePaymentMethod}
+                  />
+                  <PaymentOption
+                    value="zinli"
+                    label="Zinli"
+                    selected={form.payment.method === "zinli"}
+                    onSelect={onChangePaymentMethod}
+                  />
+                  <PaymentOption
+                    value="transferencia"
+                    label="Transferencia Bancaria"
+                    selected={form.payment.method === "transferencia"}
+                    onSelect={onChangePaymentMethod}
+                  />
+                  <PaymentOption
+                    value="pago_movil"
+                    label="Pago Móvil"
+                    selected={form.payment.method === "pago_movil"}
+                    onSelect={onChangePaymentMethod}
+                  />
                 </div>
               </section>
             </div>
