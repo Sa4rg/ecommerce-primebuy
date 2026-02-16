@@ -1,9 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { register as apiRegister, login as apiLogin } from "../authCommand";
+import { register as apiRegister } from "../authCommand";
+import { useAuth } from "../../../context/AuthContext.jsx";
+import { useCart } from "../../../context/CartContext.jsx";
 
 export function RegisterView() {
   const nav = useNavigate();
+  const { login } = useAuth();
+  const { syncUserCart } = useCart();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -46,10 +50,17 @@ export function RegisterView() {
         password,
       });
 
-      // 2) auto-login (guarda accessToken via authCommand.login)
-      await apiLogin({ email: cleanEmail, password });
+      // 2) auto-login (actualiza AuthContext)
+      await login({ email: cleanEmail, password });
 
-      // 3) go to catalog
+      // 3) sync cart with user's cart
+      try {
+        await syncUserCart();
+      } catch {
+        // Cart sync failure should not block registration
+      }
+
+      // 4) go to catalog
       nav("/", { replace: true });
     } catch (e2) {
       setErr(e2?.message || "Register failed");
@@ -57,7 +68,7 @@ export function RegisterView() {
       setLoading(false);
     }
   }
-  
+
   return (
     <section className="relative min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-10 overflow-hidden">
       {/* Glow */}

@@ -4,7 +4,7 @@ import { AppLayout } from "./shared/layout/AppLayout.jsx";
 import { ProductCatalogView } from "./features/product-catalog/ProductCatalogView.jsx";
 import { CartView } from "./features/shopping-cart/components/CartView.jsx";
 import { CheckoutStart } from "./features/checkout/components/CheckoutStart.jsx";
-import { CheckoutView } from "./features/checkout/components/CheckoutView.jsx";
+import { CheckoutView } from "./features/checkout/CheckoutView.jsx";
 import { PaymentMethodPage } from "./features/payment/components/PaymentMethodPage.jsx";
 import { PaymentStatusPage } from "./features/payment/components/PaymentStatusPage.jsx";
 import { OrderDetailPage } from "./features/orders/components/OrderDetailPage.jsx";

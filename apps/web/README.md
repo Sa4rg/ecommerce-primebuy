@@ -1,103 +1,166 @@
-SOBRE EL PROYECTO:
-- Tienda online simple con catálogo de productos y carrito de compras
-- Stack: React + Javascript + Vite + Tailwind CSS v4
-- Testing: Vitest + Testing Library + Playwright (E2E)
+# 🛒 ElectroVar — E-Commerce Platform
 
-METODOLOGÍA DE TRABAJO:
+ElectroVar is a modern full-stack e-commerce platform built for real production usage.
 
-1. TDD (Test-Driven Development): 
-   - Siempre escribir el test PRIMERO
-   - Verificar que FALLA (Red)
-   - Implementar código MÍNIMO para pasar (Green)
-   - Refactorizar si es necesario
+The system supports customer shopping flows, checkout, payment processing, and administrative product and payment management.
 
-2. Scope Rule para organización de carpetas:
-   - GLOBAL SCOPE (src/shared/): Código usado en múltiples features
-     → types/, utils/, constants/, components/, strategies/, hooks/
-   - LOCAL SCOPE (src/features/X/): Código específico de una feature
-     → product-catalog/, shopping-cart/, auth/
-   - Context global: src/context/
-   - Infraestructura: src/infrastructure/
-
-3. Verificación continua:
-   - Después de cada feature: pnpm test:run && pnpm build
-   - Después de E2E (video 7+): agregar pnpm test:e2e
-   - Al final: pnpm verify (lint + typecheck + tests + e2e + build)
-
-   ## Paso 4: Estructura de Carpetas (The Scope Rule)
-
-### Concepto: La Regla del Scope
-
-Organizamos el código siguiendo el mismo concepto de **scope** de JavaScript:
-
-```javascript
-// Global Scope - disponible en toda la app
-let globalVariable = 'Available everywhere';
-
-// Local Scope - solo disponible en su contexto
-function localContext() {
-  let localVariable = 'Available only here';
-}
-```
-
-**Aplicado a la arquitectura:**
-
-| Tipo | Ubicación | Visibilidad | Ejemplos |
-|------|-----------|-------------|----------|
-| **Global Scope** | `src/shared/` | Toda la app | Button, Modal, formatPrice, types |
-| **Local Scope** | `src/features/X/` | Solo en feature X | ProductCard, CartItem, CartService |
-
-**Beneficios:**
-- 🧩 **Modularidad**: Cada feature es independiente
-- ♻️ **Reuso eficiente**: Componentes globales sin redundancia
-- ⚡ **Lazy loading**: Features locales se cargan solo cuando se necesitan
-- 🔍 **Claridad**: Sabes dónde buscar cada cosa
-
-
-
-### Estructura Resultante (lo que queremos)
-
-```
-src/
-├── shared/                    # 🌍 GLOBAL SCOPE
-│   ├── types/
-│   │   └── index.js          # Product, CartItem
-│   ├── utils/
-│   │   └── index.js          # formatPrice, calculateSubtotal
-│   ├── constants/
-│   │   └── businessRules.js  # Reglas de negocio
-│   ├── components/
-│   │   └── index.js          # Button, Skeleton, Toast
-│   └── hooks/
-│       └── index.js          # useLocalStorage, etc.
-│
-├── features/                  # 📦 LOCAL SCOPE
-│   ├── product-catalog/
-│   │   ├── components/
-│   │   │   ├── ProductCard.tsx
-│   │   │   └── ProductCard.test.tsx
-│   │   └── ProductCatalog.tsx
-│   │
-│   └── shopping-cart/
-│       ├── components/
-│       │   ├── CartItem.tsx
-│       │   └── CartSummary.tsx
-│       └── ShoppingCart.tsx
-│
-├── context/                   # 🔄 ESTADO GLOBAL
-│   └── CartContext.tsx
-│
-├── infrastructure/            # 🔧 SERVICIOS EXTERNOS
-│   └── sentry.js
-│
-└── test/                      # 🧪 CONFIG DE TESTS
-    └── setup.js
-```
-
-### Regla Simple para Decidir
-
-> **¿Lo usa más de una feature?** → `shared/` (Global Scope)
-> 
-> **¿Solo lo usa una feature?** → `features/X/` (Local Scope)
+This repository contains the **frontend web application**.
 
 ---
+
+## ✨ Features
+
+### Customer Features
+- **Product catalog browsing**: Explore all available products.
+- **Category filtering**: Narrow down products by specific categories.
+- **Product search**: Quick search functionality for items.
+- **Cart management**: Add, remove, and update items in the shopping cart.
+- **Checkout flow**: Seamless multi-step checkout process.
+- **Payment submission**: Support for various payment proofs.
+- **Order tracking**: Monitor the status of current and past orders.
+- **Account management**: Personal user profiles and settings.
+
+### Admin Features
+- **Payment review panel**: Verify and approve customer payments.
+- **Order management**: Oversee the entire lifecycle of orders.
+- **Product management**: (In progress) CRUD operations for products.
+- **Inventory management**: (Planned) Real-time stock tracking.
+
+---
+
+## 🧱 Tech Stack
+
+### Frontend
+- **React**: UI library for building the interface.
+- **React Router**: Client-side routing.
+- **Context API**: Global state management (Auth, Cart).
+- **TailwindCSS**: Utility-first CSS framework for styling.
+- **Vite**: Modern frontend build tool.
+- **Modular architecture**: Clean, feature-based organization.
+- **JWT authentication**: Secure token-based access.
+- **Cart persistence**: Local storage and server-side sync.
+- **Responsive UI**: Optimized for mobile, tablet, and desktop.
+
+### Backend (separate repo)
+- **Node.js & Express**: Server-side runtime and framework.
+- **PostgreSQL**: Relational database for data integrity.
+- **JWT auth**: Secure authentication system.
+- **Checkout & payments system**: Logic for processing transactions.
+- **Order management**: API endpoints for order handling.
+- **Admin APIs**: Secure routes for administrative tasks.
+
+---
+
+## 📂 Project Structure
+
+```text
+src/
+├── features/
+│   ├── auth/            # Login, Registration, JWT logic
+│   ├── product-catalog/ # Product listings and filters
+│   ├── shopping-cart/   # Cart state and UI components
+│   ├── checkout/        # Checkout process steps
+│   ├── payment/         # Payment submission logic
+│   ├── orders/          # User order history
+│   └── admin/           # Admin-only dashboards and tools
+│
+├── shared/
+│   ├── components/      # Reusable UI elements (Buttons, Inputs)
+│   ├── layout/          # Main wrappers (Navbar, Footer)
+│   └── hooks/           # Custom utility hooks
+│
+├── context/
+│   ├── AuthContext      # User session global state
+│   └── CartContext      # Shopping cart global state
+│
+└── infrastructure/
+    └── apiClient        # Axios/Fetch configuration for API calls
+
+*Feature-driven architecture is used for scalability and maintainability.*
+
+---
+
+## 🔐 Authentication
+
+- **JWT-based authentication**: Secure sessions via tokens.
+- **Automatic refresh**: Handling token expiration gracefully.
+- **Session persistence**: Users stay logged in across refreshes.
+- **Secure logout**: Complete cleanup of local and server sessions.
+
+---
+
+## 🛒 Cart System
+
+- **Guest cart support**: Shop without an initial account.
+- **User cart persistence**: Saves items to the database for registered users.
+- **Cart sync**: Merges guest cart with user cart after login.
+- **Cart reset**: Automatic clearing after successful payment submission.
+
+---
+
+## 💳 Checkout Flow
+
+1. **Cart review**: Final check of items and quantities.
+2. **Checkout initialization**: Setting up order details.
+3. **Payment method selection**: Choosing how to pay.
+4. **Payment proof submission**: Uploading evidence of transaction.
+5. **Admin confirmation**: Manual or automated verification.
+6. **Order creation**: Finalizing the purchase in the system.
+
+---
+
+## 🧪 Development Approach
+
+The project follows:
+- **Test Driven Development (TDD)**: Ensuring reliability from the start.
+- **Feature-based architecture**: Keeping logic encapsulated.
+- **Modular component structure**: Maximizing reusability.
+- **Production-quality standards**: No "demo-level" shortcuts; built for real-world traffic.
+
+---
+
+## 🚀 Running Locally
+
+1. **Clone the repository**
+2. **Install dependencies**:
+   ```bash
+   pnpm install
+
+Run dev server:
+
+Bash
+pnpm dev
+
+
+ ## Environment Variables
+Create a .env file in the root directory:
+
+Code snippet
+VITE_API_BASE_URL=http://localhost:3000
+📌 Current Development Focus
+[ ] Checkout UI improvements
+
+[ ] Admin product management (CRUD)
+
+[ ] Product detail pages (PDP)
+
+[ ] Catalog performance improvements
+
+[ ] General UX polishing
+
+[ ] Final production readiness audit
+
+## 🤝 Contribution Guidelines
+All development must:
+
+Follow the rules defined in AGENTS.md.
+
+Maintain architecture consistency (feature-driven).
+
+Avoid breaking existing shopping or checkout flows.
+
+Keep production-level standards for all code and documentation.
+
+## 📄 License
+Private commercial project.
+All rights reserved. Unauthorized copying or distribution is strictly prohibited.

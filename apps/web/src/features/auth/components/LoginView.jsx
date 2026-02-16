@@ -1,5 +1,5 @@
 // src/features/auth/components/LoginView.jsx
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { useCart } from "../../../context/CartContext.jsx";
@@ -7,6 +7,7 @@ import { useCart } from "../../../context/CartContext.jsx";
 export function LoginView() {
   const nav = useNavigate();
   const location = useLocation();
+
   const { login } = useAuth();
   const { syncUserCart } = useCart();
 
@@ -16,6 +17,10 @@ export function LoginView() {
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+
+  const mountedRef = useRef(true);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  mountedRef.current = true;
 
   const canSubmit = useMemo(() => {
     return email.trim().length > 0 && password.trim().length > 0 && !loading;
@@ -27,23 +32,25 @@ export function LoginView() {
 
     setErr("");
     setLoading(true);
+
     try {
+      // 1) Login: actualiza estado global (Navbar reacciona SIN refresh)
       await login({ email: email.trim(), password });
 
-      // Sync cart with user's cart (merges guest cart if any)
+      // 2) Sync cart: no bloquea login si falla, pero lo intentamos antes de navegar
       try {
         await syncUserCart();
       } catch {
         // Cart sync failure should not block login
       }
 
-      // si venías redirigida por RequireAuth, vuelve allí; si no, al catálogo
-      const next = location.state?.from?.pathname || "/";
+      // 3) Redirect: si venías redirigida por RequireAuth, vuelve allí; si no, al catálogo
+      const next = location.state?.from?.pathname || "/checkout";
       nav(next, { replace: true });
     } catch (e2) {
-      setErr(e2?.message || "Login failed");
+      if (mountedRef.current) setErr(e2?.message || "Login failed");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }
 
@@ -189,4 +196,3 @@ export function LoginView() {
     </section>
   );
 }
-
