@@ -48,6 +48,20 @@ class InMemoryCartRepository {
   async delete(cartId) {
     this.cartsById.delete(cartId);
   }
+
+  /**
+   * Finds the active cart for a user.
+   * @param {string} userId
+   * @returns {Promise<Object|null>}
+   */
+  async findActiveByUserId(userId) {
+    for (const cart of this.cartsById.values()) {
+      if (cart.userId === userId && cart.metadata?.status === 'active') {
+        return cart;
+      }
+    }
+    return null;
+  }
 }
 
 module.exports = { InMemoryCartRepository };

@@ -6,6 +6,7 @@ import { renderWithProviders } from "./test/renderWithProviders.jsx";
 describe("App routing", () => {
   it("renders catalog on /", () => {
     renderWithProviders(<App />, { route: "/" });
-    expect(screen.getByRole("heading", { name: /catalog/i })).toBeInTheDocument();
+    // Catalog page shows "Cameras & Gear" heading
+    expect(screen.getByRole("heading", { name: /cameras & gear/i })).toBeInTheDocument();
   });
 });

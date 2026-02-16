@@ -1,9 +1,24 @@
+import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext.jsx";
 
 export function CartIndicator() {
   const { itemsCount } = useCart();
+  const count = Number(itemsCount || 0);
 
-  if (!itemsCount || itemsCount <= 0) return null;
+  return (
+    <Link
+      to="/cart"
+      className="relative inline-flex items-center justify-center rounded-full p-2 hover:bg-white/5 border border-white/10 transition-colors"
+      aria-label="Go to cart"
+      title="Cart"
+    >
+      <span className="text-lg leading-none">🛍️</span>
 
-  return <div className="cart-indicator">Cart ({itemsCount})</div>;
+      {count > 0 && (
+        <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+          {count}
+        </span>
+      )}
+    </Link>
+  );
 }

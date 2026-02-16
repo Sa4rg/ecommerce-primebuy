@@ -21,7 +21,7 @@ describe("CartView", () => {
               },
             ],
             summary: { itemsCount: 2, subtotalUSD: 20 },
-            metadata: { market: "VE", baseCurrency: "USD" },
+            metadata: { market: "VE", baseCurrency: "USD", status: "active" },
           },
           error: "",
         }}
@@ -33,11 +33,9 @@ describe("CartView", () => {
     );
 
     expect(screen.getByText("Product 1")).toBeInTheDocument();
-    expect(
-      screen.getByText((content) => content.includes("Qty:") && content.includes("2"))
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText((content) => content.includes("Subtotal:") && content.includes("20"))
-    ).toBeInTheDocument();
+    // Heading shows "Shopping Cart"
+    expect(screen.getByRole("heading", { name: /shopping cart/i })).toBeInTheDocument();
+    // Price values exist (there may be multiple $20.00)
+    expect(screen.getAllByText(/\$20\.00/).length).toBeGreaterThan(0);
   });
 });

@@ -65,11 +65,11 @@ describe("CartItem quantity controls", () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "+" }));
+    await user.click(screen.getByRole("button", { name: /increase quantity/i }));
 
     await waitFor(() => {
-      // Note: in your DOM, "Qty:" and "3" may be split. Use regex.
-      expect(screen.getByText((content) => content.includes("Qty:") && content.includes("3"))).toBeInTheDocument();
+      // Qty badge shows "3" after increment
+      expect(screen.getByText("3")).toBeInTheDocument();
     });
   });
 
@@ -88,7 +88,7 @@ describe("CartItem quantity controls", () => {
     );
 
     const user = userEvent.setup();
-    const plus = screen.getByRole("button", { name: "+" });
+    const plus = screen.getByRole("button", { name: /increase quantity/i });
 
     await user.click(plus);
     await user.click(plus);
@@ -120,9 +120,7 @@ describe("CartItem quantity controls", () => {
     });
 
     await waitFor(() => {
-        expect(
-        screen.getByText((content) => content.includes("Qty:") && content.includes("3"))
-        ).toBeInTheDocument();
+        expect(screen.getByText("3")).toBeInTheDocument();
     });
     });
 

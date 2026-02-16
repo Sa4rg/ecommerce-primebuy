@@ -42,7 +42,7 @@ describe("CartView checkout navigation", () => {
           <SeedCart />
           <Routes>
             <Route path="/cart" element={<CartView />} />
-            <Route path="/checkout" element={<h1>Checkout</h1>} />
+            <Route path="/checkout" element={<h1>Checkout Page</h1>} />
           </Routes>
         </MemoryRouter>
       </CartProvider>
@@ -50,9 +50,10 @@ describe("CartView checkout navigation", () => {
 
     const user = userEvent.setup();
 
-    const button = screen.getByRole("button", { name: /finalize purchase/i });
-    await user.click(button);
+    // Find the main checkout button in the summary (not the mobile one)
+    const buttons = screen.getAllByRole("button", { name: /checkout/i });
+    await user.click(buttons[0]);
 
-    expect(screen.getByRole("heading", { name: /checkout/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /checkout page/i })).toBeInTheDocument();
   });
 });

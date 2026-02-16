@@ -1,11 +1,22 @@
 import { useState } from "react";
 import { useCart } from "../../context/CartContext.jsx";
 
+function formatMoneyUSD(value) {
+  const n = Number(value);
+  if (Number.isNaN(n)) return String(value ?? "");
+  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
 export function ProductCard({ product }) {
   const { addItem } = useCart();
   const [isAdding, setIsAdding] = useState(false);
+  const [fav, setFav] = useState(false);
+
+  const inStock = Boolean(product.inStock) && Number(product.stock || 0) > 0;
+  const isDisabled = isAdding || !inStock;
 
   async function handleAddToCart() {
+    if (isDisabled) return;
     try {
       setIsAdding(true);
       await addItem({ productId: product.id, quantity: 1 });
@@ -14,27 +25,78 @@ export function ProductCard({ product }) {
     }
   }
 
-  const isDisabled = isAdding || !product.inStock || product.stock <= 0;
+  const imgUrl =
+    product.imageUrl ||
+    product.image ||
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='1100'%3E%3Crect width='100%25' height='100%25' fill='%232a2a2a'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23888888' font-family='Arial' font-size='36'%3ENo image%3C/text%3E%3C/svg%3E";
 
   return (
-    <div className="product-card">
-      <div className="product-card__header">
-        <h3 className="product-card__title">{product.name}</h3>
-        <span className={`badge ${product.inStock ? "badge--ok" : "badge--no"}`}>
-          {product.inStock ? "In stock" : "Out of stock"}
+    <div className="group relative">
+      {/* Media */}
+      <div className="relative mb-4 aspect-[4/5] overflow-hidden rounded-2xl bg-white/5 border border-white/10">
+        <img
+          src={imgUrl}
+          alt={product.name}
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+          loading="lazy"
+        />
+
+        {/* Badge (opcional) */}
+        {inStock && (
+          <div className="absolute left-4 top-4">
+            <span className="rounded-full bg-orange-500 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-white">
+              In stock
+            </span>
+          </div>
+        )}
+
+        {/* Favorite */}
+        <button
+          type="button"
+          onClick={() => setFav((v) => !v)}
+          className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 backdrop-blur-md text-white hover:bg-orange-500 transition-colors"
+          aria-label="Favorite"
+          title="Favorite"
+        >
+          <span className="text-lg">{fav ? "♥" : "♡"}</span>
+        </button>
+
+        {/* Quick add */}
+        <button
+          type="button"
+          onClick={handleAddToCart}
+          disabled={isDisabled}
+          className={[
+            "absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-2xl",
+            "opacity-0 translate-y-4 transition-all duration-300",
+            "group-hover:opacity-100 group-hover:translate-y-0",
+            isDisabled
+              ? "bg-white/20 text-white/60 cursor-not-allowed"
+              : "bg-white text-black hover:bg-orange-500 hover:text-white",
+          ].join(" ")}
+        >
+          <span className="text-base">🛒</span>
+          {isAdding ? "Adding..." : "Add to cart"}
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h3 className="truncate text-lg font-bold text-white group-hover:text-orange-400 transition-colors">
+            {product.name}
+          </h3>
+          <p className="mt-1 text-sm text-slate-400">
+            {product.category ? `${product.category}` : "General"}{" "}
+            <span className="opacity-60">/</span>{" "}
+            {inStock ? `Stock: ${product.stock}` : "Out of stock"}
+          </p>
+        </div>
+
+        <span className="shrink-0 text-xl font-bold text-orange-400">
+          ${formatMoneyUSD(product.priceUSD)}
         </span>
       </div>
-
-      <p className="product-card__price">${product.priceUSD}</p>
-
-      <div className="product-card__meta">
-        <span>Category: {product.category}</span>
-        <span>Stock: {product.stock}</span>
-      </div>
-
-      <button className="product-card__btn" disabled={isDisabled} onClick={handleAddToCart}>
-        {isAdding ? "Adding..." : "Add to cart"}
-      </button>
     </div>
   );
 }

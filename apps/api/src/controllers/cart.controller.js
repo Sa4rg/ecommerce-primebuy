@@ -89,4 +89,24 @@ async function updateMetadata(req, res, next) {
   }
 }
 
-module.exports = { createCart, getCart, addItem, updateItem, removeItem, updateMetadata };
+async function getMyCart(req, res, next) {
+  try {
+    // requireAuth middleware guarantees req.user.userId exists
+    const userId = req.user.userId;
+    const guestCartId = req.headers['x-guest-cart-id'] || null;
+    const guestCartSecret = req.headers['x-cart-secret'] || null;
+
+    const result = await cartService.getMyCart(userId, guestCartId, guestCartSecret);
+
+    res.status(200);
+    success(res, {
+      cart: sanitizeCart(result.cart),
+      isNewCart: result.isNewCart,
+      mergedFromGuestCart: result.mergedFromGuestCart,
+    }, "Cart retrieved successfully");
+  } catch (error) {
+    return next(error);
+  }
+}
+
+module.exports = { createCart, getCart, addItem, updateItem, removeItem, updateMetadata, getMyCart };

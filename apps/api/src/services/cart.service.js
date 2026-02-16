@@ -302,7 +302,95 @@ function createCartService(deps = {}) {
     return cart;
   }
 
-  return { createCart, getCart, addItem, updateItem, removeItem, updateMetadata, assignCartToUser, lockCart };
+  /**
+   * Merge items from source cart into target cart.
+   * If same product exists, quantities are summed.
+   * @param {Object} targetCart - The cart to merge INTO
+   * @param {Object} sourceCart - The cart to merge FROM (will be marked as merged)
+   * @returns {Object} - The merged target cart
+   */
+  async function mergeCarts(targetCart, sourceCart) {
+    if (!sourceCart || !sourceCart.items || sourceCart.items.length === 0) {
+      return targetCart;
+    }
+
+    if (sourceCart.metadata?.status === "locked" || sourceCart.metadata?.status === "checked_out") {
+      // Don't merge from locked/checked_out carts
+      return targetCart;
+    }
+
+    for (const sourceItem of sourceCart.items) {
+      const existingItem = targetCart.items.find(i => i.productId === sourceItem.productId);
+      if (existingItem) {
+        // Sum quantities
+        existingItem.quantity += sourceItem.quantity;
+        existingItem.lineTotalUSD = existingItem.unitPriceUSD * existingItem.quantity;
+      } else {
+        // Add new item
+        targetCart.items.push({ ...sourceItem });
+      }
+    }
+
+    // Recalculate summary
+    targetCart.summary.itemsCount = targetCart.items.reduce((sum, i) => sum + i.quantity, 0);
+    targetCart.summary.subtotalUSD = targetCart.items.reduce((sum, i) => sum + i.lineTotalUSD, 0);
+    targetCart.metadata.updatedAt = nextUpdatedAt(targetCart.metadata.updatedAt);
+
+    await cartRepository.save(targetCart);
+
+    // Mark source cart as merged (soft delete alternative)
+    sourceCart.metadata.status = "merged";
+    sourceCart.metadata.updatedAt = nextUpdatedAt(sourceCart.metadata.updatedAt);
+    await cartRepository.save(sourceCart);
+
+    return targetCart;
+  }
+
+  /**
+   * Get the active cart for a user.
+   * Creates a new cart if none exists.
+   * Optionally merges a guest cart if provided.
+   * 
+   * @param {string} userId - The user ID
+   * @param {string|null} guestCartId - Optional guest cart ID to merge
+   * @param {string|null} guestCartSecret - Secret for guest cart validation
+   * @returns {Promise<{cart: Object, isNewCart: boolean, mergedFromGuestCart: boolean}>}
+   */
+  async function getMyCart(userId, guestCartId = null, guestCartSecret = null) {
+    if (!userId) {
+      throw new AppError("Unauthorized", 401);
+    }
+
+    let isNewCart = false;
+    let mergedFromGuestCart = false;
+
+    // Try to find existing cart for user
+    let cart = await cartRepository.findActiveByUserId(userId);
+
+    if (!cart) {
+      // Create new cart for user
+      const { cartId } = await createCart(userId);
+      cart = await cartRepository.findById(cartId);
+      isNewCart = true;
+    }
+
+    // Handle guest cart merge
+    if (guestCartId) {
+      const guestCart = await cartRepository.findById(guestCartId);
+      
+      // Only merge if guest cart exists, has valid secret, and is not locked
+      if (guestCart && 
+          guestCart.cartSecret === guestCartSecret && 
+          guestCart.metadata?.status === "active") {
+        await mergeCarts(cart, guestCart);
+        mergedFromGuestCart = true;
+      }
+    }
+
+    return { cart, isNewCart, mergedFromGuestCart };
+  }
+
+  return { createCart, getCart, addItem, updateItem, removeItem, updateMetadata, assignCartToUser, lockCart, getMyCart, mergeCarts };
 }
 
 // Default instance for the application (backward compatible)

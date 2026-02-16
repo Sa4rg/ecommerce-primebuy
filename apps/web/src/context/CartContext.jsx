@@ -5,7 +5,7 @@ import {
   updateItemQuantity,
   removeItemFromCart,
 } from "../features/shopping-cart/cartCommand";
-import { clearCartSession, ensureCartId } from "../features/shopping-cart/cartService";
+import { clearCartSession, ensureCartId, fetchMyCart } from "../features/shopping-cart/cartService";
 
 const CartContext = createContext(null);
 
@@ -43,6 +43,16 @@ export function CartProvider({ children, initialState }) {
         setError(msg);
         return;
       }
+
+      // 403 Forbidden = cart belongs to another user, create fresh one
+      if (msg.includes("Forbidden") || msg.includes("403")) {
+        clearCartSession();
+        const newCartId = await ensureCartId();
+        const newCart = await getCart(newCartId);
+        setCart(newCart);
+        setStatus("ready");
+        return;
+      }
       
       setStatus("error");
       setError(msg);
@@ -67,7 +77,29 @@ export function CartProvider({ children, initialState }) {
     setError("");
     await initializeCart();
   }
+  /**
+   * Sync cart with authenticated user's cart.
+   * Merges current guest cart items into user's cart if any.
+   * Call this after successful login.
+   */
+  async function syncUserCart() {
+    try {
+      setStatus("loading");
+      setError("");
 
+      const result = await fetchMyCart();
+
+      setCart(result.cart);
+      setStatus("ready");
+
+      return result;
+    } catch (err) {
+      const msg = err?.message || "Unknown error";
+      setStatus("error");
+      setError(msg);
+      throw err;
+    }
+  }
   async function addItem({ productId, quantity }) {
     try {
       setError("");
@@ -81,6 +113,12 @@ export function CartProvider({ children, initialState }) {
         setStatus("session-expired");
         setError(msg);
         return;
+      }
+      // 403 Forbidden = cart belongs to another user, create new one
+      if (msg.includes("Forbidden") || msg.includes("403")) {
+        await startNewCart();
+        // Retry the add with new cart
+        return addItem({ productId, quantity });
       }
       setStatus("error");
       setError(msg);
@@ -160,6 +198,7 @@ export function CartProvider({ children, initialState }) {
       initializeCart,
       refreshCart,
       startNewCart, // ✅ EXPUESTO PARA USAR EN /account
+      syncUserCart, // ✅ EXPUESTO PARA USAR DESPUÉS DE LOGIN
       addItem,
       updateQuantity,
       removeItem,

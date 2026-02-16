@@ -9,9 +9,17 @@ export async function login({ email, password }) {
   return data;
 }
 
-export async function register({ email, password }) {
+export async function register({ name, email, password }) {
   if (!email || !password) throw new Error("email and password are required");
-  return apiClient.post("/api/auth/register", { email, password });
+
+  // name es opcional: si backend no lo usa, no pasa nada.
+  const payload = {
+    email,
+    password,
+    ...(name?.trim() ? { name: name.trim() } : {}),
+  };
+
+  return apiClient.post("/api/auth/register", payload);
 }
 
 export async function logout() {

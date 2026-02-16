@@ -1,6 +1,7 @@
 import React from "react";
 import { describe, it, expect, } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { CartIndicator } from "./CartIndicator";
 import { CartProvider, useCart } from "../../context/CartContext.jsx";
 
@@ -19,23 +20,29 @@ function TestSetup({ itemsCount }) {
 }
 
 describe("CartIndicator", () => {
-  it("does not render when itemsCount is 0", () => {
+  it("does not render badge when itemsCount is 0", () => {
     render(
       <CartProvider>
-        <CartIndicator />
+        <MemoryRouter>
+          <CartIndicator />
+        </MemoryRouter>
       </CartProvider>
     );
 
-    expect(screen.queryByText(/cart/i)).toBeNull();
+    // Cart link exists but no count badge
+    expect(screen.getByRole("link", { name: /go to cart/i })).toBeInTheDocument();
+    expect(screen.queryByText("0")).toBeNull();
   });
 
-  it("renders itemsCount when itemsCount > 0", async () => {
+  it("renders itemsCount badge when itemsCount > 0", async () => {
     render(
       <CartProvider>
-        <TestSetup itemsCount={3} />
+        <MemoryRouter>
+          <TestSetup itemsCount={3} />
+        </MemoryRouter>
       </CartProvider>
     );
 
-    expect(await screen.findByText("Cart (3)")).toBeInTheDocument();
+    expect(await screen.findByText("3")).toBeInTheDocument();
   });
 });

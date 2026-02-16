@@ -157,6 +157,27 @@ class MySQLCartRepository {
       }
     });
   }
+
+  /**
+   * Finds the active cart for a user.
+   * @param {string} userId
+   * @returns {Promise<Object|null>}
+   */
+  async findActiveByUserId(userId) {
+    const cartRow = await db(this.cartsTable)
+      .where({ user_id: userId, status: 'active' })
+      .first();
+
+    if (!cartRow) {
+      return null;
+    }
+
+    const itemRows = await db(this.itemsTable)
+      .where({ cart_id: cartRow.cart_id })
+      .select('*');
+
+    return this._mapDbToCart(cartRow, itemRows);
+  }
 }
 
 module.exports = { MySQLCartRepository };

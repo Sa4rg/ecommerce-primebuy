@@ -1,5 +1,5 @@
 // src/features/payment/pages/PaymentStatusPage.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { paymentService } from "../paymentService";
 import { useCart } from "../../../context/CartContext.jsx";
@@ -7,7 +7,7 @@ import { useCart } from "../../../context/CartContext.jsx";
 export function PaymentStatusPage() {
   const { paymentId } = useParams();
   const nav = useNavigate();
-  const { resetCart } = useCart();
+  const { startNewCart } = useCart();
 
   const [payment, setPayment] = useState(null);
   const [reference, setReference] = useState("");
@@ -16,13 +16,18 @@ export function PaymentStatusPage() {
 
   const status = payment?.status;
 
+  // evita crear el carrito nuevo múltiples veces por polling / rerenders
+  const didCreateNewCartRef = useRef(false);
+
   async function load() {
     const p = await paymentService.getPayment(paymentId);
     setPayment(p);
+    return p;
   }
 
   useEffect(() => {
     setErr("");
+    didCreateNewCartRef.current = false; // reset por si cambias de paymentId
     load().catch((e) => setErr(e.message || "Failed to load payment"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentId]);
@@ -40,6 +45,17 @@ export function PaymentStatusPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, paymentId]);
 
+  // ✅ LÓGICA: cuando pasa a submitted/confirmed, el carrito anterior queda "used/inactive"
+  // Creamos uno nuevo automáticamente (UNA sola vez).
+  useEffect(() => {
+    if (!status) return;
+
+    if ((status === "submitted" || status === "confirmed") && !didCreateNewCartRef.current) {
+      didCreateNewCartRef.current = true;
+      startNewCart().catch(() => {});
+    }
+  }, [status, startNewCart]);
+
   const instructions = useMemo(() => {
     if (!payment) return null;
     if (payment.method === "zelle") return "Send via Zelle to payments@tienda.com";
@@ -49,21 +65,28 @@ export function PaymentStatusPage() {
     return null;
   }, [payment]);
 
-  function continueShopping() {
-    // ✅ siempre limpiamos carrito local para evitar quedar pegados a uno locked
-    resetCart();
+  async function continueShopping() {
+    // ✅ por UX: asegura carrito nuevo y navega al catálogo
+    try {
+      await startNewCart();
+    } catch {}
     nav("/", { replace: true });
   }
 
   async function onSubmitProof() {
     setErr("");
     setLoading(true);
+
     try {
       const updated = await paymentService.submitPayment({ paymentId, reference });
       setPayment(updated);
 
-      // ✅ Opción B: backend lockea el carrito al submit, reseteamos el front
-      resetCart();
+      // ✅ Si backend lockea el carrito al submit (lo normal),
+      // creamos uno nuevo inmediatamente (una sola vez).
+      if ((updated?.status === "submitted" || updated?.status === "confirmed") && !didCreateNewCartRef.current) {
+        didCreateNewCartRef.current = true;
+        await startNewCart();
+      }
     } catch (e) {
       setErr(e.message || "Failed to submit proof");
     } finally {

@@ -1,76 +1,192 @@
-import { useState } from "react";
-import { useNavigate, Link, useLocation  } from "react-router-dom";
+// src/features/auth/components/LoginView.jsx
+import { useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext.jsx";
+import { useCart } from "../../../context/CartContext.jsx";
 
 export function LoginView() {
-  const navigate = useNavigate();
+  const nav = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { syncUserCart } = useCart();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [status, setStatus] = useState("idle");
-  const [error, setError] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
 
-  async function handleSubmit(e) {
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+
+  const canSubmit = useMemo(() => {
+    return email.trim().length > 0 && password.trim().length > 0 && !loading;
+  }, [email, password, loading]);
+
+  async function onSubmit(e) {
     e.preventDefault();
+    if (!canSubmit) return;
 
+    setErr("");
+    setLoading(true);
     try {
-      setStatus("loading");
-      setError("");
+      await login({ email: email.trim(), password });
 
-      await login({ email, password });
+      // Sync cart with user's cart (merges guest cart if any)
+      try {
+        await syncUserCart();
+      } catch {
+        // Cart sync failure should not block login
+      }
 
-      setStatus("success");
-      const from = location.state?.from || "/checkout";
-      navigate(from, { replace: true });
-    } catch (err) {
-      setStatus("error");
-      setError(err?.message || "Unknown error");
+      // si venías redirigida por RequireAuth, vuelve allí; si no, al catálogo
+      const next = location.state?.from?.pathname || "/";
+      nav(next, { replace: true });
+    } catch (e2) {
+      setErr(e2?.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <section>
-      <h2>Login</h2>
+    <section className="relative min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-10 overflow-hidden">
+      {/* Glow background */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-orange-500/10 blur-[130px]" />
 
-      {status === "error" && (
-        <div role="alert" className="error">
-          <p>Something went wrong.</p>
-          <p>{error}</p>
+      {/* Card */}
+      <div className="w-full max-w-[440px] rounded-xl border border-white/5 bg-[#1c1610] shadow-2xl">
+        <div className="p-8 md:p-10">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
+              Welcome Back
+            </h1>
+            <p className="text-sm text-slate-400">
+              Log in to your ElectroVar account
+            </p>
+          </div>
+
+          <form onSubmit={onSubmit} className="space-y-6">
+            {/* Email */}
+            <div className="flex flex-col gap-2">
+              <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Email Address
+              </label>
+
+              <div className="relative group">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-400 transition-colors">
+                  ✉️
+                </span>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@company.com"
+                  className="w-full rounded-lg border border-white/10 bg-[#282018] py-3 pl-11 pr-4 text-white placeholder:text-slate-500 outline-none transition-all focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/40"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between px-1">
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-orange-400 hover:underline"
+                  onClick={() => alert("Luego conectamos Forgot password 😉")}
+                >
+                  Forgot password?
+                </button>
+              </div>
+
+              <div className="relative group">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-400 transition-colors">
+                  🔒
+                </span>
+
+                <input
+                  type={showPwd ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full rounded-lg border border-white/10 bg-[#282018] py-3 pl-11 pr-12 text-white placeholder:text-slate-500 outline-none transition-all focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/40"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPwd((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                  aria-label={showPwd ? "Hide password" : "Show password"}
+                  title={showPwd ? "Hide password" : "Show password"}
+                >
+                  {showPwd ? "🙈" : "👁️"}
+                </button>
+              </div>
+            </div>
+
+            {/* Error */}
+            {err && (
+              <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                <div className="font-semibold">Something went wrong</div>
+                <div className="opacity-90">{err}</div>
+              </div>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="w-full rounded-lg bg-orange-500 py-4 font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:bg-orange-500/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? "Signing in..." : "Sign In"}
+              <span className="text-lg">→</span>
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-[#1c1610] px-3 text-slate-500">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          {/* Social buttons (UI only) */}
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent py-2.5 text-sm font-medium text-slate-200 hover:bg-white/5 transition-colors"
+              onClick={() => alert("Luego conectamos Google 😉")}
+            >
+              <span>🟦</span> Google
+            </button>
+
+            <button
+              type="button"
+              className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent py-2.5 text-sm font-medium text-slate-200 hover:bg-white/5 transition-colors"
+              onClick={() => alert("Luego conectamos Facebook 😉")}
+            >
+              <span>🅕</span> Facebook
+            </button>
+          </div>
+
+          {/* Footer link */}
+          <p className="mt-10 text-center text-sm text-slate-400">
+            Don't have an account?{" "}
+            <Link to="/register" className="font-bold text-orange-400 hover:underline">
+              Create account
+            </Link>
+          </p>
         </div>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        <label>
-          Email
-          <input
-            name="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-          />
-        </label>
-
-        <label>
-          Password
-          <input
-            name="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-          />
-        </label>
-
-        <button type="submit" disabled={status === "loading"}>
-          {status === "loading" ? "Logging in..." : "Login"}
-        </button>
-      </form>
-
-      <p>
-        No account? <Link to="/register">Register</Link>
-      </p>
+      </div>
     </section>
   );
 }
+

@@ -14,6 +14,9 @@ function getRoleFromToken(token) {
 
 const AuthContext = createContext(null);
 
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+
 export function AuthProvider({ children }) {
   const [status, setStatus] = useState("checking"); // checking | ready
   const [token, setToken] = useState(() => getAccessToken() || "");
@@ -31,9 +34,9 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // ✅ intenta refresh silencioso 1 vez
+      // ✅ refresh silencioso
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"}/api/auth/refresh`, {
+        const res = await fetch(`${API_BASE}/api/auth/refresh`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -70,10 +73,19 @@ export function AuthProvider({ children }) {
   const role = getRoleFromToken(token);
   const isAuthenticated = Boolean(token);
 
-  function logout() {
+  async function logout() {
+    // opcional recomendado: invalidar refreshToken en backend
+    try {
+      await fetch(`${API_BASE}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+    } catch {}
+
     clearAccessToken();
     setToken("");
-    // opcional: también pegarle a /api/auth/logout para invalidar refresh en servidor
   }
 
   async function login(credentials) {
@@ -90,7 +102,7 @@ export function AuthProvider({ children }) {
       role,
       login,
       logout,
-      setToken, // por si quieres setearlo al hacer login
+      setToken,
     }),
     [status, token, isAuthenticated, role]
   );

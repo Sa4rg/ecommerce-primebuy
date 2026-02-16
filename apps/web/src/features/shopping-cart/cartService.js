@@ -33,3 +33,34 @@ export async function ensureCartId() {
 
   return data.cartId;
 }
+
+/**
+ * Fetch the authenticated user's cart from /api/cart/me
+ * If a guest cart exists, sends headers to merge it into user's cart.
+ * 
+ * @returns {Promise<{cart: Object, isNewCart: boolean, mergedFromGuestCart: boolean}>}
+ */
+export async function fetchMyCart() {
+  const guestCartId = getCartId();
+  const guestCartSecret = getCartSecret();
+
+  const headers = {};
+  if (guestCartId) {
+    headers["X-Guest-Cart-Id"] = guestCartId;
+  }
+  if (guestCartSecret) {
+    headers["X-Cart-Secret"] = guestCartSecret;
+  }
+
+  const data = await apiClient.get("/api/cart/me", { headers });
+
+  // Update local storage with user's cart info
+  // The user's cart doesn't need a secret (auth is used instead)
+  if (data.cart?.cartId) {
+    localStorage.setItem(CART_ID_KEY, data.cart.cartId);
+    // Remove guest secret since user is authenticated
+    localStorage.removeItem(CART_SECRET_KEY);
+  }
+
+  return data;
+}
