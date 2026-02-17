@@ -186,6 +186,7 @@ export function CheckoutView() {
       !isNonEmpty(form.customer.name) ||
       !isNonEmpty(a.line1) ||
       !isNonEmpty(a.city) ||
+      !isNonEmpty(a.state) ||
       !isNonEmpty(form.customer.phone);
 
     if (missing) {
@@ -316,6 +317,15 @@ export function CheckoutView() {
                     value={form.shipping.address?.city}
                     onChangeValue={(v) => onChangeShippingAddress("city", v)}
                     placeholder="Toronto"
+                    disabled={saving}
+                  />
+
+                  <Field
+                    id="state"
+                    label="State"
+                    value={form.shipping.address?.state}
+                    onChangeValue={(v) => onChangeShippingAddress("state", v)}
+                    placeholder="Carabobo"
                     disabled={saving}
                   />
 
