@@ -264,7 +264,6 @@ export function CheckoutView() {
     }
   }
 
-
   return (
     <section className="min-h-screen bg-[#0f0a06]">
       <div className="mx-auto max-w-6xl px-4 pt-8">

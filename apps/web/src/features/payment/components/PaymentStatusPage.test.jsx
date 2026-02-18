@@ -87,6 +87,7 @@ describe("PaymentStatusPage", () => {
     // Use getAllByText since "zelle" appears in method AND instructions
     expect(screen.getAllByText(/zelle/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/50 USD/i)).toBeInTheDocument();
+    expect(screen.getByText(/Status:/i)).toBeInTheDocument();
   });
 
   it("shows error when payment fails to load", async () => {
@@ -180,7 +181,7 @@ describe("PaymentStatusPage", () => {
       expect(screen.getByText(/payment confirmed|pago confirmado/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("link", { name: /view your order|ver tu orden/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /view your order/i })).toHaveAttribute(
       "href",
       "/orders/order-456"
     );
@@ -199,13 +200,13 @@ describe("PaymentStatusPage", () => {
 
     renderWithRouter();
 
-    // Wait for the rejection message specifically (contains "Rejected:")
+    // Wait for the rejection message specifically (supports localized UI strings)
     await waitFor(() => {
       expect(screen.getByText(/Rejected:|Rechazado:/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/invalid reference|referencia inválida/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /choose another method|volver al checkout/i })).toBeInTheDocument();
+    expect(screen.getByText(/invalid reference/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /choose another method/i })).toBeInTheDocument();
   });
 
   it("navigates to payment method selection when rejected and user clicks retry", async () => {
@@ -220,10 +221,10 @@ describe("PaymentStatusPage", () => {
     renderWithRouter();
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /choose another method|volver al checkout/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /choose another method/i })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /choose another method|volver al checkout/i }));
+    fireEvent.click(screen.getByRole("button", { name: /choose another method/i }));
 
     expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/^\/checkout\/checkout-789(?:\/payment)?$/));
   });
