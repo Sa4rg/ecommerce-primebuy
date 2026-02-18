@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext.jsx";
 
 function formatMoneyUSD(value) {
@@ -12,7 +13,8 @@ export function ProductCard({ product }) {
   const [isAdding, setIsAdding] = useState(false);
   const [fav, setFav] = useState(false);
 
-  const inStock = Boolean(product.inStock) && Number(product.stock || 0) > 0;
+  const baseStock = Number(product.stock || 0);
+  const inStock = Boolean(product.inStock) && baseStock > 0;
   const isDisabled = isAdding || !inStock;
 
   async function handleAddToCart() {
@@ -20,6 +22,7 @@ export function ProductCard({ product }) {
     try {
       setIsAdding(true);
       await addItem({ productId: product.id, quantity: 1 });
+      // Si luego quieres "Added" en el botón, lo reactivamos.
     } finally {
       setIsAdding(false);
     }
@@ -34,6 +37,13 @@ export function ProductCard({ product }) {
     <div className="group relative">
       {/* Media */}
       <div className="relative mb-4 aspect-[4/5] overflow-hidden rounded-2xl bg-white/5 border border-white/10">
+        {/* Click en toda la imagen abre el detail */}
+        <Link
+          to={`/products/${product.productId || product.id}`}
+          className="absolute inset-0 z-10"
+          aria-label={product.name}
+        />
+
         <img
           src={imgUrl}
           alt={product.name}
@@ -41,20 +51,27 @@ export function ProductCard({ product }) {
           loading="lazy"
         />
 
-        {/* Badge (opcional) */}
-        {inStock && (
-          <div className="absolute left-4 top-4">
+        {/* Badge: Available / Out of stock */}
+        <div className="absolute left-4 top-4 z-20">
+          {inStock ? (
             <span className="rounded-full bg-orange-500 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-white">
-              In stock
+              Available
             </span>
-          </div>
-        )}
+          ) : (
+            <span className="rounded-full bg-white/15 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-white/70 border border-white/10">
+              Out of stock
+            </span>
+          )}
+        </div>
 
         {/* Favorite */}
         <button
           type="button"
-          onClick={() => setFav((v) => !v)}
-          className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 backdrop-blur-md text-white hover:bg-orange-500 transition-colors"
+          onClick={(e) => {
+            e.preventDefault();
+            setFav((v) => !v);
+          }}
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 backdrop-blur-md text-white hover:bg-orange-500 transition-colors"
           aria-label="Favorite"
           title="Favorite"
         >
@@ -64,10 +81,13 @@ export function ProductCard({ product }) {
         {/* Quick add */}
         <button
           type="button"
-          onClick={handleAddToCart}
+          onClick={(e) => {
+            e.preventDefault();
+            handleAddToCart();
+          }}
           disabled={isDisabled}
           className={[
-            "absolute bottom-4 left-4 right-4 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-2xl",
+            "absolute bottom-4 left-4 right-4 z-20 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-2xl",
             "opacity-0 translate-y-4 transition-all duration-300",
             "group-hover:opacity-100 group-hover:translate-y-0",
             isDisabled
@@ -76,7 +96,7 @@ export function ProductCard({ product }) {
           ].join(" ")}
         >
           <span className="text-base">🛒</span>
-          {isAdding ? "Adding..." : "Add to cart"}
+          {isAdding ? "Adding..." : inStock ? "Add to cart" : "Out of stock"}
         </button>
       </div>
 
@@ -84,12 +104,14 @@ export function ProductCard({ product }) {
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h3 className="truncate text-lg font-bold text-white group-hover:text-orange-400 transition-colors">
-            {product.name}
+            <Link to={`/products/${product.productId || product.id}`} className="hover:text-orange-400">
+              {product.name}
+            </Link>
           </h3>
           <p className="mt-1 text-sm text-slate-400">
             {product.category ? `${product.category}` : "General"}{" "}
             <span className="opacity-60">/</span>{" "}
-            {inStock ? `Stock: ${product.stock}` : "Out of stock"}
+            {inStock ? "Available" : "Out of stock"}
           </p>
         </div>
 

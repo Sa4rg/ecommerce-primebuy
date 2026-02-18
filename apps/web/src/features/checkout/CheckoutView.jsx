@@ -5,6 +5,8 @@ import { getCheckoutById } from "./checkoutQuery";
 import { updateCheckoutCustomer, updateCheckoutShipping } from "./checkoutCommand";
 import { CheckoutLayout } from "./components/CheckoutLayout.jsx";
 import { OrderSummaryCard } from "./components/OrderSummaryCard.jsx";
+import { paymentService } from "../payment/paymentService"; // ajusta ruta real
+import { getPaymentForCheckout, savePaymentForCheckout } from "../payment/paymentStorage"; // ajusta ruta real
 
 function emptyDeliveryAddress() {
   return {
@@ -246,9 +248,20 @@ export function CheckoutView() {
     }
   }
 
-  function handleProceedToPayment(id) {
+  async function handleProceedToPayment(id) {
     if (saving || dirty) return;
-    navigate(`/checkout/${id}/payment`);
+    const existing = getPaymentForCheckout(id);
+    if (existing) return navigate(`/payments/${existing}`);
+
+    try {
+        const method = form.payment.method; // zelle | zinli | pago_movil | bank_transfer
+        const payment = await paymentService.createPayment({ checkoutId: id, method });
+        savePaymentForCheckout(id, payment.paymentId);
+        navigate(`/payments/${payment.paymentId}`);
+    } catch (e) {
+        // aquí puedes mostrar un toast o setear error local
+        console.error(e);
+    }
   }
 
 

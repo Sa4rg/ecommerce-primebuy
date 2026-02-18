@@ -1,23 +1,3 @@
-/**
- * Composition Root
- *
- * Central place where all dependencies are wired together.
- * Creates repositories via factories and injects them into services.
- *
- * Structure:
- * 1. Seed data (InMemory only)
- * 2. Repository factories
- * 3. Service factories
- * 4. Wire dependencies
- * 5. Export services container
- *
- * NOTE: Factories decide InMemory vs MySQL based on environment.
- * This module only wires the dependency graph.
- */
-
-// ============================================================================
-// SEED DATA (for InMemory repositories only)
-// ============================================================================
 const SEED_PRODUCTS = [
   { name: "Laptop", priceUSD: 1000, stock: 10, category: "Electronics" },
   { name: "Mouse", priceUSD: 20, stock: 50, category: "Electronics" },
@@ -46,12 +26,11 @@ const { createPaymentsService } = require("../services/payments.service");
 const { createOrdersService } = require("../services/orders.service");
 const { createAuthService } = require("../services/auth.service");
 
-
 // ============================================================================
 // DEPENDENCY WIRING
 // ============================================================================
 
-// Repositories (factories decide implementation based on environment)
+// Repositories
 const productsRepository = createProductsRepository(SEED_PRODUCTS);
 const cartRepository = createCartRepository();
 const checkoutRepository = createCheckoutRepository();
@@ -60,17 +39,31 @@ const ordersRepository = createOrdersRepository();
 const usersRepository = createUsersRepository();
 const refreshTokensRepository = createRefreshTokensRepository();
 
-// Services (explicitly injected dependencies)
+// Services
 const productsService = createProductsService({ productsRepository });
+
 const cartService = createCartService({ productsService, cartRepository });
+
 const checkoutService = createCheckoutService({
   cartService,
   productsService,
   checkoutRepository,
   paymentsRepository,
 });
-const paymentsService = createPaymentsService({ cartService, checkoutService, paymentsRepository });
-const ordersService = createOrdersService({ cartService, checkoutService, paymentsService, ordersRepository });
+
+const paymentsService = createPaymentsService({
+  cartService,
+  checkoutService,
+  paymentsRepository,
+});
+
+const ordersService = createOrdersService({
+  cartService,
+  checkoutService,
+  paymentsService,
+  ordersRepository,
+  productsService, // ✅ IMPORTANT: for stock decrement on confirm
+});
 
 // Lazy injection to avoid circular dependency
 paymentsService.setOrdersService(ordersService);
@@ -80,7 +73,6 @@ const authService = createAuthService({ usersRepository, refreshTokensRepository
 // ============================================================================
 // EXPORTS
 // ============================================================================
- 
 module.exports = {
   services: {
     productsService,
@@ -90,4 +82,4 @@ module.exports = {
     ordersService,
     authService,
   },
-}
+};

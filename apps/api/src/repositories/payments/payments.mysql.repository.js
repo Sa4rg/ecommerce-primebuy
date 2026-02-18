@@ -174,6 +174,28 @@ class MySQLPaymentsRepository {
       .orderBy('created_at', 'desc');
     return rows.map(row => this._mapToPayment(row));
   }
+
+    /**
+   * Decrement stock atomically (only if enough stock)
+   * @param {string} id
+   * @param {number} qty
+   * @param {object} [trx] - knex transaction
+   * @returns {Promise<boolean>} true if updated, false if insufficient
+   */
+  async decrementStock(id, qty, trx) {
+    const numericId = parseInt(id, 10);
+    const q = trx || db;
+
+    const updatedRows = await q(this.table)
+      .where({ id: numericId })
+      .andWhere("stock", ">=", qty)
+      .update({
+        stock: db.raw("stock - ?", [qty]),
+      });
+
+    return updatedRows > 0;
+  }
+
 }
 
 

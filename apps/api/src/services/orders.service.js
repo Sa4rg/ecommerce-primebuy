@@ -9,6 +9,7 @@ const defaultCartService = require("./cart.service");
 const defaultCheckoutService = require("./checkout.service");
 const defaultPaymentsService = require("./payments.service");
 
+
 const VALID_SHIPPING_METHODS = ["pickup", "local_delivery", "national_shipping"];
 const VALID_CARRIER_NAMES = ["MRW", "ZOOM", "OTHER"];
 
@@ -24,7 +25,7 @@ function createMapAdapter(map) {
           throw error;
         }
       }
-      
+
       const orderId = order.orderId;
       map.set(orderId, order);
       return { orderId };
@@ -34,11 +35,26 @@ function createMapAdapter(map) {
       return order || null;
     },
     async save(order) {
-      const orderId = order.orderId;
-      map.set(orderId, order);
+      map.set(order.orderId, order);
     },
     async findAll() {
       return Array.from(map.values());
+    },
+
+    // ✅ FIX: required by payments.service.getPaymentById() and orders.service methods
+    async findByPaymentId(paymentId) {
+      for (const order of map.values()) {
+        if (order.paymentId === paymentId) return order;
+      }
+      return null;
+    },
+
+    async findByUserId(userId) {
+      const orders = [];
+      for (const order of map.values()) {
+        if (order.userId === userId) orders.push(order);
+      }
+      return orders;
     },
   };
 }
@@ -47,6 +63,7 @@ function createOrdersService(deps = {}) {
   const cartService = deps.cartService || defaultCartService;
   const checkoutService = deps.checkoutService || defaultCheckoutService;
   const paymentsService = deps.paymentsService || defaultPaymentsService;
+  const productsService = deps.productsService || null; // ✅ injected
   const idGenerator = deps.idGenerator || (() => crypto.randomUUID());
 
   let ordersRepository;
@@ -82,12 +99,10 @@ function createOrdersService(deps = {}) {
     }
 
     if (details.method === "pickup") {
-      // Address must be null or undefined for pickup
       if (details.address !== null && details.address !== undefined) {
         throw new AppError("Invalid shipping details", 400);
       }
     } else {
-      // Address required for local_delivery and national_shipping
       if (!details.address || typeof details.address !== "object") {
         throw new AppError("Invalid shipping details", 400);
       }
@@ -162,6 +177,13 @@ function createOrdersService(deps = {}) {
     // 4) Load cart
     const cart = await cartService.getCart(checkout.cartId);
 
+    // ✅ 4.5) Decrement stock NOW (this is your desired behavior)
+    // If stock is insufficient, we throw 409 and payment.confirm will rollback to SUBMITTED
+    if (productsService && typeof productsService.decrementStockForItems === "function") {
+      await productsService.decrementStockForItems(cart.items);
+    }
+
+
     // 5) Build order snapshot
     const orderId = idGenerator();
     const now = new Date().toISOString();
@@ -207,7 +229,6 @@ function createOrdersService(deps = {}) {
     try {
       await ordersRepository.create(order);
     } catch (error) {
-      // Translate MySQL UNIQUE constraint violation
       if (error.code === 'ER_DUP_ENTRY' && error.sqlMessage?.includes('orders_payment_id_unique')) {
         throw new AppError("Order already exists for payment", 409);
       }
@@ -350,11 +371,6 @@ function createOrdersService(deps = {}) {
     return await ordersRepository.findByPaymentId(paymentId);
   }
 
-  /**
-   * Get all orders for a specific user
-   * @param {string} userId
-   * @returns {Promise<Object[]>}
-   */
   async function getOrdersByUserId(userId) {
     return await ordersRepository.findByUserId(userId);
   }

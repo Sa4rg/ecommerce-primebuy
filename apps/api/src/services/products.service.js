@@ -42,6 +42,20 @@ function validateCreateInput(input) {
   }
 }
 
+/**
+ * Build a map { productId: totalQty } from cart/order items
+ */
+function aggregateQuantities(items) {
+  const byId = new Map();
+  for (const it of items || []) {
+    const pid = String(it.productId);
+    const qty = Number(it.quantity || 0);
+    if (!pid || qty <= 0) continue;
+    byId.set(pid, (byId.get(pid) || 0) + qty);
+  }
+  return byId;
+}
+
 function createProductsService(deps = {}) {
   const productsRepository =
     deps.productsRepository || new InMemoryProductsRepository();
@@ -107,12 +121,45 @@ function createProductsService(deps = {}) {
     return toProductReadModel(deletedProduct);
   }
 
+  /**
+   * ✅ Decrement stock when an order is created (after payment confirm)
+   * items: [{ productId, quantity, ... }]
+   *
+   * - Validates product exists
+   * - Validates stock is sufficient
+   * - Updates stock in repository
+   */
+  async function decrementStockForItems(items) {
+    const qtyMap = aggregateQuantities(items);
+
+    // 1) Validate all products exist and have enough stock
+    for (const [productId, qty] of qtyMap.entries()) {
+      const p = await productsRepository.findById(productId);
+      if (!p) throw new NotFoundError("Product not found");
+
+      const current = Number(p.stock || 0);
+      if (current < qty) {
+        throw new AppError(`Insufficient stock for product ${productId}`, 409);
+      }
+    }
+
+    // 2) Apply updates
+    for (const [productId, qty] of qtyMap.entries()) {
+      const p = await productsRepository.findById(productId);
+      const nextStock = Number(p.stock || 0) - qty;
+      await productsRepository.update(productId, { stock: nextStock });
+    }
+
+    return true;
+  }
+
   return {
     getProducts,
     getProductById,
     createProduct,
     updateProduct,
     deleteProduct,
+    decrementStockForItems, // ✅ new
   };
 }
 
@@ -123,9 +170,6 @@ const SEED_PRODUCTS = [
   { name: "Keyboard", priceUSD: 50, stock: 30, category: "Electronics" },
   { name: "USB Cable", priceUSD: 5, stock: 0, category: "Electronics" },
 ];
-
-// NOTE: Legacy seed for backward compatibility with existing tests.
-// This will be removed once Products are persisted in MySQL with proper seeds/migrations.
 
 // Default instance for backward compatibility
 const defaultService = createProductsService({
@@ -139,4 +183,5 @@ module.exports = {
   createProduct: defaultService.createProduct,
   updateProduct: defaultService.updateProduct,
   deleteProduct: defaultService.deleteProduct,
+  decrementStockForItems: defaultService.decrementStockForItems, // ✅ export
 };

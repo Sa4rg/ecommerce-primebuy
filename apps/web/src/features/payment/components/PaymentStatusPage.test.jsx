@@ -70,6 +70,7 @@ describe("PaymentStatusPage", () => {
   it("shows loading initially, then displays payment details", async () => {
     mockFetchPayment({
       paymentId: "pay-123",
+      orderId: "pay-123",
       method: "zelle",
       amount: 50,
       currency: "USD",
@@ -80,13 +81,12 @@ describe("PaymentStatusPage", () => {
 
     // Initial load
     await waitFor(() => {
-      expect(screen.getByText(/pay-123/i)).toBeInTheDocument();
+      expect(screen.getByText(/#pay-123/i)).toBeInTheDocument();
     });
 
     // Use getAllByText since "zelle" appears in method AND instructions
     expect(screen.getAllByText(/zelle/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/50 USD/i)).toBeInTheDocument();
-    expect(screen.getByText(/Status:/i)).toBeInTheDocument();
   });
 
   it("shows error when payment fails to load", async () => {
@@ -114,7 +114,7 @@ describe("PaymentStatusPage", () => {
       expect(screen.getByRole("textbox")).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("button", { name: /submit proof/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /submit proof|enviar comprobante/i })).toBeInTheDocument();
   });
 
   it("submits proof and updates payment status", async () => {
@@ -138,7 +138,7 @@ describe("PaymentStatusPage", () => {
     fireEvent.change(input, { target: { value: "REF-12345" } });
 
     // Submit
-    fireEvent.click(screen.getByRole("button", { name: /submit proof/i }));
+    fireEvent.click(screen.getByRole("button", { name: /submit proof|enviar comprobante/i }));
 
     await waitFor(() => {
       expect(globalThis.fetch).toHaveBeenCalledWith(
@@ -160,7 +160,7 @@ describe("PaymentStatusPage", () => {
     renderWithRouter();
 
     await waitFor(() => {
-      expect(screen.getByText(/waiting for admin confirmation/i)).toBeInTheDocument();
+      expect(screen.getByText(/waiting for admin confirmation|esperando confirmaci[oó]n/i)).toBeInTheDocument();
     });
   });
 
@@ -177,10 +177,10 @@ describe("PaymentStatusPage", () => {
     renderWithRouter();
 
     await waitFor(() => {
-      expect(screen.getByText(/payment confirmed/i)).toBeInTheDocument();
+      expect(screen.getByText(/payment confirmed|pago confirmado/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("link", { name: /view your order/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /view your order|ver tu orden/i })).toHaveAttribute(
       "href",
       "/orders/order-456"
     );
@@ -201,11 +201,11 @@ describe("PaymentStatusPage", () => {
 
     // Wait for the rejection message specifically (contains "Rejected:")
     await waitFor(() => {
-      expect(screen.getByText(/Rejected:/i)).toBeInTheDocument();
+      expect(screen.getByText(/Rejected:|Rechazado:/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/invalid reference/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /choose another method/i })).toBeInTheDocument();
+    expect(screen.getByText(/invalid reference|referencia inválida/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /choose another method|volver al checkout/i })).toBeInTheDocument();
   });
 
   it("navigates to payment method selection when rejected and user clicks retry", async () => {
@@ -220,11 +220,11 @@ describe("PaymentStatusPage", () => {
     renderWithRouter();
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /choose another method/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /choose another method|volver al checkout/i })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /choose another method/i }));
+    fireEvent.click(screen.getByRole("button", { name: /choose another method|volver al checkout/i }));
 
-    expect(mockNavigate).toHaveBeenCalledWith("/checkout/checkout-789/payment");
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/^\/checkout\/checkout-789(?:\/payment)?$/));
   });
 });

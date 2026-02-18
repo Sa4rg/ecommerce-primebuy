@@ -6,7 +6,7 @@ import { savePaymentForCheckout, getPaymentForCheckout } from "../paymentStorage
 
 const METHODS = [
   { key: "zelle", label: "Zelle (USD)" },
-  { key: "zini", label: "Zinli (USD)" },
+  { key: "zinli", label: "Zinli (USD)" },
   { key: "pago_movil", label: "Pago Móvil (VES)" },
   { key: "bank_transfer", label: "Transferencia (VES)" },
 ];

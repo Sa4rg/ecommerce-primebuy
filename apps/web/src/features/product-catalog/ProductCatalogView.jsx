@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { fetchProducts } from "../../api/products";
 import { ProductCard } from "../../shared/components/ProductCard.jsx";
@@ -59,6 +59,26 @@ export function ProductCatalogView() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // ✅ Opción B: optimistic stock update (sin refetch)
+  const onOptimisticStock = useCallback((productId, qty) => {
+    const qn = Math.max(1, Number(qty || 1));
+
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (String(p.id) !== String(productId)) return p;
+
+        const currentStock = Number(p.stock || 0);
+        const nextStock = Math.max(0, currentStock - qn);
+
+        return {
+          ...p,
+          stock: nextStock,
+          inStock: nextStock > 0,
+        };
+      })
+    );
   }, []);
 
   const filtered = useMemo(() => {
@@ -167,20 +187,14 @@ export function ProductCatalogView() {
                 <span>$2,500</span>
               </div>
 
-              <p className="mt-3 text-xs text-slate-400">
-                (UI placeholder — luego lo conectamos de verdad)
-              </p>
+              <p className="mt-3 text-xs text-slate-400">(UI placeholder — luego lo conectamos de verdad)</p>
             </div>
           </div>
 
           {/* Featured card */}
           <div className="relative overflow-hidden rounded-2xl border border-orange-500/20 bg-orange-500/5 p-6">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-orange-400">
-              Member Special
-            </p>
-            <h4 className="mb-4 text-lg font-bold text-white">
-              Get 15% off electronics
-            </h4>
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-orange-400">Member Special</p>
+            <h4 className="mb-4 text-lg font-bold text-white">Get 15% off electronics</h4>
             <button
               type="button"
               className="text-xs font-bold underline decoration-orange-400 underline-offset-4 hover:text-orange-300 transition-colors"
@@ -199,9 +213,7 @@ export function ProductCatalogView() {
           {/* Controls */}
           <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-white">
-                Cameras & Gear
-              </h2>
+              <h2 className="text-2xl font-bold tracking-tight text-white">Cameras & Gear</h2>
               <p className="text-sm text-slate-400">
                 Showing {showingCount} of {totalCount} products
               </p>
@@ -255,7 +267,7 @@ export function ProductCatalogView() {
           {status === "success" && filtered.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
               {filtered.map((p) => (
-                <ProductCard key={p.id} product={p} />
+                <ProductCard key={p.id} product={p} onOptimisticStock={onOptimisticStock} />
               ))}
             </div>
           )}
@@ -269,10 +281,7 @@ export function ProductCatalogView() {
               >
                 ‹
               </button>
-              <button
-                type="button"
-                className="h-10 w-10 rounded-lg bg-orange-500 text-white font-bold"
-              >
+              <button type="button" className="h-10 w-10 rounded-lg bg-orange-500 text-white font-bold">
                 1
               </button>
               <button

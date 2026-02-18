@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 import { AppLayout } from "./shared/layout/AppLayout.jsx";
 import { ProductCatalogView } from "./features/product-catalog/ProductCatalogView.jsx";
@@ -14,6 +13,9 @@ import { AdminPaymentsPage } from "./features/admin/components/AdminPaymentsPage
 import { RequireAdmin } from "./shared/components/RequireAdmin.jsx";
 import { AccountPage } from "./features/account/components/AccountPage.jsx";
 import { RequireAuth } from "./shared/components/RequireAuth.jsx";
+import { ProductDetailView } from "./features/product-detail/ProductDetailView.jsx";
+import { AdminProductsPage } from "./features/admin/components/AdminProductsPage.jsx";
+
 
 function App() {
   return (
@@ -23,6 +25,9 @@ function App() {
         {/* Public */}
         <Route path="/" element={<ProductCatalogView />} />
         <Route path="/cart" element={<CartView />} />
+
+        {/* Product detail ✅ (ADENTRO del layout) */}
+        <Route path="/products/:id" element={<ProductDetailView />} />
 
         {/* Checkout */}
         <Route path="/checkout" element={<CheckoutStart />} />
@@ -57,6 +62,15 @@ function App() {
           }
         />
       </Route>
+      <Route
+        path="/admin/products"
+        element={
+          <RequireAdmin>
+            <AdminProductsPage />
+          </RequireAdmin>
+        }
+      />
+
     </Routes>
   );
 }

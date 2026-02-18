@@ -1,9 +1,10 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ProductCard } from "./ProductCard";
-import { CartProvider, useCart } from "../../context/CartContext.jsx";
+import { useCart } from "../../context/CartContext.jsx";
+import { renderWithProviders } from "../../test/renderWithProviders.jsx";
 
 function CartCount() {
   const { itemsCount } = useCart();
@@ -20,7 +21,6 @@ describe("ProductCard (with CartProvider)", () => {
     localStorage.setItem("cartId", "existing-cart-id");
 
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url, options) => {
-      // POST /api/cart/:cartId/items
       if (String(url).includes("/api/cart/existing-cart-id/items") && options?.method === "POST") {
         return {
           ok: true,
@@ -60,11 +60,12 @@ describe("ProductCard (with CartProvider)", () => {
       inStock: true,
     };
 
-    render(
-      <CartProvider>
+    renderWithProviders(
+      <>
         <CartCount />
         <ProductCard product={product} />
-      </CartProvider>
+      </>,
+      { route: "/" }
     );
 
     expect(screen.getByTestId("count")).toHaveTextContent("0");
@@ -124,11 +125,7 @@ describe("ProductCard (with CartProvider)", () => {
       inStock: true,
     };
 
-    render(
-      <CartProvider>
-        <ProductCard product={product} />
-      </CartProvider>
-    );
+    renderWithProviders(<ProductCard product={product} />, { route: "/" });
 
     const button = screen.getByRole("button", { name: /add to cart/i });
 
