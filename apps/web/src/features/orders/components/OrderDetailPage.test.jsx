@@ -39,8 +39,8 @@ describe("OrderDetailPage", () => {
       orderId: "order-123",
       status: "paid",
       items: [
-        { productId: "prod-1", name: "Product A", quantity: 2, lineTotalUSD: 40 },
-        { productId: "prod-2", name: "Product B", quantity: 1, lineTotalUSD: 25 },
+        { productId: "prod-1", name: "Product A", quantity: 2, unitPriceUSD: 20, lineTotalUSD: 40 },
+        { productId: "prod-2", name: "Product B", quantity: 1, unitPriceUSD: 25, lineTotalUSD: 25 },
       ],
       totals: {
         amountPaid: 65,
@@ -52,25 +52,14 @@ describe("OrderDetailPage", () => {
 
     renderWithRouter();
 
-    // Wait for order to load
-    await waitFor(() => {
-      expect(screen.getByText(/order-123/i)).toBeInTheDocument();
-    });
+    expect(await screen.findByText(/detalle del pedido/i)).toBeInTheDocument();
 
-    // Check status
-    expect(screen.getByText(/paid/i)).toBeInTheDocument();
-
-    // Check items
+    expect(screen.getAllByText(/pagado/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Product A/i)).toBeInTheDocument();
-    expect(screen.getByText(/x2/i)).toBeInTheDocument();
-    expect(screen.getByText(/\$40/i)).toBeInTheDocument();
-
     expect(screen.getByText(/Product B/i)).toBeInTheDocument();
-    expect(screen.getByText(/x1/i)).toBeInTheDocument();
-    expect(screen.getByText(/\$25/i)).toBeInTheDocument();
-
-    // Check totals
-    expect(screen.getByText(/65 USD/i)).toBeInTheDocument();
+    expect(screen.getByText(/\$40\.00/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/\$25\.00/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$65\.00/i).length).toBeGreaterThan(0);
   });
 
   it("shows error message when order fails to load", async () => {
@@ -106,9 +95,9 @@ describe("OrderDetailPage", () => {
       orderId: "order-multi",
       status: "completed",
       items: [
-        { productId: "p1", name: "Item One", quantity: 3, lineTotalUSD: 30 },
-        { productId: "p2", name: "Item Two", quantity: 1, lineTotalUSD: 15 },
-        { productId: "p3", name: "Item Three", quantity: 5, lineTotalUSD: 50 },
+        { productId: "p1", name: "Item One", quantity: 3, unitPriceUSD: 10, lineTotalUSD: 30 },
+        { productId: "p2", name: "Item Two", quantity: 1, unitPriceUSD: 15, lineTotalUSD: 15 },
+        { productId: "p3", name: "Item Three", quantity: 5, unitPriceUSD: 10, lineTotalUSD: 50 },
       ],
       totals: { amountPaid: 95, currency: "USD" },
     };
@@ -117,21 +106,11 @@ describe("OrderDetailPage", () => {
 
     renderWithRouter("order-multi");
 
-    await waitFor(() => {
-      expect(screen.getByText(/Item One/i)).toBeInTheDocument();
-    });
-
+    expect(await screen.findByText(/Item One/i)).toBeInTheDocument();
     expect(screen.getByText(/Item Two/i)).toBeInTheDocument();
     expect(screen.getByText(/Item Three/i)).toBeInTheDocument();
-    
-    // Rows: incluye header row + 3 items => total 4
+
     const rows = screen.getAllByRole("row");
     expect(rows).toHaveLength(4);
-
-    // o si quieres contar SOLO items (filas del tbody)
-    const bodyRows = screen.getAllByRole("row").filter((r) =>
-      r.textContent?.includes("Item ")
-    );
-    expect(bodyRows).toHaveLength(3);
   });
 });

@@ -1,7 +1,7 @@
 {
   "name": "ecommerce",
   "private": true,
-  "packageManager": "pnpm@latest",
+  "packageManager": "pnpm@10.23.0",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "dev:api": "pnpm --filter api dev",
