@@ -124,8 +124,14 @@ describe("OrderDetailPage", () => {
     expect(screen.getByText(/Item Two/i)).toBeInTheDocument();
     expect(screen.getByText(/Item Three/i)).toBeInTheDocument();
     
-    // All list items should be rendered
-    const listItems = screen.getAllByRole("listitem");
-    expect(listItems).toHaveLength(3);
+    // Rows: incluye header row + 3 items => total 4
+    const rows = screen.getAllByRole("row");
+    expect(rows).toHaveLength(4);
+
+    // o si quieres contar SOLO items (filas del tbody)
+    const bodyRows = screen.getAllByRole("row").filter((r) =>
+      r.textContent?.includes("Item ")
+    );
+    expect(bodyRows).toHaveLength(3);
   });
 });

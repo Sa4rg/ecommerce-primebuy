@@ -37,7 +37,8 @@ describe("CheckoutView", () => {
     );
 
     expect(await screen.findByText(/order summary/i)).toBeInTheDocument();
-    expect(screen.getByText(/Subtotal: \$20/i)).toBeInTheDocument();
+    expect(screen.getByText(/subtotal/i)).toBeInTheDocument();
+    expect(screen.getByText(/\$20(\.00)?/i)).toBeInTheDocument();
     expect(screen.getByText(/Bs 800/i)).toBeInTheDocument();
     expect(screen.getByText(/USD: zelle, zinli/i)).toBeInTheDocument();
 

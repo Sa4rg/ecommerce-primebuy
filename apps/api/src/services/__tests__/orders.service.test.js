@@ -544,7 +544,7 @@ describe("shipping", () => {
       phone: "+1234567890",
     });
     await checkoutService.updateShipping(checkout.checkoutId, TEST_USER_ID, {
-      method: "delivery",
+      method: "local_delivery",
       address: {
         recipientName: "Test User",
         phone: "+1234567890",
@@ -580,8 +580,15 @@ describe("shipping", () => {
     // Assert
     expect(order.shipping).toBeDefined();
     expect(order.shipping.status).toBe(ShippingStatus.PENDING);
-    expect(order.shipping.method).toBeNull();
-    expect(order.shipping.address).toBeNull();
+    expect(order.shipping.method).toBe("local_delivery");
+    expect(order.shipping.address).toMatchObject({
+      recipientName: "Test User",
+      phone: "+1234567890",
+      state: "Test State",
+      city: "Test City",
+      line1: "123 Test St",
+      reference: "Near the park",
+    });
     expect(order.shipping.carrier).toEqual({ name: null, trackingNumber: null });
     expect(order.shipping.dispatchedAt).toBeNull();
     expect(order.shipping.deliveredAt).toBeNull();

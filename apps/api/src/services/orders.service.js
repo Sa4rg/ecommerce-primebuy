@@ -204,15 +204,15 @@ function createOrdersService(deps = {}) {
       },
       exchangeRate: checkout.exchangeRate,
       tax: cart.metadata.tax,
-      customer: cart.metadata.customer,
+      customer: checkout.customer ?? { name: null, email: null, phone: null },
       payment: {
         method: payment.method,
         proof: payment.proof,
         review: payment.review,
       },
       shipping: {
-        method: null,
-        address: null,
+        method: checkout.shipping?.method ?? null,
+        address: checkout.shipping?.method === "pickup" ? null : (checkout.shipping?.address ?? null),
         carrier: { name: null, trackingNumber: null },
         status: ShippingStatus.PENDING,
         dispatchedAt: null,

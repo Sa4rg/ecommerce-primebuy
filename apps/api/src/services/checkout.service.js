@@ -149,9 +149,13 @@ function createCheckoutService(deps = {}) {
         subtotalUSD,
         subtotalVES,
       },
-      exchangeRate,
+      exchangeRate: exchangeRate ?? null,
       paymentMethods,
       shippingAddress: null,
+      shipping: {
+        method: null,
+        address: null,
+      },
       billingAddress: null,
       customer: {
         name: null,
@@ -213,19 +217,37 @@ function createCheckoutService(deps = {}) {
       throw new AppError("Invalid shipping", 400);
     }
 
-    if (patch.method !== undefined && patch.method !== null) {
-      if (!["delivery", "pickup"].includes(patch.method)) {
+    // ✅ normalize legacy + allow new methods
+    const rawMethod = patch.method ?? null;
+    let method = rawMethod;
+
+    if (typeof method === "string") {
+      method = method.trim().toLowerCase();
+
+      // legacy alias
+      if (method === "delivery") method = "local_delivery";
+
+      // other common aliases (optional, por si llegan)
+      if (method === "localdelivery") method = "local_delivery";
+      if (method === "nationalshipping") method = "national_shipping";
+    }
+
+    const allowed = ["pickup", "local_delivery", "national_shipping"];
+
+    if (method !== null && method !== undefined) {
+      if (!allowed.includes(method)) {
         throw new AppError("Invalid shipping method", 400);
       }
     }
 
-    if (patch.method === "pickup") {
+    if (method === "pickup") {
       return {
         method: "pickup",
         address: null,
       };
     }
 
+    // ✅ delivery methods require address
     if (patch.address !== undefined && patch.address !== null) {
       const a = patch.address;
 
@@ -241,7 +263,7 @@ function createCheckoutService(deps = {}) {
       }
 
       return {
-        method: patch.method || "delivery",
+        method: method || "local_delivery",
         address: {
           recipientName: a.recipientName.trim(),
           phone: a.phone.trim(),

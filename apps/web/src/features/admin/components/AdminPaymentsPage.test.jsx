@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { AdminPaymentsPage } from "./AdminPaymentsPage.jsx";
 import { adminService } from "../adminService";
+
+function renderWithRouter(ui, { route = "/admin/payments" } = {}) {
+  return render(<MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>);
+}
+
 
 vi.mock("../adminService");
 
@@ -28,7 +34,7 @@ describe("AdminPaymentsPage", () => {
 
     adminService.listPayments.mockResolvedValue(mockPayments);
 
-    render(<AdminPaymentsPage />);
+    renderWithRouter(<AdminPaymentsPage />);
 
     // Initially shows loading
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
@@ -47,7 +53,7 @@ describe("AdminPaymentsPage", () => {
   it("shows error message when loading fails", async () => {
     adminService.listPayments.mockRejectedValue(new Error("Network error"));
 
-    render(<AdminPaymentsPage />);
+    renderWithRouter(<AdminPaymentsPage />);
 
     await waitFor(() => {
       expect(screen.getByText(/network error/i)).toBeInTheDocument();
@@ -57,7 +63,7 @@ describe("AdminPaymentsPage", () => {
   it("shows 'No payments found' when list is empty", async () => {
     adminService.listPayments.mockResolvedValue([]);
 
-    render(<AdminPaymentsPage />);
+    renderWithRouter(<AdminPaymentsPage />);
 
     await waitFor(() => {
       expect(screen.getByText(/no payments found/i)).toBeInTheDocument();
@@ -82,7 +88,7 @@ describe("AdminPaymentsPage", () => {
       order: { orderId: "order-123" }
     });
 
-    render(<AdminPaymentsPage />);
+    renderWithRouter(<AdminPaymentsPage />);
 
     // Wait for table to render
     await waitFor(() => {
@@ -114,7 +120,7 @@ describe("AdminPaymentsPage", () => {
     adminService.listPayments.mockResolvedValue(mockPayments);
     adminService.rejectPayment.mockResolvedValue({ paymentId: "pay-to-reject", status: "rejected" });
 
-    render(<AdminPaymentsPage />);
+    renderWithRouter(<AdminPaymentsPage />);
 
     // Wait for table
     await waitFor(() => {
@@ -144,7 +150,7 @@ describe("AdminPaymentsPage", () => {
   it("changes filter and reloads payments", async () => {
     adminService.listPayments.mockResolvedValue([]);
 
-    render(<AdminPaymentsPage />);
+    renderWithRouter(<AdminPaymentsPage />);
 
     await waitFor(() => {
       expect(adminService.listPayments).toHaveBeenCalledWith({ status: "submitted" });

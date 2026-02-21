@@ -51,7 +51,7 @@ describe("PATCH /api/checkout/:id/shipping", () => {
       .patch(`/api/checkout/${checkoutId}/shipping`)
       .set("Authorization", `Bearer ${customerAccessToken}`)
       .send({
-        method: "delivery",
+        method: "local_delivery",
         address: {
           recipientName: "Sara",
           phone: "0412-0000000",
@@ -67,7 +67,7 @@ describe("PATCH /api/checkout/:id/shipping", () => {
 
     // assert snapshot exists
     expect(patchRes.body.data.shipping).toMatchObject({
-      method: "delivery",
+      method: "local_delivery",
       address: {
         recipientName: "Sara",
         phone: "0412-0000000",
@@ -82,7 +82,7 @@ describe("PATCH /api/checkout/:id/shipping", () => {
   test("should return 401 if no auth", async () => {
     const res = await request(app)
       .patch("/api/checkout/any-id/shipping")
-      .send({ method: "delivery", address: { recipientName: "X", phone: "1", state: "S", city: "C", line1: "L" } });
+      .send({ method: "local_delivery", address: { recipientName: "X", phone: "1", state: "S", city: "C", line1: "L" } });
 
     expect(res.status).toBe(401);
     expect(res.body.message).toBe("Unauthorized");

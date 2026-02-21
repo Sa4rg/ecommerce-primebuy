@@ -15,6 +15,7 @@ import { AccountPage } from "./features/account/components/AccountPage.jsx";
 import { RequireAuth } from "./shared/components/RequireAuth.jsx";
 import { ProductDetailView } from "./features/product-detail/ProductDetailView.jsx";
 import { AdminProductsPage } from "./features/admin/components/AdminProductsPage.jsx";
+import { AdminPaymentDetailPage } from "./features/admin/components/AdminPaymentDetailPage.jsx";
 
 
 function App() {
@@ -37,6 +38,25 @@ function App() {
         {/* Payment & Order */}
         <Route path="/payments/:paymentId" element={<PaymentStatusPage />} />
         <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+
+        <Route
+          path="/admin/products"
+          element={
+            <RequireAdmin>
+              <AdminProductsPage />
+            </RequireAdmin>
+          }
+        />
+
+        <Route
+          path="/admin/payments/:paymentId"
+          element={
+            <RequireAdmin>
+              <AdminPaymentDetailPage />
+            </RequireAdmin>
+          }
+        />
+
 
         {/* Auth */}
         <Route path="/login" element={<LoginView />} />
@@ -62,14 +82,6 @@ function App() {
           }
         />
       </Route>
-      <Route
-        path="/admin/products"
-        element={
-          <RequireAdmin>
-            <AdminProductsPage />
-          </RequireAdmin>
-        }
-      />
 
     </Routes>
   );

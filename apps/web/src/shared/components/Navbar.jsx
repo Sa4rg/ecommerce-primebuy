@@ -150,6 +150,15 @@ export function Navbar() {
               </Link>
             )}
 
+            {role === "admin" && (
+              <Link
+                to="/admin/products"
+                className="hidden sm:inline-flex items-center rounded-full px-3 py-2 text-sm font-bold text-fuchsia-300 hover:bg-white/5 border border-white/10 transition-colors"
+                >
+                Products
+              </Link>
+            )}
+
             {showAuthLinks && (
               <>
                 {!isAuthenticated ? (

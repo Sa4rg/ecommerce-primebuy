@@ -1,445 +1,485 @@
+// web/src/features/checkout/CheckoutView.jsx
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useCart } from "../../context/CartContext.jsx";
-import { getCheckoutById } from "./checkoutQuery";
+import { useNavigate, useParams } from "react-router-dom";
 import { updateCheckoutCustomer, updateCheckoutShipping } from "./checkoutCommand";
-import { CheckoutLayout } from "./components/CheckoutLayout.jsx";
-import { OrderSummaryCard } from "./components/OrderSummaryCard.jsx";
-import { paymentService } from "../payment/paymentService"; // ajusta ruta real
-import { getPaymentForCheckout, savePaymentForCheckout } from "../payment/paymentStorage"; // ajusta ruta real
+import { useCart } from "../../context/CartContext.jsx";
 
-function emptyDeliveryAddress() {
-  return {
-    recipientName: "",
-    phone: "",
-    state: "",
-    city: "",
-    line1: "",
-    reference: "",
-  };
+// ✅ Payments
+import { paymentService } from "../payment/paymentService";
+import { savePaymentForCheckout, getPaymentForCheckout } from "../payment/paymentStorage";
+
+const SHIPPING_METHODS = [
+  { value: "pickup", title: "Retiro en tienda / Pickup", icon: "store" },
+  { value: "local_delivery", title: "Delivery", icon: "moped" },
+  { value: "national_shipping", title: "Envío nacional", icon: "local_shipping" },
+];
+
+const PAYMENT_METHODS = [
+  { value: "zelle", title: "Zelle", icon: "account_balance_wallet" },
+  { value: "zinli", title: "Zinli", icon: "payments" },
+  { value: "transferencia", title: "Transferencia Bancaria", icon: "account_balance" },
+  { value: "pago_movil", title: "Pago Móvil", icon: "smartphone" },
+];
+
+function formatUSD(n) {
+  const num = Number(n);
+  if (Number.isNaN(num)) return "$0.00";
+  return num.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-function isNonEmpty(v) {
-  return typeof v === "string" && v.trim().length > 0;
-}
-
-function Field({ id, label, value, onChangeValue, type = "text", placeholder, disabled }) {
+function RadioCard({ checked, onClick, icon, title }) {
   return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="block text-sm font-medium mb-1.5 opacity-70">
-        {label}
-      </label>
-      <input
-        id={id}
-        name={id}
-        disabled={disabled}
-        type={type}
-        value={value ?? ""}
-        onChange={(e) => onChangeValue(e.target.value)}
-        placeholder={placeholder}
-        className="w-full bg-orange-500/5 border border-orange-500/20 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500/40 focus:border-transparent transition-all outline-none disabled:opacity-60"
-      />
-    </div>
-  );
-}
-
-function PaymentOption({ value, label, selected, onSelect }) {
-  return (
-    <label
-      className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${
-        selected ? "border-orange-500 bg-[#0f0a06]/30" : "border-orange-500/10 bg-[#0f0a06]/10 hover:border-orange-500/40"
-      }`}
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left",
+        checked ? "border-orange-500 bg-black/20" : "border-white/10 bg-black/10 hover:border-orange-500/40",
+      ].join(" ")}
     >
       <div className="flex items-center gap-3">
-        <span className={`${selected ? "opacity-100" : "opacity-70"} font-bold`}>{label}</span>
+        <span
+          className={[
+            "material-symbols-outlined text-xl",
+            checked ? "text-orange-400" : "text-slate-400",
+          ].join(" ")}
+        >
+          {icon}
+        </span>
+        <span className={checked ? "font-bold text-slate-100" : "font-bold text-slate-200/80"}>
+          {title}
+        </span>
       </div>
-      <div
-        className={`w-5 h-5 rounded-full ${
-          selected ? "border-4 border-orange-500 bg-orange-500" : "border-2 border-orange-500/20"
-        }`}
+
+      <span
+        className={[
+          "w-5 h-5 rounded-full",
+          checked ? "bg-orange-500 border-4 border-orange-500" : "border-2 border-white/20",
+        ].join(" ")}
       />
-      <input
-        className="hidden"
-        type="radio"
-        name="payment_method"
-        value={value}
-        checked={selected}
-        onChange={() => onSelect(value)}
-      />
-    </label>
+    </button>
   );
 }
 
 export function CheckoutView() {
-  const { itemsCount } = useCart();
   const { checkoutId } = useParams();
   const navigate = useNavigate();
+  const { cart, status: cartStatus, initializeCart } = useCart();
 
-  const [status, setStatus] = useState("idle");
-  const [error, setError] = useState("");
-  const [checkout, setCheckout] = useState(null);
-
-  const [form, setForm] = useState({
-    customer: { name: "", email: "", phone: "" },
-    shipping: { method: "delivery", address: emptyDeliveryAddress() },
-    payment: { method: "zelle" },
-  });
-
-  const [dirty, setDirty] = useState(false);
-  const [dirtyWarning, setDirtyWarning] = useState("");
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
-  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
+  // Form
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const [street, setStreet] = useState("");
+  const [city, setCity] = useState("");
+  const [stateRegion, setStateRegion] = useState("");
+  const [reference, setReference] = useState("");
+
+  const [shippingMethod, setShippingMethod] = useState("pickup");
+  const [paymentMethod, setPaymentMethod] = useState("zelle");
+
+  // --- Load cart/checkout (and show alert on failure) ---
   useEffect(() => {
     let cancelled = false;
 
-    async function run() {
+    async function boot() {
+      if (cartStatus !== "idle") return;
       try {
-        setStatus("loading");
-        setError("");
-
-        const data = await getCheckoutById(checkoutId);
-        if (cancelled) return;
-
-        const customer = data?.customer ?? { name: "", email: "", phone: "" };
-
-        const shippingFromApi = data?.shipping ?? { method: "delivery", address: null };
-
-        // ✅ NORMALIZA address SIEMPRE (aunque venga parcial)
-        const normalizedAddress = {
-        ...emptyDeliveryAddress(),
-        ...(shippingFromApi.address || {}),
-        };
-
-        const nextForm = {
-        customer,
-        shipping: {
-            method: shippingFromApi.method || "delivery",
-            address: normalizedAddress,
-        },
-        payment: { method: "zelle" },
-        };
-
-        setCheckout(data);
-        setForm(nextForm);
-
-        setDirty(false);
-        setDirtyWarning("");
-        setSaved(false);
-        setSaveError("");
-
-        setStatus("success");
-      } catch (err) {
-        if (cancelled) return;
-        setStatus("error");
-        setError(err?.message || "Unknown error");
+        await initializeCart();
+      } catch (e) {
+        if (!cancelled) setError(e?.message || "Failed to load checkout");
       }
     }
 
-    run();
+    boot();
     return () => {
       cancelled = true;
     };
-  }, [checkoutId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartStatus]);
 
-  useEffect(() => {
-    function handleBeforeUnload(e) {
-      if (!dirty) return;
-      e.preventDefault();
-      e.returnValue = "";
+  // --- Derived cart data ---
+  const items = cart?.items || [];
+
+  // ✅ robust subtotal (supports different shapes + fallback)
+  const subtotalUSD = useMemo(() => {
+    const t = cart?.totals || {};
+
+    const fromTotals =
+      t.subtotalUSD ??
+      t.amountUSD ??
+      t.totalUSD ??
+      t.subtotal ??
+      t.total ??
+      cart?.subtotalUSD ??
+      cart?.amountUSD ??
+      null;
+
+    if (fromTotals != null && !Number.isNaN(Number(fromTotals))) {
+      return Number(fromTotals);
     }
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [dirty]);
 
-  const blockedReason = useMemo(() => {
-    if (saving) return "Saving...";
-    if (dirty) return "Please save your information first.";
-    return "";
-  }, [saving, dirty]);
+    // Fallback: sum items
+    return (cart?.items || []).reduce((acc, it) => {
+      const price = Number(it.unitPriceUSD ?? it.priceUSD ?? it.price ?? 0);
+      const qty = Number(it.quantity ?? 0);
+      return acc + price * qty;
+    }, 0);
+  }, [cart]);
 
-  function markDirty() {
-    setSaved(false);
-    setDirty(true);
-    setDirtyWarning("Unsaved changes. Please save to continue.");
-    setSaveError("");
-  }
+  const taxRate = cart?.metadata?.tax?.vatRate ?? 0.16;
+  const priceIncludesVAT = cart?.metadata?.tax?.priceIncludesVAT ?? true;
 
-  function onChangeCustomer(key, value) {
-    setForm((f) => ({ ...f, customer: { ...f.customer, [key]: value } }));
-    markDirty();
-  }
+  const estimatedTaxesUSD = useMemo(() => {
+    const sub = Number(subtotalUSD) || 0;
+    if (priceIncludesVAT) {
+      // VAT portion = sub * (rate / (1+rate))
+      return sub * (taxRate / (1 + taxRate));
+    }
+    return sub * taxRate;
+  }, [subtotalUSD, taxRate, priceIncludesVAT]);
 
-  function onChangeShippingAddress(key, value) {
-    setForm((f) => ({
-      ...f,
-      shipping: {
-        ...f.shipping,
-        address: { ...(f.shipping.address || emptyDeliveryAddress()), [key]: value },
-      },
-    }));
-    markDirty();
-  }
+  const totalUSD = useMemo(() => {
+    // hoy tu total = subtotal (sin shipping real)
+    return Number(subtotalUSD) || 0;
+  }, [subtotalUSD]);
 
-  function onChangePaymentMethod(value) {
-    setForm((f) => ({ ...f, payment: { method: value } }));
-    markDirty();
-  }
+  const needsAddress = shippingMethod !== "pickup";
 
-  async function onSave() {
+  const canContinue = useMemo(() => {
+    const nameOk = fullName.trim().length >= 2;
+    const phoneOk = phone.trim().length >= 6;
+    const emailOk = email.trim().length >= 3;
+
+    if (!nameOk || !phoneOk || !emailOk) return false;
+
+    if (needsAddress) {
+      const streetOk = street.trim().length >= 3;
+      const cityOk = city.trim().length >= 2;
+      const stateOk = stateRegion.trim().length >= 2;
+      return streetOk && cityOk && stateOk;
+    }
+
+    return true;
+  }, [fullName, phone, email, needsAddress, street, city, stateRegion]);
+
+  async function onContinue() {
     if (saving) return;
+    setError("");
 
-    const a = form.shipping.address || {};
-    const missing =
-      !isNonEmpty(form.customer.name) ||
-      !isNonEmpty(a.line1) ||
-      !isNonEmpty(a.city) ||
-      !isNonEmpty(a.state) ||
-      !isNonEmpty(form.customer.phone);
+    if (!checkoutId) return setError("checkoutId missing in URL.");
+    if (!cart?.cartId) return setError("No cart found. Please add items first.");
+    if (items.length === 0) return setError("Your cart is empty.");
+    if (!canContinue) return setError("Completa tus datos para continuar.");
 
-    if (missing) {
-      setSaveError("Please complete shipping address");
-      return;
-    }
-
+    setSaving(true);
     try {
-      setSaving(true);
-      setSaveError("");
-      setSaved(false);
-
-      const updatedCustomer = await updateCheckoutCustomer(checkoutId, {
-        name: form.customer.name,
-        email: form.customer.email,
-        phone: form.customer.phone,
+      // 1) Customer
+      await updateCheckoutCustomer(checkoutId, {
+        name: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
       });
 
-       const shippingPayload = {
-        method: "delivery",
-        address: {
-          ...(form.shipping.address || emptyDeliveryAddress()),
-          recipientName: (form.shipping.address?.recipientName || form.customer.name || "").trim(),
-          phone: (form.shipping.address?.phone || form.customer.phone || "").trim(),
-        },
-      };
+      // 2) Shipping
+      await updateCheckoutShipping(checkoutId, {
+        method: shippingMethod,
+        address: needsAddress
+          ? {
+              recipientName: fullName.trim(),
+              phone: phone.trim(),
+              state: stateRegion.trim(),
+              city: city.trim(),
+              line1: street.trim(),
+              reference: reference.trim() || null,
+            }
+          : null,
+      });
 
-      const updatedShipping = await updateCheckoutShipping(checkoutId, shippingPayload);
+      // 3) Payment
+      const existingPaymentId = getPaymentForCheckout(checkoutId);
+      if (existingPaymentId) {
+        navigate(`/payments/${existingPaymentId}`);
+        return;
+      }
 
-      const committed = {
-        customer: updatedCustomer?.customer ?? form.customer,
-        shipping: updatedShipping?.shipping ?? form.shipping,
-        payment: form.payment,
-      };
+      const paymentRes = await paymentService.createPayment({
+        checkoutId,
+        method: paymentMethod,
+      });
 
-      setForm(committed);
-      setCheckout((prev) => ({
-        ...(prev || {}),
-        customer: committed.customer,
-        shipping: committed.shipping,
-      }));
+      const paymentId =
+        paymentRes?.data?.paymentId ??
+        paymentRes?.paymentId ??
+        paymentRes?.data?.data?.paymentId;
 
-      setDirty(false);
-      setDirtyWarning("");
-      setSaved(true);
-    } catch (err) {
-      setSaveError(err?.message || "Unknown error");
+      if (!paymentId) throw new Error("No paymentId returned from /api/payments");
+
+      savePaymentForCheckout(checkoutId, paymentId);
+      navigate(`/payments/${paymentId}`);
+    } catch (e) {
+      setError(e?.message || "Checkout failed");
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleProceedToPayment(id) {
-    if (saving || dirty) return;
-    const existing = getPaymentForCheckout(id);
-    if (existing) return navigate(`/payments/${existing}`);
-
-    try {
-        const method = form.payment.method; // zelle | zinli | pago_movil | bank_transfer
-        const payment = await paymentService.createPayment({ checkoutId: id, method });
-        savePaymentForCheckout(id, payment.paymentId);
-        navigate(`/payments/${payment.paymentId}`);
-    } catch (e) {
-        // aquí puedes mostrar un toast o setear error local
-        console.error(e);
-    }
-  }
-
   return (
-    <section className="min-h-screen bg-[#0f0a06]">
-      <div className="mx-auto max-w-6xl px-4 pt-8">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-slate-400">Cart ({itemsCount})</div>
-          <div className="flex items-center gap-2 text-sm text-slate-400">
-            <span>🔒</span>
-            <span>Secure Checkout</span>
+    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
+        {/* Left: Form */}
+        <div className="lg:col-span-7 space-y-10">
+          {error && (
+            <div
+              role="alert"
+              className="mb-6 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100"
+            >
+              {error}
+            </div>
+          )}
+
+          {/* Shipping Information */}
+          <section>
+            <div className="mb-6 flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/20 font-bold text-orange-400">
+                1
+              </span>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-100">
+                Shipping Information
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <label className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                  Full Name
+                </label>
+                <input
+                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  placeholder="Alexander Wright"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                  Email
+                </label>
+                <input
+                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  placeholder="you@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                  City
+                </label>
+                <input
+                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  placeholder="Caracas"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  disabled={!needsAddress}
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                  Phone Number
+                </label>
+                <input
+                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  placeholder="+58 414 123 4567"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                  Street Address
+                </label>
+                <input
+                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  placeholder="Av Principal, Casa #1"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  disabled={!needsAddress}
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                  State
+                </label>
+                <input
+                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  placeholder="Carabobo"
+                  value={stateRegion}
+                  onChange={(e) => setStateRegion(e.target.value)}
+                  disabled={!needsAddress}
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                  Reference (optional)
+                </label>
+                <input
+                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  placeholder="Near the park"
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
+                  disabled={!needsAddress}
+                />
+              </div>
+            </div>
+
+            {!needsAddress && (
+              <p className="mt-3 text-sm text-slate-400">
+                Para <b>Pickup</b> no se requiere dirección completa.
+              </p>
+            )}
+          </section>
+
+          <hr className="border-orange-500/10" />
+
+          {/* Shipping + Payment */}
+          <section className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="space-y-4">
+                <div className="mb-6 flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/20 font-bold text-orange-400">
+                    2
+                  </span>
+                  <h2 className="text-2xl font-bold tracking-tight text-slate-100">
+                    Tipo de Entrega
+                  </h2>
+                </div>
+
+                <div className="space-y-4 rounded-xl border border-orange-500/20 bg-orange-500/5 p-6">
+                  {SHIPPING_METHODS.map((m) => (
+                    <RadioCard
+                      key={m.value}
+                      checked={shippingMethod === m.value}
+                      icon={m.icon}
+                      title={m.title}
+                      onClick={() => setShippingMethod(m.value)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="mb-6 flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/20 font-bold text-orange-400">
+                    3
+                  </span>
+                  <h2 className="text-2xl font-bold tracking-tight text-slate-100">
+                    Método de Pago
+                  </h2>
+                </div>
+
+                <div className="space-y-4 rounded-xl border border-orange-500/20 bg-orange-500/5 p-6">
+                  {PAYMENT_METHODS.map((m) => (
+                    <RadioCard
+                      key={m.value}
+                      checked={paymentMethod === m.value}
+                      icon={m.icon}
+                      title={m.title}
+                      onClick={() => setPaymentMethod(m.value)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {/* Right: Summary */}
+        <div className="lg:col-span-5">
+          <div className="sticky top-24">
+            <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-8">
+              <h3 className="mb-6 text-xl font-bold text-slate-100">Order Summary</h3>
+
+              {items.length === 0 ? (
+                <p className="text-slate-400">Your cart is empty.</p>
+              ) : (
+                <div className="space-y-4">
+                  {items.map((it) => (
+                    <div key={it.productId} className="flex gap-4">
+                      <div className="h-16 w-16 rounded-lg border border-white/10 bg-black/30" />
+                      <div className="flex flex-1 flex-col justify-center">
+                        <h4 className="font-bold text-slate-100">{it.name}</h4>
+                        <p className="text-sm text-slate-400">Qty: {it.quantity}</p>
+                      </div>
+                      <div className="flex flex-col items-end justify-center">
+                        <span className="font-bold text-orange-400">
+                          {formatUSD(it.unitPriceUSD ?? it.priceUSD ?? 0)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-8 space-y-4 border-t border-orange-500/10 pt-6 text-sm">
+                <div className="flex justify-between text-slate-300">
+                  <span className="opacity-70">Subtotal</span>
+                  <span className="font-medium">{formatUSD(subtotalUSD)}</span>
+                </div>
+                <div className="flex justify-between text-slate-300">
+                  <span className="opacity-70">Shipping</span>
+                  <span className="text-emerald-400 font-bold uppercase tracking-wider text-xs">
+                    {shippingMethod === "pickup" ? "FREE" : "TBD"}
+                  </span>
+                </div>
+                <div className="flex justify-between text-slate-300">
+                  <span className="opacity-70">Estimated Taxes</span>
+                  <span className="font-medium">{formatUSD(estimatedTaxesUSD)}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-orange-500/10 pt-4">
+                  <span className="text-xl font-bold tracking-tight text-slate-100">Total</span>
+                  <span className="text-2xl font-bold tracking-tight text-orange-400">
+                    {formatUSD(totalUSD)}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={saving || !canContinue}
+                onClick={onContinue}
+                className="group mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-4 font-bold text-white transition-all hover:bg-orange-500/90 disabled:opacity-60"
+              >
+                {saving ? "Procesando..." : "Continuar con el pago"}
+                <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
+                  arrow_forward
+                </span>
+              </button>
+
+              <div className="mt-6 flex items-center justify-center gap-4">
+                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-400/60">
+                  <span className="material-symbols-outlined text-sm">verified_user</span>
+                  Secure Payment
+                </div>
+                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-400/60">
+                  <span className="material-symbols-outlined text-sm">assignment_return</span>
+                  30-Day Returns
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-
-      {status === "loading" && (
-        <div className="flex items-center justify-center py-20">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
-            <p className="text-slate-400">Loading checkout...</p>
-          </div>
-        </div>
-      )}
-
-      {status === "error" && (
-        <div className="mx-auto mt-16 max-w-md rounded-xl border border-red-500/20 bg-red-500/10 p-6 text-center">
-          <div className="mb-3 text-3xl">⚠️</div>
-          <p className="font-semibold text-white">Something went wrong</p>
-          <p className="mt-2 text-sm text-slate-300" role="alert">
-            {error}
-          </p>
-        </div>
-      )}
-
-      {status === "success" && checkout && (
-        <CheckoutLayout
-          left={
-            <div className="space-y-10">
-                <section className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="w-8 h-8 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold">
-                    1
-                  </span>
-                  <h2 className="text-2xl font-bold tracking-tight text-white">Shipping Information</h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <Field
-                      id="name"
-                      label="Name"
-                      value={form.customer.name}
-                      onChangeValue={(v) => onChangeCustomer("name", v)}
-                      placeholder="Alexander Wright"
-                      disabled={saving}
-                    />
-            </div>
-
-            <div className="md:col-span-2">
-                    <Field
-                      id="email"
-                      label="Email"
-                      value={form.customer.email}
-                      onChangeValue={(v) => onChangeCustomer("email", v)}
-                      placeholder="your@email.com"
-                      type="email"
-                      disabled={saving}
-                    />
-                  </div>
-
-                  <Field
-                    id="city"
-                    label="City"
-                    value={form.shipping.address?.city}
-                    onChangeValue={(v) => onChangeShippingAddress("city", v)}
-                    placeholder="Toronto"
-                    disabled={saving}
-                  />
-
-                  <Field
-                    id="state"
-                    label="State"
-                    value={form.shipping.address?.state}
-                    onChangeValue={(v) => onChangeShippingAddress("state", v)}
-                    placeholder="Carabobo"
-                    disabled={saving}
-                    />
-
-                  <Field
-                    id="phone"
-                    label="Phone"
-                    value={form.customer.phone}
-                    onChangeValue={(v) => onChangeCustomer("phone", v)}
-                    placeholder="+1 (555) 000-0000"
-                    type="tel"
-                    disabled={saving}
-                  />
-
-                  <div className="md:col-span-2">
-                    <Field
-                      id="line1"
-                      label="Street Address"
-                      value={form.shipping.address?.line1}
-                      onChangeValue={(v) => onChangeShippingAddress("line1", v)}
-                      placeholder="123 Logistics Way, Suite 400"
-                      disabled={saving}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-6 flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={onSave}
-                    disabled={saving}
-                    className="rounded-lg bg-white/5 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:opacity-50"
-                  >
-                    {saving ? "Saving..." : "Save"}
-                  </button>
-
-                  {saved && <span className="text-sm text-green-400">Saved</span>}
-                </div>{dirtyWarning && <p className="mt-3 text-xs text-center text-slate-400">{dirtyWarning}</p>}
-
-                {saveError && (
-                  <div role="alert" className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
-                    {saveError}
-                  </div>
-                )}
-              </section>
-
-              <section className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="w-8 h-8 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold">
-                    2
-                  </span>
-                  <h2 className="text-2xl font-bold tracking-tight text-white">Payment Method</h2>
-                </div>
-
-                <div className="space-y-4">
-
-                    <PaymentOption
-                    value="zelle"
-                    label="Zelle"
-                    selected={form.payment.method === "zelle"}
-                    onSelect={onChangePaymentMethod}
-                  />
-                  <PaymentOption
-                    value="zinli"
-                    label="Zinli"
-                    selected={form.payment.method === "zinli"}
-                    onSelect={onChangePaymentMethod}
-                  />
-                  <PaymentOption
-                    value="transferencia"
-                    label="Transferencia Bancaria"
-                    selected={form.payment.method === "transferencia"}
-                    onSelect={onChangePaymentMethod}
-                  />
-                  <PaymentOption
-                    value="pago_movil"
-                    label="Pago Móvil"
-                    selected={form.payment.method === "pago_movil"}
-                    onSelect={onChangePaymentMethod}
-                  />
-                </div>
-              </section>
-            </div>
-          }
-          right={
-            <OrderSummaryCard
-              checkout={checkout}
-              checkoutId={checkoutId}
-              onProceedToPayment={handleProceedToPayment}
-              disabled={saving || dirty}
-              blockedReason={blockedReason}
-            />
-          }
-        />
-      )}
-    </section>
+    </main>
   );
 }
