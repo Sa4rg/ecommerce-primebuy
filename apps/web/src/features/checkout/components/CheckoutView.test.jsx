@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "../../../context/CartContext.jsx";
 import { CheckoutView } from "../CheckoutView.jsx";
@@ -10,24 +10,20 @@ describe("CheckoutView", () => {
     localStorage.clear();
   });
 
-  it("loads checkout by ID and renders totals", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        success: true,
-        data: {
-          checkoutId: "checkout-1",
-          cartId: "cart-1",
-          totals: { subtotalUSD: 20, subtotalVES: 800 },
-          exchangeRate: { provider: "BCV", usdToVes: 40, asOf: "2023-01-01T00:00:00.000Z" },
-          paymentMethods: { usd: ["zelle", "zinli"], ves: ["bank_transfer", "pago_movil"] },
-        },
-      }),
-    });
-
+  it("renders totals from cart state", async () => {
     render(
-      <CartProvider>
+      <CartProvider
+        initialState={{
+          status: "ready",
+          error: "",
+          cart: {
+            cartId: "cart-1",
+            items: [{ productId: "p1", name: "Product 1", quantity: 2, unitPriceUSD: 10 }],
+            totals: { subtotalUSD: 20 },
+            metadata: { tax: { vatRate: 0.16, priceIncludesVAT: true } },
+          },
+        }}
+      >
         <MemoryRouter initialEntries={["/checkout/checkout-1"]}>
           <Routes>
             <Route path="/checkout/:checkoutId" element={<CheckoutView />} />
@@ -36,31 +32,26 @@ describe("CheckoutView", () => {
       </CartProvider>
     );
 
-    expect(await screen.findByText(/order summary/i)).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /order summary/i })).toBeInTheDocument();
     expect(screen.getByText(/subtotal/i)).toBeInTheDocument();
-    expect(screen.getByText(/\$20(\.00)?/i)).toBeInTheDocument();
-    expect(screen.getByText(/Bs 800/i)).toBeInTheDocument();
-    expect(screen.getByText(/USD: zelle, zinli/i)).toBeInTheDocument();
-
-    // Verify it called GET with the checkoutId
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/checkout/checkout-1"),
-      expect.objectContaining({ method: "GET" })
-    );
+    expect(screen.getAllByText(/\$20\.00/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/estimated taxes/i)).toBeInTheDocument();
   });
 
-  it("shows error banner when backend fails", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue({
-      ok: false,
-      status: 401,
-      json: async () => ({
-        success: false,
-        message: "Unauthorized",
-      }),
-    });
-
+  it("shows validation error when trying to continue with incomplete data", async () => {
     render(
-      <CartProvider>
+      <CartProvider
+        initialState={{
+          status: "ready",
+          error: "",
+          cart: {
+            cartId: "cart-1",
+            items: [{ productId: "p1", name: "Product 1", quantity: 1, unitPriceUSD: 10 }],
+            totals: { subtotalUSD: 10 },
+            metadata: {},
+          },
+        }}
+      >
         <MemoryRouter initialEntries={["/checkout/checkout-1"]}>
           <Routes>
             <Route path="/checkout/:checkoutId" element={<CheckoutView />} />
@@ -69,10 +60,7 @@ describe("CheckoutView", () => {
       </CartProvider>
     );
 
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-    });
-
-    expect(screen.getByText(/unauthorized/i)).toBeInTheDocument();
+    const continueBtn = await screen.findByRole("button", { name: /continuar con el pago/i });
+    expect(continueBtn).toBeDisabled();
   });
 });
