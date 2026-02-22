@@ -1,8 +1,8 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CartProvider, useCart } from "../../../context/CartContext.jsx";
+import { useCart } from "../../../context/CartContext.jsx";
 import { CartItem } from "./CartItem";
 import { renderWithProviders } from "../../../test/renderWithProviders.jsx";
 
@@ -65,7 +65,7 @@ describe("CartItem quantity controls", () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /increase quantity/i }));
+    await user.click(screen.getByRole("button", { name: /aumentar cantidad|increase quantity/i }));
 
     await waitFor(() => {
       // Qty badge shows "3" after increment
@@ -79,7 +79,12 @@ describe("CartItem quantity controls", () => {
         resolveFetch = resolve;
     });
 
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(() => pending);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation((url) => {
+      if (String(url).includes("/api/auth/me")) {
+        return Promise.resolve({ ok: true, status: 200, json: async () => ({ success: true, data: null }) });
+      }
+      return pending;
+    });
 
     renderWithProviders(
       <CartItemFromContext />,
@@ -87,13 +92,14 @@ describe("CartItem quantity controls", () => {
     );
 
     const user = userEvent.setup();
-    const plus = screen.getByRole("button", { name: /increase quantity/i });
+    const plus = screen.getByRole("button", { name: /aumentar cantidad|increase quantity/i });
 
     await user.click(plus);
     await user.click(plus);
 
     // Guard should prevent the second request before the first finishes
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const updateCalls = fetchSpy.mock.calls.filter(([url]) => String(url).includes("/api/cart/")).length;
+    expect(updateCalls).toBe(1);
 
     // Finish the first request to avoid hanging test
     resolveFetch({

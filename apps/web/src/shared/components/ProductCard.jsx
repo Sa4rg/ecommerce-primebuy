@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext.jsx";
+import { useTranslation } from "../i18n/useTranslation.js";
 
 function formatMoneyUSD(value) {
   const n = Number(value);
@@ -10,6 +11,7 @@ function formatMoneyUSD(value) {
 
 export function ProductCard({ product, isFavorite, onToggleFavorite }) {
   const { addItem } = useCart();
+  const { t } = useTranslation();
   const [isAdding, setIsAdding] = useState(false);
   const [localFav, setLocalFav] = useState(false);
   const [addError, setAddError] = useState("");
@@ -20,6 +22,11 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
   const inStock = Boolean(product.inStock) && baseStock > 0;
   const isDisabled = isAdding || !inStock;
 
+  function getErrorMessage(message) {
+    if (/insufficient stock/i.test(message)) return t("productCard.errors.insufficientStock");
+    return message;
+  }
+
   async function handleAddToCart() {
     if (isDisabled) return;
 
@@ -28,8 +35,8 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
       setIsAdding(true);
       await addItem({ productId: product.id, quantity: 1 });
     } catch (err) {
-      const msg = String(err?.message || "Unknown error");
-      setAddError(msg);
+      const msg = String(err?.message || t("productCard.errors.unknown"));
+      setAddError(getErrorMessage(msg));
     } finally {
       setIsAdding(false);
     }
@@ -62,11 +69,11 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
         <div className="absolute left-4 top-4 z-20">
           {inStock ? (
             <span className="rounded-full bg-orange-500 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-white">
-              Available
+              {t("productCard.stock.available")}
             </span>
           ) : (
             <span className="rounded-full bg-white/15 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-white/70 border border-white/10">
-              Out of stock
+              {t("productCard.stock.out")}
             </span>
           )}
         </div>
@@ -85,9 +92,9 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
             setLocalFav((v) => !v);
           }}
           className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 backdrop-blur-md text-white hover:bg-orange-500 transition-colors"
-          aria-label="Favorite"
+          aria-label={t("productCard.favorite")}
           aria-pressed={fav}
-          title="Favorite"
+          title={t("productCard.favorite")}
         >
           <span className="text-lg">{fav ? "♥" : "♡"}</span>
         </button>
@@ -110,7 +117,7 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
           ].join(" ")}
         >
           <span className="text-base">🛒</span>
-          {isAdding ? "Adding..." : inStock ? "Add to cart" : "Out of stock"}
+          {isAdding ? t("productCard.actions.adding") : inStock ? t("productCard.actions.addToCart") : t("productCard.stock.out")}
         </button>
 
         {/* Inline error (catalog) */}
@@ -133,8 +140,8 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
             </Link>
           </h3>
           <p className="mt-1 text-sm text-slate-400">
-            {product.category ? `${product.category}` : "General"} <span className="opacity-60">/</span>{" "}
-            {inStock ? "Available" : "Out of stock"}
+            {product.category ? `${product.category}` : t("productCard.category.general")} <span className="opacity-60">/</span>{" "}
+            {inStock ? t("productCard.stock.available") : t("productCard.stock.out")}
           </p>
         </div>
 

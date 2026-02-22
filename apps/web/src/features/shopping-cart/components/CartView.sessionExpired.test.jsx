@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
-import { CartProvider } from "../../../context/CartContext.jsx";
+import { Routes, Route } from "react-router-dom";
+import { renderWithProviders } from "../../../test/renderWithProviders.jsx";
 import { CartView } from "./CartView.jsx";
 
 describe("CartView session expired", () => {
@@ -12,36 +12,23 @@ describe("CartView session expired", () => {
   });
 
   it("shows login and new cart options when session expired (401)", async () => {
-    // Simula un carrito reclamado pero con sesión expirada
     const initialState = {
       cart: null,
       status: "session-expired",
       error: "Unauthorized",
     };
 
-    render(
-      <CartProvider initialState={initialState}>
-        <MemoryRouter initialEntries={["/cart"]}>
-          <Routes>
-            <Route path="/cart" element={<CartView />} />
-            <Route path="/login" element={<h1>Login Page</h1>} />
-          </Routes>
-        </MemoryRouter>
-      </CartProvider>
+    renderWithProviders(
+      <Routes>
+        <Route path="/cart" element={<CartView />} />
+        <Route path="/login" element={<h1>Login Page</h1>} />
+      </Routes>,
+      { route: "/cart", cartInitialState: initialState }
     );
 
-    // Debe mostrar mensaje de sesión expirada
-    expect(screen.getByRole("heading", { name: /session expired/i })).toBeInTheDocument();
-
-    // Debe ofrecer opción de login
-    expect(
-      screen.getByRole("link", { name: /log in/i })
-    ).toBeInTheDocument();
-
-    // Debe ofrecer opción de continuar como invitado
-    expect(
-      screen.getByRole("button", { name: /continue as guest/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /sesión expirada|session expired/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ingresar|log in/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /continuar como invitado|continue as guest/i })).toBeInTheDocument();
   });
 
   it("navigates to login when clicking Log in", async () => {
@@ -51,19 +38,16 @@ describe("CartView session expired", () => {
       error: "Unauthorized",
     };
 
-    render(
-      <CartProvider initialState={initialState}>
-        <MemoryRouter initialEntries={["/cart"]}>
-          <Routes>
-            <Route path="/cart" element={<CartView />} />
-            <Route path="/login" element={<h1>Login Page</h1>} />
-          </Routes>
-        </MemoryRouter>
-      </CartProvider>
+    renderWithProviders(
+      <Routes>
+        <Route path="/cart" element={<CartView />} />
+        <Route path="/login" element={<h1>Login Page</h1>} />
+      </Routes>,
+      { route: "/cart", cartInitialState: initialState }
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("link", { name: /log in/i }));
+    await user.click(screen.getByRole("link", { name: /ingresar|log in/i }));
 
     expect(screen.getByRole("heading", { name: /login page/i })).toBeInTheDocument();
   });
@@ -78,7 +62,6 @@ describe("CartView session expired", () => {
       error: "Unauthorized",
     };
 
-    // Mock fetch for creating new cart
     vi.spyOn(globalThis, "fetch").mockImplementation((url) => {
       if (url.includes("/api/cart") && !url.includes("old-claimed-cart")) {
         return Promise.resolve({
@@ -97,7 +80,6 @@ describe("CartView session expired", () => {
             }),
         });
       }
-      // GET new cart
       if (url.includes("new-anon-cart")) {
         return Promise.resolve({
           ok: true,
@@ -117,21 +99,16 @@ describe("CartView session expired", () => {
       return Promise.reject(new Error("Unexpected fetch: " + url));
     });
 
-    render(
-      <CartProvider initialState={initialState}>
-        <MemoryRouter initialEntries={["/cart"]}>
-          <Routes>
-            <Route path="/cart" element={<CartView />} />
-          </Routes>
-        </MemoryRouter>
-      </CartProvider>
+    renderWithProviders(
+      <Routes>
+        <Route path="/cart" element={<CartView />} />
+      </Routes>,
+      { route: "/cart", cartInitialState: initialState }
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /continue as guest/i }));
+    await user.click(screen.getByRole("button", { name: /continuar como invitado|continue as guest/i }));
 
-    // localStorage should be cleared (old cart) and new cart created
-    // The component should now show empty cart
     expect(localStorage.getItem("cartId")).not.toBe("old-claimed-cart");
   });
 });

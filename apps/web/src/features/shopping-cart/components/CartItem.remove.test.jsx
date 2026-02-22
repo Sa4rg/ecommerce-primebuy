@@ -1,8 +1,9 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CartProvider, useCart } from "../../../context/CartContext.jsx";
+import { useCart } from "../../../context/CartContext.jsx";
+import { renderWithProviders } from "../../../test/renderWithProviders.jsx";
 import { CartItem } from "./CartItem";
 
 function CartItemListFromContext() {
@@ -60,17 +61,13 @@ describe("CartItem remove control", () => {
       }),
     });
 
-    render(
-      <CartProvider>
-        <CartItemListFromContext />
-      </CartProvider>
-    );
+    renderWithProviders(<CartItemListFromContext />, { route: "/cart" });
 
     expect(screen.getByText("Product A")).toBeInTheDocument();
     expect(screen.getByText("Product B")).toBeInTheDocument();
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /remove product a/i }));
+    await user.click(screen.getByRole("button", { name: /eliminar product a|remove product a/i }));
 
     await waitFor(() => {
       expect(screen.queryByText("Product A")).toBeNull();
