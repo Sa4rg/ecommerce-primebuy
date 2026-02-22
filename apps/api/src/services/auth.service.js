@@ -5,7 +5,16 @@ const crypto = require('crypto');
 const argon2 = require('argon2');
 const { AppError } = require('../utils/errors');
 const { JWT_SECRET, JWT_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN_DAYS, REFRESH_TOKEN_PEPPER } = require('../config/env');
+const { RESET_CODE_PEPPER, RESET_CODE_EXPIRES_MINUTES } = require('../config/env');
 const jwt = require('jsonwebtoken');
+
+function generate6DigitCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function hashResetCode(code, pepper) {
+  return crypto.createHash('sha256').update(code + pepper).digest('hex');
+}
 
 function defaultIdGenerator() {
   return crypto.randomUUID();
@@ -35,9 +44,14 @@ function createAuthService({
   jwtSigner = defaultJwtSigner,
   refreshTokenGenerator = defaultRefreshTokenGenerator,
   refreshTokenPepper = REFRESH_TOKEN_PEPPER,
+  passwordResetRequestsRepository,
+  emailSender,
 } = {}) {
+
   if (!usersRepository) throw new Error('usersRepository is required');
   if (!refreshTokensRepository) throw new Error('refreshTokensRepository is required');
+  if (!passwordResetRequestsRepository) throw new Error('passwordResetRequestsRepository is required');
+  if (!emailSender) throw new Error('emailSender is required');
 
   async function register(email, password) {
     // Minimal validation
@@ -183,14 +197,114 @@ function createAuthService({
     return { success: true };
   }
 
+    async function requestPasswordReset(email) {
+    // Always respond OK (no user enumeration)
+    if (!email || typeof email !== 'string') {
+      return { success: true };
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await usersRepository.findByEmail(normalizedEmail);
+
+    if (!user) {
+      // Do not reveal
+      return { success: true };
+    }
+
+    // Optional simple rate limit: max 1 request per 60s (example)
+    // You can tune this later or remove.
+    const now = nowProvider();
+    const since = new Date(now.getTime() - 60 * 1000);
+    try {
+      const recent = await passwordResetRequestsRepository.countRecentByUserId(user.userId, since);
+      if (recent >= 3) {
+        // silently succeed (avoid giving attacker signal)
+        return { success: true };
+      }
+    } catch {
+      // ignore rate limit failures
+    }
+
+    if (!RESET_CODE_PEPPER) {
+      // In production you MUST set this. For dev, you can allow empty, but it's weaker.
+      // We'll allow for now to avoid blocking.
+    }
+
+    const code = generate6DigitCode();
+    const codeHash = hashResetCode(code, RESET_CODE_PEPPER || '');
+
+    const expiresAt = new Date(now.getTime() + RESET_CODE_EXPIRES_MINUTES * 60 * 1000);
+
+    await passwordResetRequestsRepository.create({
+      requestId: idGenerator(),
+      userId: user.userId,
+      codeHash,
+      expiresAt,
+      createdAt: now,
+    });
+
+    // Send email (real)
+    await emailSender.sendPasswordResetCode({ to: user.email, code });
+
+    return { success: true };
+  }
+
+  async function resetPasswordWithCode(email, code, newPassword) {
+    if (!email || typeof email !== 'string') {
+      throw new AppError('Invalid request', 400);
+    }
+    if (!code || typeof code !== 'string') {
+      throw new AppError('Invalid request', 400);
+    }
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
+      throw new AppError('Password must be at least 8 characters', 400);
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await usersRepository.findByEmail(normalizedEmail);
+    if (!user) {
+      throw new AppError('Invalid code', 400);
+    }
+
+    const now = nowProvider();
+    const reqRecord = await passwordResetRequestsRepository.findLatestActiveByUserId(user.userId, now);
+    if (!reqRecord) {
+      throw new AppError('Invalid code', 400);
+    }
+
+    const expectedHash = reqRecord.codeHash;
+    const providedHash = hashResetCode(code.trim(), RESET_CODE_PEPPER || '');
+
+    if (providedHash !== expectedHash) {
+      throw new AppError('Invalid code', 400);
+    }
+
+    const passwordHash = await argon2.hash(newPassword);
+
+    // you need an updatePassword method in users repo
+    await usersRepository.updatePasswordHash(user.userId, passwordHash, now);
+
+    await passwordResetRequestsRepository.markUsed(reqRecord.requestId, now);
+
+    // Optional: revoke all refresh tokens after reset (recommended)
+    try {
+      await refreshTokensRepository.revokeAllByUserId(user.userId, now);
+    } catch {}
+
+    return { success: true };
+  }
+
   return {
     register,
     login,
     refresh,
     logout,
     logoutAll,
+    requestPasswordReset,
+    resetPasswordWithCode,
   };
 }
+
 module.exports = { createAuthService };
 
 

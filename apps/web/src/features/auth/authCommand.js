@@ -1,4 +1,3 @@
-// src/features/auth/authCommand.js
 import { apiClient } from "../../infrastructure/apiClient";
 
 export async function login({ email, password }) {
@@ -19,6 +18,15 @@ export async function register({ name, email, password }) {
 }
 
 export async function logout() {
-  // invalida refresh en backend + clear cookie
   return apiClient.post("/api/auth/logout", {});
+}
+
+export async function requestPasswordReset({ email }) {
+  if (!email) throw new Error("email is required");
+  return apiClient.post("/api/auth/password-reset/request", { email });
+}
+
+export async function resetPassword({ email, code, newPassword }) {
+  if (!email || !code || !newPassword) throw new Error("email, code and newPassword are required");
+  return apiClient.post("/api/auth/password-reset/confirm", { email, code, newPassword });
 }

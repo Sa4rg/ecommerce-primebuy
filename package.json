@@ -13,5 +13,8 @@
     "db:migrate": "pnpm --filter api db:migrate",
     "db:rollback": "pnpm --filter api db:rollback",
     "db:status": "pnpm --filter api db:status"
+  },
+  "dependencies": {
+    "resend": "^6.9.2"
   }
 }

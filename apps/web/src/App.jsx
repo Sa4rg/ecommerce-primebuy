@@ -16,6 +16,9 @@ import { RequireAuth } from "./shared/components/RequireAuth.jsx";
 import { ProductDetailView } from "./features/product-detail/ProductDetailView.jsx";
 import { AdminProductsPage } from "./features/admin/components/AdminProductsPage.jsx";
 import { AdminPaymentDetailPage } from "./features/admin/components/AdminPaymentDetailPage.jsx";
+import { ForgotPasswordView } from "./features/auth/components/ForgotPasswordView.jsx";
+import { ResetPasswordView } from "./features/auth/components/ResetPasswordView.jsx";
+import { AuthCallbackView } from "./features/auth/components/AuthCallbackView.jsx";
 
 
 function App() {
@@ -61,6 +64,9 @@ function App() {
         {/* Auth */}
         <Route path="/login" element={<LoginView />} />
         <Route path="/register" element={<RegisterView />} />
+        <Route path="/forgot-password" element={<ForgotPasswordView />} />
+        <Route path="/reset-password" element={<ResetPasswordView />} />
+        <Route path="/auth/callback" element={<AuthCallbackView />} />
 
         {/* Account */}
         <Route

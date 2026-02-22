@@ -9,6 +9,22 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS, 10) || 7;
 const REFRESH_TOKEN_PEPPER = process.env.REFRESH_TOKEN_PEPPER || '';
 
+// Password reset
+const RESET_CODE_PEPPER = process.env.RESET_CODE_PEPPER || '';
+const RESET_CODE_EXPIRES_MINUTES = parseInt(process.env.RESET_CODE_EXPIRES_MINUTES, 10) || 15;
+
+// Resend
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_FROM = process.env.RESEND_FROM || 'onboarding@resend.dev';
+
+// App URL (frontend)
+const APP_PUBLIC_URL = process.env.APP_PUBLIC_URL || 'http://localhost:5173';
+
+// Google OAuth
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || '';
+
 // Fail fast in production if JWT_SECRET is missing
 if (NODE_ENV === 'production' && !JWT_SECRET) {
   throw new Error(
@@ -82,4 +98,12 @@ module.exports = {
   JWT_EXPIRES_IN,
   REFRESH_TOKEN_EXPIRES_IN_DAYS,
   REFRESH_TOKEN_PEPPER,
+  RESET_CODE_PEPPER,
+  RESET_CODE_EXPIRES_MINUTES,
+  RESEND_API_KEY,
+  RESEND_FROM,
+  APP_PUBLIC_URL,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REDIRECT_URI,
 };

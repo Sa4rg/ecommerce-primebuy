@@ -46,6 +46,20 @@ class InMemoryUsersRepository {
     const user = this.usersById.get(userId);
     return user ? { ...user } : null;
   }
+
+    async findByGoogleSub(googleSub) {
+    for (const user of this.usersById.values()) {
+      if (user.googleSub === googleSub) return { ...user };
+    }
+    return null;
+  }
+
+  async updatePasswordHash(userId, passwordHash) {
+    const user = this.usersById.get(userId);
+    if (!user) return;
+    user.passwordHash = passwordHash;
+    user.updatedAt = new Date().toISOString();
+  }
 }
 
 InMemoryUsersRepository.DuplicateEmailError = DuplicateEmailError;

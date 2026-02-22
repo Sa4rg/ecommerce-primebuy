@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { useCart } from "../../../context/CartContext.jsx";
+import { API_BASE_URL } from "../../../config";
 
 export function LoginView() {
   const nav = useNavigate();
@@ -19,7 +20,6 @@ export function LoginView() {
   const [err, setErr] = useState("");
 
   const mountedRef = useRef(true);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   mountedRef.current = true;
 
   const canSubmit = useMemo(() => {
@@ -34,17 +34,14 @@ export function LoginView() {
     setLoading(true);
 
     try {
-      // 1) Login: actualiza estado global (Navbar reacciona SIN refresh)
       await login({ email: email.trim(), password });
 
-      // 2) Sync cart: no bloquea login si falla, pero lo intentamos antes de navegar
       try {
         await syncUserCart();
       } catch {
-        // Cart sync failure should not block login
+        // ignore
       }
 
-      // 3) Redirect: si venías redirigida por RequireAuth, vuelve allí; si no, al catálogo
       const next = location.state?.from?.pathname || "/checkout";
       nav(next, { replace: true });
     } catch (e2) {
@@ -52,6 +49,13 @@ export function LoginView() {
     } finally {
       if (mountedRef.current) setLoading(false);
     }
+  }
+
+  function handleGoogleLogin() {
+    // Importante: backend debe hacer OAuth y luego redirect al FE a /auth/callback
+    const returnTo = location.state?.from?.pathname || "/checkout";
+    const url = `${API_BASE_URL}/api/auth/google/start?returnTo=${encodeURIComponent(returnTo)}`;
+    window.location.href = url;
   }
 
   return (
@@ -99,13 +103,14 @@ export function LoginView() {
                 <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                   Password
                 </label>
-                <button
-                  type="button"
+
+                {/* ✅ ahora es link real */}
+                <Link
+                  to="/forgot-password"
                   className="text-xs font-medium text-orange-400 hover:underline"
-                  onClick={() => alert("Luego conectamos Forgot password 😉")}
                 >
                   Forgot password?
-                </button>
+                </Link>
               </div>
 
               <div className="relative group">
@@ -165,22 +170,14 @@ export function LoginView() {
             </div>
           </div>
 
-          {/* Social buttons (UI only) */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* ✅ Social buttons (Google only for now) */}
+          <div className="grid grid-cols-1 gap-4">
             <button
               type="button"
               className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent py-2.5 text-sm font-medium text-slate-200 hover:bg-white/5 transition-colors"
-              onClick={() => alert("Luego conectamos Google 😉")}
+              onClick={handleGoogleLogin}
             >
-              <span>🟦</span> Google
-            </button>
-
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent py-2.5 text-sm font-medium text-slate-200 hover:bg-white/5 transition-colors"
-              onClick={() => alert("Luego conectamos Facebook 😉")}
-            >
-              <span>🅕</span> Facebook
+              <span>🟦</span> Continue with Google
             </button>
           </div>
 

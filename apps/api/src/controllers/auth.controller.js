@@ -78,10 +78,32 @@ async function logoutAll(req, res, next) {
   }
 }
 
+async function passwordResetRequest(req, res, next) {
+  try {
+    const { email } = req.body;
+    const result = await authService.requestPasswordReset(email);
+    success(res, result, 'If the email exists, a code was sent');
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function passwordResetConfirm(req, res, next) {
+  try {
+    const { email, code, newPassword } = req.body;
+    const result = await authService.resetPasswordWithCode(email, code, newPassword);
+    success(res, result, 'Password reset successful');
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   register,
   login,
   refresh,
   logout,
   logoutAll,
+  passwordResetRequest,
+  passwordResetConfirm,
 };

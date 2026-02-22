@@ -15,6 +15,8 @@ const { createCheckoutRepository } = require("./factories/checkout.repository.fa
 const { createOrdersRepository } = require("./factories/orders.repository.factory");
 const { createUsersRepository } = require("./factories/users/users.factory");
 const { createRefreshTokensRepository } = require("./factories/refreshTokens.repository.factory");
+const { createPasswordResetRequestsRepository } = require("./factories/passwordResetRequests.repository.factory");
+
 
 // ============================================================================
 // SERVICE FACTORIES
@@ -25,6 +27,8 @@ const { createCheckoutService } = require("../services/checkout.service");
 const { createPaymentsService } = require("../services/payments.service");
 const { createOrdersService } = require("../services/orders.service");
 const { createAuthService } = require("../services/auth.service");
+const { createPasswordResetService } = require("../services/passwordReset.service");
+const emailService = require("../services/email.service");
 
 // ============================================================================
 // DEPENDENCY WIRING
@@ -38,6 +42,8 @@ const paymentsRepository = createPaymentsRepository();
 const ordersRepository = createOrdersRepository();
 const usersRepository = createUsersRepository();
 const refreshTokensRepository = createRefreshTokensRepository();
+const passwordResetRequestsRepository = createPasswordResetRequestsRepository();
+
 
 // Services
 const productsService = createProductsService({ productsRepository });
@@ -68,7 +74,13 @@ const ordersService = createOrdersService({
 // Lazy injection to avoid circular dependency
 paymentsService.setOrdersService(ordersService);
 
-const authService = createAuthService({ usersRepository, refreshTokensRepository });
+const authService = createAuthService({ usersRepository, refreshTokensRepository, passwordResetRequestsRepository });
+
+const passwordResetService = createPasswordResetService({
+  usersRepository,
+  passwordResetRequestsRepository,
+  emailService,
+});
 
 // ============================================================================
 // EXPORTS
@@ -81,5 +93,6 @@ module.exports = {
     paymentsService,
     ordersService,
     authService,
+    passwordResetService,
   },
 };
