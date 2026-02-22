@@ -12,6 +12,24 @@ export const translations = {
       login: "Ingresar",
       logout: "Salir",
     },
+    productCard: {
+      favorite: "Favorito",
+      stock: {
+        available: "Disponible",
+        out: "Sin stock",
+      },
+      actions: {
+        addToCart: "Agregar al carrito",
+        adding: "Agregando...",
+      },
+      category: {
+        general: "General",
+      },
+      errors: {
+        insufficientStock: "Stock insuficiente",
+        unknown: "Error desconocido",
+      },
+    },
     productCatalog: {
         breadcrumbs: {
             home: "Home",
@@ -113,6 +131,25 @@ export const translations = {
       products: "Products",
       login: "Login",
       logout: "Logout",
+    },
+
+    productCard: {
+      favorite: "Favorite",
+      stock: {
+        available: "Available",
+        out: "Out of stock",
+      },
+      actions: {
+        addToCart: "Add to cart",
+        adding: "Adding...",
+      },
+      category: {
+        general: "General",
+      },
+      errors: {
+        insufficientStock: "Insufficient stock",
+        unknown: "Unknown error",
+      },
     },
 
     productCatalog: {

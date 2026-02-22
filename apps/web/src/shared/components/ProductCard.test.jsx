@@ -70,7 +70,7 @@ describe("ProductCard (with CartProvider)", () => {
 
     expect(screen.getByTestId("count")).toHaveTextContent("0");
 
-    await user.click(screen.getByRole("button", { name: /add to cart/i }));
+    await user.click(screen.getByRole("button", { name: /agregar al carrito|add to cart/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId("count")).toHaveTextContent("1");
@@ -127,19 +127,19 @@ describe("ProductCard (with CartProvider)", () => {
 
     renderWithProviders(<ProductCard product={product} />, { route: "/" });
 
-    const button = screen.getByRole("button", { name: /add to cart/i });
+    const button = screen.getByRole("button", { name: /agregar al carrito|add to cart/i });
 
     await user.click(button);
 
     expect(button).toBeDisabled();
-    expect(button).toHaveTextContent(/adding/i);
+    expect(button).toHaveTextContent(/agregando|adding/i);
 
     // Resolve the "network" request
     resolveRequest();
 
     await waitFor(() => {
       expect(button).not.toBeDisabled();
-      expect(button).toHaveTextContent(/add to cart/i);
+      expect(button).toHaveTextContent(/agregar al carrito|add to cart/i);
     });
   });
 
@@ -174,8 +174,58 @@ describe("ProductCard (with CartProvider)", () => {
 
     renderWithProviders(<ProductCard product={product} />, { route: "/" });
 
-    await user.click(screen.getByRole("button", { name: /add to cart/i }));
+    await user.click(screen.getByRole("button", { name: /agregar al carrito|add to cart/i }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/insufficient stock/i);
+    expect(await screen.findByRole("alert")).toHaveTextContent(/stock insuficiente|insufficient stock/i);
   });
+
+  it("clears inline error when user retries add to cart", async () => {
+    localStorage.setItem("cartId", "existing-cart-id");
+
+    let call = 0;
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url, options) => {
+      if (String(url).includes("/api/cart/existing-cart-id/items") && options?.method === "POST") {
+        call += 1;
+        if (call === 1) {
+          return {
+            ok: false,
+            status: 400,
+            json: async () => ({ success: false, message: "Insufficient stock" }),
+          };
+        }
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: {
+              cartId: "existing-cart-id",
+              items: [],
+              summary: { itemsCount: 0, subtotalUSD: 0 },
+              metadata: { market: "VE", baseCurrency: "USD", status: "active" },
+            },
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected request: ${String(url)} ${options?.method || "GET"}`);
+    });
+
+    const user = userEvent.setup();
+    const product = { id: "p-1", name: "Test Product", priceUSD: 10, stock: 1, category: "Test", inStock: true };
+
+    renderWithProviders(<ProductCard product={product} />, { route: "/" });
+
+    const button = screen.getByRole("button", { name: /agregar al carrito|add to cart/i });
+    await user.click(button);
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+
+    await user.click(button);
+
+    await waitFor(() => {
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+  });
+
 });

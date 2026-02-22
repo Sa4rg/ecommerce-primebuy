@@ -1,9 +1,10 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
-import { CartProvider, useCart } from "../../../context/CartContext.jsx";
+import { Routes, Route } from "react-router-dom";
+import { useCart } from "../../../context/CartContext.jsx";
+import { renderWithProviders } from "../../../test/renderWithProviders.jsx";
 import { CartView } from "./CartView.jsx";
 
 function SeedCart() {
@@ -36,21 +37,18 @@ describe("CartView checkout navigation", () => {
   });
 
   it("navigates to /checkout when clicking Finalize purchase", async () => {
-    render(
-      <CartProvider>
-        <MemoryRouter initialEntries={["/cart"]}>
-          <SeedCart />
-          <Routes>
-            <Route path="/cart" element={<CartView />} />
-            <Route path="/checkout" element={<h1>Checkout Page</h1>} />
-          </Routes>
-        </MemoryRouter>
-      </CartProvider>
+    renderWithProviders(
+      <>
+        <SeedCart />
+        <Routes>
+          <Route path="/cart" element={<CartView />} />
+          <Route path="/checkout" element={<h1>Checkout Page</h1>} />
+        </Routes>
+      </>,
+      { route: "/cart" }
     );
 
     const user = userEvent.setup();
-
-    // Find the main checkout button in the summary (not the mobile one)
     const buttons = screen.getAllByRole("button", { name: /checkout/i });
     await user.click(buttons[0]);
 
