@@ -142,4 +142,40 @@ describe("ProductCard (with CartProvider)", () => {
       expect(button).toHaveTextContent(/add to cart/i);
     });
   });
+
+    it("shows an inline error when API responds 'Insufficient stock'", async () => {
+    localStorage.setItem("cartId", "existing-cart-id");
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url, options) => {
+      if (String(url).includes("/api/cart/existing-cart-id/items") && options?.method === "POST") {
+        return {
+          ok: false,
+          status: 400,
+          json: async () => ({
+            success: false,
+            message: "Insufficient stock",
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected request: ${String(url)} ${options?.method || "GET"}`);
+    });
+
+    const user = userEvent.setup();
+
+    const product = {
+      id: "p-1",
+      name: "Test Product",
+      priceUSD: 10,
+      stock: 1,
+      category: "Test",
+      inStock: true,
+    };
+
+    renderWithProviders(<ProductCard product={product} />, { route: "/" });
+
+    await user.click(screen.getByRole("button", { name: /add to cart/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/insufficient stock/i);
+  });
 });

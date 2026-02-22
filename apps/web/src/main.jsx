@@ -5,15 +5,18 @@ import App from "./App.jsx";
 import { CartProvider } from "./context/CartContext.jsx";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { LanguageProvider } from "./shared/i18n/LanguageContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <AuthProvider>
-      <CartProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </CartProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <CartProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </CartProvider>
+      </AuthProvider>
+    </LanguageProvider>
   </StrictMode>
 );

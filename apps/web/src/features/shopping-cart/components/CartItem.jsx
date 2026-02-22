@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCart } from "../../../context/CartContext.jsx";
+import { useTranslation } from "../../../shared/i18n/useTranslation.js";
 
 function formatMoneyUSD(value) {
   const n = Number(value);
@@ -8,6 +9,7 @@ function formatMoneyUSD(value) {
 }
 
 export function CartItem({ item }) {
+  const { t } = useTranslation();
   const { updateQuantity, removeItem } = useCart();
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -59,20 +61,16 @@ export function CartItem({ item }) {
         <div className="flex flex-col flex-grow">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-lg font-bold text-white leading-tight">
-                {item.name}
-              </h3>
+              <h3 className="text-lg font-bold text-white leading-tight">{item.name}</h3>
               <p className="text-sm text-slate-400 mt-1">
-                Product ID: <span className="font-mono">{item.productId}</span>
+                {t("cart.item.productId")}: <span className="font-mono">{item.productId}</span>
               </p>
             </div>
 
             <div className="text-right">
-              <p className="text-lg font-bold text-orange-400">
-                ${formatMoneyUSD(item.lineTotalUSD)}
-              </p>
+              <p className="text-lg font-bold text-orange-400">${formatMoneyUSD(item.lineTotalUSD)}</p>
               <p className="text-xs text-slate-400">
-                Qty {item.quantity}
+                {t("cart.item.qty")} {item.quantity}
               </p>
             </div>
           </div>
@@ -85,21 +83,19 @@ export function CartItem({ item }) {
                 onClick={() => changeQuantity(item.quantity - 1)}
                 disabled={isUpdating || item.quantity <= 1}
                 className="px-3 py-2 text-slate-200 hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                aria-label="Decrease quantity"
+                aria-label={t("cart.item.decrease")}
               >
                 −
               </button>
 
-              <span className="px-4 py-2 text-sm font-semibold text-white">
-                {item.quantity}
-              </span>
+              <span className="px-4 py-2 text-sm font-semibold text-white">{item.quantity}</span>
 
               <button
                 type="button"
                 onClick={() => changeQuantity(item.quantity + 1)}
                 disabled={isUpdating}
                 className="px-3 py-2 text-slate-200 hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                aria-label="Increase quantity"
+                aria-label={t("cart.item.increase")}
               >
                 +
               </button>
@@ -111,10 +107,10 @@ export function CartItem({ item }) {
               onClick={handleRemove}
               disabled={isUpdating}
               className="inline-flex items-center gap-2 text-sm font-semibold text-slate-300 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              aria-label={`Remove ${item.name}`}
+              aria-label={t("cart.item.removeAria", { name: item.name })}
             >
               <span className="text-base">🗑️</span>
-              Remove
+              {t("cart.item.remove")}
             </button>
           </div>
         </div>

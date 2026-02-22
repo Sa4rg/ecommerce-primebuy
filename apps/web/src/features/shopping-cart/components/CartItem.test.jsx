@@ -4,6 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CartProvider, useCart } from "../../../context/CartContext.jsx";
 import { CartItem } from "./CartItem";
+import { renderWithProviders } from "../../../test/renderWithProviders.jsx";
 
 function CartItemFromContext() {
   const { cart, setCart } = useCart();
@@ -58,10 +59,9 @@ describe("CartItem quantity controls", () => {
       }),
     });
 
-    render(
-      <CartProvider>
-        <CartItemFromContext />
-      </CartProvider>
+    renderWithProviders(
+      <CartItemFromContext />,
+      { route: "/cart" }
     );
 
     const user = userEvent.setup();
@@ -81,10 +81,9 @@ describe("CartItem quantity controls", () => {
 
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(() => pending);
 
-    render(
-        <CartProvider>
-        <CartItemFromContext />
-        </CartProvider>
+    renderWithProviders(
+      <CartItemFromContext />,
+      { route: "/cart" }
     );
 
     const user = userEvent.setup();

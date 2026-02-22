@@ -8,10 +8,13 @@ function formatMoneyUSD(value) {
   return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
-export function ProductCard({ product }) {
+export function ProductCard({ product, isFavorite, onToggleFavorite }) {
   const { addItem } = useCart();
   const [isAdding, setIsAdding] = useState(false);
-  const [fav, setFav] = useState(false);
+  const [localFav, setLocalFav] = useState(false);
+  const [addError, setAddError] = useState("");
+
+  const fav = typeof isFavorite === "boolean" ? isFavorite : localFav;
 
   const baseStock = Number(product.stock || 0);
   const inStock = Boolean(product.inStock) && baseStock > 0;
@@ -19,10 +22,14 @@ export function ProductCard({ product }) {
 
   async function handleAddToCart() {
     if (isDisabled) return;
+
     try {
+      setAddError("");
       setIsAdding(true);
       await addItem({ productId: product.id, quantity: 1 });
-      // Si luego quieres "Added" en el botón, lo reactivamos.
+    } catch (err) {
+      const msg = String(err?.message || "Unknown error");
+      setAddError(msg);
     } finally {
       setIsAdding(false);
     }
@@ -37,7 +44,7 @@ export function ProductCard({ product }) {
     <div className="group relative">
       {/* Media */}
       <div className="relative mb-4 aspect-[4/5] overflow-hidden rounded-2xl bg-white/5 border border-white/10">
-        {/* Click en toda la imagen abre el detail */}
+        {/* Click in image opens detail */}
         <Link
           to={`/products/${product.productId || product.id}`}
           className="absolute inset-0 z-10"
@@ -51,7 +58,7 @@ export function ProductCard({ product }) {
           loading="lazy"
         />
 
-        {/* Badge: Available / Out of stock */}
+        {/* Badge */}
         <div className="absolute left-4 top-4 z-20">
           {inStock ? (
             <span className="rounded-full bg-orange-500 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-white">
@@ -69,10 +76,17 @@ export function ProductCard({ product }) {
           type="button"
           onClick={(e) => {
             e.preventDefault();
-            setFav((v) => !v);
+
+            if (typeof onToggleFavorite === "function") {
+              onToggleFavorite(product.id);
+              return;
+            }
+
+            setLocalFav((v) => !v);
           }}
           className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 backdrop-blur-md text-white hover:bg-orange-500 transition-colors"
           aria-label="Favorite"
+          aria-pressed={fav}
           title="Favorite"
         >
           <span className="text-lg">{fav ? "♥" : "♡"}</span>
@@ -98,6 +112,16 @@ export function ProductCard({ product }) {
           <span className="text-base">🛒</span>
           {isAdding ? "Adding..." : inStock ? "Add to cart" : "Out of stock"}
         </button>
+
+        {/* Inline error (catalog) */}
+        {addError && (
+          <div
+            role="alert"
+            className="absolute bottom-2 left-4 right-4 z-20 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
+          >
+            {addError}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -109,15 +133,12 @@ export function ProductCard({ product }) {
             </Link>
           </h3>
           <p className="mt-1 text-sm text-slate-400">
-            {product.category ? `${product.category}` : "General"}{" "}
-            <span className="opacity-60">/</span>{" "}
+            {product.category ? `${product.category}` : "General"} <span className="opacity-60">/</span>{" "}
             {inStock ? "Available" : "Out of stock"}
           </p>
         </div>
 
-        <span className="shrink-0 text-xl font-bold text-orange-400">
-          ${formatMoneyUSD(product.priceUSD)}
-        </span>
+        <span className="shrink-0 text-xl font-bold text-orange-400">${formatMoneyUSD(product.priceUSD)}</span>
       </div>
     </div>
   );

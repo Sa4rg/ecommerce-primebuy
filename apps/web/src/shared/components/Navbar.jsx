@@ -1,14 +1,14 @@
-// src/shared/components/Navbar.jsx
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useCart } from "../../context/CartContext.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { useTranslation } from "../i18n/useTranslation.js";
 
 function classNames(...xs) {
   return xs.filter(Boolean).join(" ");
 }
 
-function CartBadge() {
+function CartBadge({ label }) {
   const { itemsCount } = useCart();
   const count = itemsCount ?? 0;
 
@@ -16,8 +16,8 @@ function CartBadge() {
     <Link
       to="/cart"
       className="relative inline-flex items-center justify-center rounded-full p-2 hover:bg-white/5 transition-colors"
-      aria-label="Cart"
-      title="Cart"
+      aria-label={label}
+      title={label}
     >
       <span className="text-lg">🛍️</span>
       {count > 0 && (
@@ -37,6 +37,7 @@ export function Navbar() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [q, setQ] = useState(searchParams.get("q") || "");
+  const { t, language, setLanguage } = useTranslation();
 
   async function handleLogout() {
     await logout();
@@ -95,23 +96,24 @@ export function Navbar() {
             </Link>
 
             <nav className="hidden md:flex items-center gap-6">
-              <NavLink
+            <NavLink
                 to="/"
                 className={({ isActive }) =>
-                  classNames(
+                classNames(
                     "text-sm font-medium transition-colors",
                     isActive ? "text-orange-400" : "text-slate-200 hover:text-orange-400"
-                  )
+                )
                 }
-              >
-                Electrónica
-              </NavLink>
-              <a className="text-sm font-medium text-slate-200 hover:text-orange-400 transition-colors" href="#">
-                Novedades
-              </a>
-              <a className="text-sm font-medium text-slate-200 hover:text-orange-400 transition-colors" href="#">
-                Ofertas
-              </a>
+            >
+                {t("navbar.electronics")}
+            </NavLink>
+
+            <a
+                className="text-sm font-medium text-slate-200 hover:text-orange-400 transition-colors"
+                href="#"
+            >
+                {t("navbar.newArrivals")}
+            </a>
             </nav>
           </div>
 
@@ -125,19 +127,37 @@ export function Navbar() {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Buscar productos..."
+                placeholder={t("navbar.searchPlaceholder")}
                 className="w-40 md:w-64 bg-transparent text-sm text-white placeholder:text-slate-400 outline-none"
               />
             </form>
 
-            <CartBadge />
+            <div className="flex items-center gap-1 border border-white/10 rounded-full px-2 py-1 text-xs">
+            <button
+                type="button"
+                onClick={() => setLanguage("es")}
+                className={language === "es" ? "text-orange-400 font-bold" : "text-slate-300"}
+            >
+                ES
+            </button>
+            <span className="text-slate-500">|</span>
+            <button
+                type="button"
+                onClick={() => setLanguage("en")}
+                className={language === "en" ? "text-orange-400 font-bold" : "text-slate-300"}
+            >
+                EN
+            </button>
+            </div>
+
+            <CartBadge label={t("navbar.cart")} />
 
             {isAuthenticated && (
               <Link
                 to="/account"
                 className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-white hover:bg-white/5 border border-white/10 transition-colors"
               >
-                👤 <span className="hidden sm:inline">Account</span>
+                👤 <span className="hidden sm:inline">{t("navbar.account")}</span>
               </Link>
             )}
 
@@ -146,7 +166,7 @@ export function Navbar() {
                 to="/admin/payments"
                 className="hidden sm:inline-flex items-center rounded-full px-3 py-2 text-sm font-bold text-fuchsia-300 hover:bg-white/5 border border-white/10 transition-colors"
               >
-                Admin
+                {t("navbar.admin")}
               </Link>
             )}
 
@@ -155,7 +175,7 @@ export function Navbar() {
                 to="/admin/products"
                 className="hidden sm:inline-flex items-center rounded-full px-3 py-2 text-sm font-bold text-fuchsia-300 hover:bg-white/5 border border-white/10 transition-colors"
                 >
-                Products
+                {t("navbar.products")}
               </Link>
             )}
 
@@ -166,7 +186,7 @@ export function Navbar() {
                     to="/login"
                     className="inline-flex items-center rounded-full px-3 py-2 text-sm font-semibold text-white hover:bg-white/5 border border-white/10 transition-colors"
                   >
-                    Login
+                    {t("navbar.login")}
                   </Link>
                 ) : (
                   <button
@@ -174,7 +194,7 @@ export function Navbar() {
                     onClick={handleLogout}
                     className="inline-flex items-center rounded-full px-3 py-2 text-sm font-semibold text-white hover:bg-white/5 border border-white/10 transition-colors"
                   >
-                    Logout
+                    {t("navbar.logout")}
                   </button>
                 )}
               </>

@@ -7,6 +7,6 @@ describe("App routing /cart", () => {
   it("renders cart on /cart", () => {
     renderWithProviders(<App />, { route: "/cart" });
     // Cart page renders - shows loading or cart content
-    expect(screen.getByText(/loading cart|shopping cart/i)).toBeInTheDocument();
+    expect(screen.getByText(/cargando carrito|loading cart|carrito de compras|shopping cart/i)).toBeInTheDocument();
   });
 });
