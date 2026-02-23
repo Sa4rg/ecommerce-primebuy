@@ -2,12 +2,19 @@ const { Resend } = require('resend');
 const { RESEND_API_KEY, RESEND_FROM } = require('../config/env');
 
 if (!RESEND_API_KEY) {
-  console.warn('⚠️  RESEND_API_KEY is not set. Emails will fail.');
+  console.warn('⚠️  RESEND_API_KEY is not set. Emails will be skipped.');
 }
 
-const resend = new Resend(RESEND_API_KEY);
+function getResendClient() {
+  if (!RESEND_API_KEY) return null;
+  return new Resend(RESEND_API_KEY);
+}
 
-async function sendPasswordResetEmail({ to, code }) {
+async function sendPasswordResetCode({ to, code }) {
+  if (!RESEND_API_KEY) {
+    return { skipped: true };
+  }
+
   const subject = 'Your password reset code';
   const html = `
     <div style="font-family: Arial, sans-serif;">
@@ -19,14 +26,22 @@ async function sendPasswordResetEmail({ to, code }) {
     </div>
   `;
 
+  const resend = getResendClient();
   await resend.emails.send({
     from: RESEND_FROM,
     to,
     subject,
     html,
   });
+
+  return { skipped: false };
+}
+
+async function sendPasswordResetEmail({ to, code }) {
+  return sendPasswordResetCode({ to, code });
 }
 
 module.exports = {
+  sendPasswordResetCode,
   sendPasswordResetEmail,
 };
