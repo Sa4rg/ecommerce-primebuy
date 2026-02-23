@@ -88,6 +88,25 @@ async function passwordResetRequest(req, res, next) {
   }
 }
 
+
+async function googleStart(req, res, next) {
+  try {
+    res.status(501);
+    success(res, null, 'Google OAuth not implemented yet');
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function googleCallback(req, res, next) {
+  try {
+    res.status(501);
+    success(res, null, 'Google OAuth not implemented yet');
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function passwordResetConfirm(req, res, next) {
   try {
     const { email, code, newPassword } = req.body;
@@ -106,4 +125,6 @@ module.exports = {
   logoutAll,
   passwordResetRequest,
   passwordResetConfirm,
+  googleStart,
+  googleCallback,
 };

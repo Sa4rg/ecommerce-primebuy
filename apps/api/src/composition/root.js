@@ -74,7 +74,12 @@ const ordersService = createOrdersService({
 // Lazy injection to avoid circular dependency
 paymentsService.setOrdersService(ordersService);
 
-const authService = createAuthService({ usersRepository, refreshTokensRepository, passwordResetRequestsRepository });
+const authService = createAuthService({
+  usersRepository,
+  refreshTokensRepository,
+  passwordResetRequestsRepository,
+  emailSender: emailService,
+});
 
 const passwordResetService = createPasswordResetService({
   usersRepository,

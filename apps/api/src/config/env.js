@@ -4,13 +4,13 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;
 
 // JWT configuration
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_jwt_secret_change_me';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS, 10) || 7;
 const REFRESH_TOKEN_PEPPER = process.env.REFRESH_TOKEN_PEPPER || '';
 
 // Password reset
-const RESET_CODE_PEPPER = process.env.RESET_CODE_PEPPER || '';
+const RESET_CODE_PEPPER = process.env.RESET_CODE_PEPPER || '9b2af6de8f7c0a2c17456d953ba4ea7f4f17b7f6d6d2a8cc2a2b170eb819f6d1';
 const RESET_CODE_EXPIRES_MINUTES = parseInt(process.env.RESET_CODE_EXPIRES_MINUTES, 10) || 15;
 
 // Resend
@@ -37,6 +37,15 @@ if (NODE_ENV === 'production' && !REFRESH_TOKEN_PEPPER) {
   throw new Error(
     'FATAL: REFRESH_TOKEN_PEPPER environment variable is required in production. ' +
     'Set it to a long random secret for refresh token hashing security.'
+  );
+}
+
+
+// Fail fast in production if RESET_CODE_PEPPER is missing
+if (NODE_ENV === 'production' && !process.env.RESET_CODE_PEPPER) {
+  throw new Error(
+    'FATAL: RESET_CODE_PEPPER environment variable is required in production. ' +
+    'Set it to a long random secret for password reset code hashing security.'
   );
 }
 

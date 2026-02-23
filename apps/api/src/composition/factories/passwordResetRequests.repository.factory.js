@@ -1,5 +1,5 @@
-const InMemoryPasswordResetRequestsRepository = require('../../repositories/password_reset_requests/passwordResetRequests.memory.repository');
-const MySQLPasswordResetRequestsRepository = require('../../repositories/password_reset_requests/passwordResetRequests.mysql.repository');
+const InMemoryPasswordResetRequestsRepository = require('../../repositories/password_reset/passwordReset.memory.repository');
+const MySQLPasswordResetRequestsRepository = require('../../repositories/password_reset/passwordReset.mysql.repository');
 const { shouldUseMySQL } = require('./repository.provider');
 
 function createPasswordResetRequestsRepository() {

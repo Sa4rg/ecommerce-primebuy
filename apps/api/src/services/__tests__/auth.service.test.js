@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 const { createAuthService } = require('../auth.service');
 const UsersMemoryRepository = require('../../repositories/users/users.memory.repository');
 const { InMemoryRefreshTokensRepository } = require('../../repositories/refresh_tokens/refreshTokens.memory.repository');
+const InMemoryPasswordResetRequestsRepository = require('../../repositories/password_reset/passwordReset.memory.repository');
 const jwt = require('jsonwebtoken');
 
 const TEST_SECRET = 'test_jwt_secret';
@@ -25,11 +26,15 @@ function createSequentialIdGenerator() {
 describe('auth.service', () => {
   let usersRepository;
   let refreshTokensRepository;
+  let passwordResetRequestsRepository;
+  let emailSender;
   let authService;
 
   beforeEach(() => {
     usersRepository = new UsersMemoryRepository();
     refreshTokensRepository = new InMemoryRefreshTokensRepository({ nowProvider: deterministicNowProvider });
+    passwordResetRequestsRepository = new InMemoryPasswordResetRequestsRepository({ nowProvider: deterministicNowProvider });
+    emailSender = { sendPasswordResetCode: vi.fn().mockResolvedValue(undefined) };
     authService = createAuthService({
       usersRepository,
       refreshTokensRepository,
@@ -37,6 +42,8 @@ describe('auth.service', () => {
       nowProvider: deterministicNowProvider,
       jwtSigner: deterministicJwtSigner,
       refreshTokenPepper: 'test-pepper',
+      passwordResetRequestsRepository,
+      emailSender,
     });
   });
 
@@ -129,6 +136,8 @@ describe('auth.service', () => {
       idGenerator: sequentialIdGenerator,
       nowProvider: deterministicNowProvider,
       jwtSigner: deterministicJwtSigner,
+      passwordResetRequestsRepository,
+      emailSender,
     });
 
     await rotationAuthService.register('rotation@email.com', 'password123');
@@ -155,6 +164,8 @@ describe('auth.service', () => {
       nowProvider: deterministicNowProvider,
       jwtSigner: deterministicJwtSigner,
       refreshTokenPepper: 'pepper-A',
+      passwordResetRequestsRepository,
+      emailSender,
     });
 
     const serviceWithPepperB = createAuthService({
@@ -164,6 +175,8 @@ describe('auth.service', () => {
       nowProvider: deterministicNowProvider,
       jwtSigner: deterministicJwtSigner,
       refreshTokenPepper: 'pepper-B',
+      passwordResetRequestsRepository,
+      emailSender,
     });
 
     await serviceWithPepperA.register('pepper-test@email.com', 'password123');
@@ -227,6 +240,8 @@ describe('auth.service', () => {
       nowProvider: deterministicNowProvider,
       jwtSigner: deterministicJwtSigner,
       refreshTokenPepper: 'test-pepper',
+      passwordResetRequestsRepository,
+      emailSender,
     });
 
     // Register and login to get refreshTokenA
