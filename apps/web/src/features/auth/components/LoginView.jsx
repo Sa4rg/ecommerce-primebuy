@@ -11,7 +11,7 @@ export function LoginView() {
   const returnTo =
   location.state?.from?.pathname
     ? location.state.from.pathname + (location.state.from.search || "")
-    : "/checkout";
+    : "/account";
 
   const { login } = useAuth();
   const { syncUserCart } = useCart();
@@ -46,20 +46,12 @@ export function LoginView() {
         // ignore
       }
 
-      const next = location.state?.from?.pathname || "/checkout";
-      nav(next, { replace: true });
+      nav(returnTo, { replace: true });
     } catch (e2) {
       if (mountedRef.current) setErr(e2?.message || "Login failed");
     } finally {
       if (mountedRef.current) setLoading(false);
     }
-  }
-
-  function handleGoogleLogin() {
-    // Importante: backend debe hacer OAuth y luego redirect al FE a /auth/callback
-    const returnTo = location.state?.from?.pathname || "/checkout";
-    const url = `${API_BASE_URL}/api/auth/oauth/google/start?returnTo=${encodeURIComponent(returnTo)}`;
-    window.location.href = url;
   }
 
   return (

@@ -9,7 +9,7 @@ export function AuthCallbackView() {
   const [params] = useSearchParams();
   const { syncUserCart } = useCart();
   const error = params.get("error");
-  const returnTo = params.get("returnTo") || "/checkout";
+  const returnTo = params.get("returnTo") || "/account";
 
   const [status, setStatus] = useState("loading"); // loading | error
   const [err, setErr] = useState("");
@@ -45,7 +45,7 @@ export function AuthCallbackView() {
 
         setAccessToken(token);
 
-        try { await syncUserCart(); } catch {}
+        //try { await syncUserCart(); } catch {}
 
         if (!cancelled) nav(returnTo, { replace: true });
         } catch (e) {

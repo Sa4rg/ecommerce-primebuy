@@ -109,7 +109,7 @@ async function googleStart(req, res, next) {
       throw new AppError('Google OAuth is not configured', 500);
     }
 
-    const returnTo = req.query.returnTo || '/checkout';
+    const returnTo = req.query.returnTo || '/account';
 
     const state = generateState();
 
@@ -164,7 +164,7 @@ async function googleCallback(req, res, next) {
       throw new AppError('Invalid OAuth state', 400);
     }
 
-    const returnTo = returnToEncoded ? decodeURIComponent(returnToEncoded) : '/checkout';
+    const returnTo = returnToEncoded ? decodeURIComponent(returnToEncoded) : '/account';
 
     // Clear cookie
     res.cookie('google_oauth_state', '', {
