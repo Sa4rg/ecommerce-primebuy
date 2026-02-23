@@ -8,21 +8,16 @@ export function AuthCallbackView() {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const { syncUserCart } = useCart();
+  const error = params.get("error");
+  const returnTo = params.get("returnTo") || "/checkout";
 
   const [status, setStatus] = useState("loading"); // loading | error
   const [err, setErr] = useState("");
 
   useEffect(() => {
     let cancelled = false;
-    let didRun = false;
 
     async function run() {
-        if (didRun) return;
-        didRun = true;
-
-        const error = params.get("error");
-        const returnTo = params.get("returnTo") || "/checkout";
-
         if (error) {
         if (!cancelled) {
             setStatus("error");
@@ -64,7 +59,7 @@ export function AuthCallbackView() {
 
     run();
     return () => { cancelled = true; };
-    }, [nav, params, syncUserCart]);
+    }, [error, returnTo, nav, syncUserCart]);
 
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">

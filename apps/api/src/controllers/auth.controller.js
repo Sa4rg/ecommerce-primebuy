@@ -3,7 +3,13 @@ const { services } = require('../composition/root');
 const authService = services.authService;
 
 const { OAuth2Client } = require('google-auth-library');
-const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, APP_PUBLIC_URL } = require('../config/env');
+const {
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REDIRECT_URI,
+  APP_PUBLIC_URL,
+  REFRESH_TOKEN_EXPIRES_IN_DAYS,
+} = require('../config/env');
 const { generateState } = require('../utils/oauthState');
 const { AppError } = require('../utils/errors');
 
@@ -19,11 +25,16 @@ function getCookieValue(cookieHeader, name) {
   return null;
 }
 
-const cookieOptions = {
+const cookieBaseOptions = {
   httpOnly: true,
   sameSite: 'lax',
   secure: process.env.NODE_ENV === 'production',
   path: '/api/auth',
+};
+
+const cookieOptions = {
+  ...cookieBaseOptions,
+  maxAge: REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000,
 };
 
 async function register(req, res, next) {
@@ -50,8 +61,7 @@ async function login(req, res, next) {
 
 async function refresh(req, res, next) {
   try {
-    const cookieHeader = req.headers.cookie || '';
-    const refreshToken = getCookieValue(cookieHeader, 'refreshToken');
+    const refreshToken = req.cookies?.refreshToken || getCookieValue(req.headers.cookie, 'refreshToken');
     const { accessToken, refreshToken: newRefreshToken } = await authService.refresh(refreshToken);
     res.cookie('refreshToken', newRefreshToken, cookieOptions);
     success(res, { accessToken }, 'Token refreshed successfully');
@@ -62,10 +72,9 @@ async function refresh(req, res, next) {
 
 async function logout(req, res, next) {
   try {
-    const cookieHeader = req.headers.cookie || '';
-    const refreshToken = getCookieValue(cookieHeader, 'refreshToken');
+    const refreshToken = req.cookies?.refreshToken || getCookieValue(req.headers.cookie, 'refreshToken');
     await authService.logout(refreshToken);
-    res.cookie('refreshToken', '', { ...cookieOptions, maxAge: 0 });
+    res.clearCookie('refreshToken', cookieBaseOptions);
     success(res, { success: true }, 'Logged out successfully');
   } catch (err) {
     next(err);
@@ -76,7 +85,7 @@ async function logoutAll(req, res, next) {
   try {
     const { userId } = req.user;
     await authService.logoutAll(userId);
-    res.cookie('refreshToken', '', { ...cookieOptions, maxAge: 0 });
+    res.clearCookie('refreshToken', cookieBaseOptions);
     success(res, { success: true }, 'Logged out from all sessions');
   } catch (err) {
     next(err);
