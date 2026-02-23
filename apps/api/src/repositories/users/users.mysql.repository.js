@@ -41,9 +41,50 @@ class MySQLUsersRepository {
     return row ? this._mapRowToUser(row) : null;
   }
 
-    async findByGoogleSub(googleSub) {
+    /**
+   * Find a user by google_sub
+   * @param {string} googleSub
+   */
+  async findByGoogleSub(googleSub) {
     const row = await knex('users').where({ google_sub: googleSub }).first();
     return row ? this._mapRowToUser(row) : null;
+  }
+
+  /**
+   * Link Google identity to an existing user
+   */
+  async linkGoogleIdentity({ userId, googleSub, name }) {
+    const now = isoToMySQLDatetime(new Date().toISOString());
+
+    await knex('users')
+      .where({ user_id: userId })
+      .update({
+        google_sub: googleSub,
+        name: name || null,
+        auth_provider: 'google',
+        updated_at: now,
+      });
+  }
+
+  /**
+   * Create a new Google user (password_hash nullable)
+   */
+  async createGoogleUser({ userId, email, googleSub, name, role = 'customer' }) {
+    const now = isoToMySQLDatetime(new Date().toISOString());
+
+    await knex('users').insert({
+      user_id: userId,
+      email,
+      password_hash: null,
+      role,
+      google_sub: googleSub,
+      name: name || null,
+      auth_provider: 'google',
+      created_at: now,
+      updated_at: now,
+    });
+
+    return { userId };
   }
 
   async updatePasswordHash(userId, passwordHash, nowDate = new Date()) {

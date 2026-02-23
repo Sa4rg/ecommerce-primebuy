@@ -84,6 +84,35 @@ class MySQLPasswordResetRequestsRepository {
     return Number(result?.count || 0);
   }
 
+  /**
+ * Find latest active request by userId (not used, not expired)
+ */
+  async findLatestActiveByUserId(userId, now = new Date()) {
+    const row = await db(this.table)
+      .where("user_id", userId)
+      .whereNull("used_at")
+      .where("expires_at", ">", now)
+      .orderBy("created_at", "desc")
+      .first();
+
+    if (!row) return null;
+
+    return this._mapRow(row);
+  }
+
+  /**
+   * Count recent reset requests by userId since a given Date
+   */
+  async countRecentByUserId(userId, since) {
+    const result = await db(this.table)
+      .where("user_id", userId)
+      .where("created_at", ">=", since)
+      .count({ count: "*" })
+      .first();
+
+    return Number(result?.count || 0);
+  }
+
   _mapRow(row) {
     return {
       requestId: row.request_id,

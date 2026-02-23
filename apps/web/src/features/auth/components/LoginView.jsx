@@ -8,6 +8,10 @@ import { API_BASE_URL } from "../../../config";
 export function LoginView() {
   const nav = useNavigate();
   const location = useLocation();
+  const returnTo =
+  location.state?.from?.pathname
+    ? location.state.from.pathname + (location.state.from.search || "")
+    : "/checkout";
 
   const { login } = useAuth();
   const { syncUserCart } = useCart();
@@ -54,7 +58,7 @@ export function LoginView() {
   function handleGoogleLogin() {
     // Importante: backend debe hacer OAuth y luego redirect al FE a /auth/callback
     const returnTo = location.state?.from?.pathname || "/checkout";
-    const url = `${API_BASE_URL}/api/auth/google/start?returnTo=${encodeURIComponent(returnTo)}`;
+    const url = `${API_BASE_URL}/api/auth/oauth/google/start?returnTo=${encodeURIComponent(returnTo)}`;
     window.location.href = url;
   }
 
@@ -175,7 +179,9 @@ export function LoginView() {
             <button
               type="button"
               className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent py-2.5 text-sm font-medium text-slate-200 hover:bg-white/5 transition-colors"
-              onClick={handleGoogleLogin}
+              onClick={() => {
+                window.location.href = `${API_BASE_URL}/api/auth/oauth/google/start?returnTo=${encodeURIComponent(returnTo)}`;
+              }}
             >
               <span>🟦</span> Continue with Google
             </button>

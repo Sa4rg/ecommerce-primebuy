@@ -48,6 +48,20 @@ class InMemoryPasswordResetRequestsRepository {
     return this.items.filter((x) => x.email === normalizedEmail && x.createdAt >= since).length;
   }
 
+  async findLatestActiveByUserId(userId, now = this.nowProvider()) {
+    const candidates = this.items
+      .filter((x) => x.userId === userId && !x.usedAt && x.expiresAt > now)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    return candidates[0] ? { ...candidates[0] } : null;
+  }
+
+  async countRecentByUserId(userId, since) {
+    return this.items.filter(
+      (x) => x.userId === userId && x.createdAt >= since
+    ).length;
+  }
+
   clear() {
     this.items = [];
   }

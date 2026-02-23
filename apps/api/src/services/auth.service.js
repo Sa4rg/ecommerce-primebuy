@@ -9,7 +9,7 @@ const { RESET_CODE_PEPPER, RESET_CODE_EXPIRES_MINUTES } = require('../config/env
 const jwt = require('jsonwebtoken');
 
 function generate6DigitCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(crypto.randomInt(100000, 999999));
 }
 
 function hashResetCode(code, pepper) {
@@ -92,6 +92,30 @@ function createAuthService({
     };
   }
 
+  async function issueTokensForUser(user) {
+    const accessToken = jwtSigner(
+      { sub: user.userId, role: user.role, email: user.email },
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    const refreshToken = refreshTokenGenerator();
+    const tokenHash = hashToken(refreshToken, refreshTokenPepper);
+    const now = nowProvider();
+    const expiresAt = new Date(
+      now.getTime() + REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000
+    );
+
+    await refreshTokensRepository.create({
+      refreshTokenId: idGenerator(),
+      userId: user.userId,
+      tokenHash,
+      expiresAt,
+      createdAt: now,
+    });
+
+    return { accessToken, refreshToken };
+  }
+
   async function login(email, password) {
     if (!email || typeof email !== 'string') {
       throw new AppError('Email is required', 400);
@@ -130,6 +154,52 @@ function createAuthService({
     });
 
     return { accessToken, refreshToken };
+  }
+
+    async function loginWithGoogle({ googleSub, email, name }) {
+    if (!googleSub || typeof googleSub !== 'string') {
+      throw new AppError('Unauthorized', 401);
+    }
+    if (!email || typeof email !== 'string') {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // 1) if google_sub already linked -> login
+    const bySub = await usersRepository.findByGoogleSub(googleSub);
+    if (bySub) {
+      return issueTokensForUser(bySub);
+    }
+
+    // 2) else if email exists -> link google identity
+    const existing = await usersRepository.findByEmail(normalizedEmail);
+    if (existing) {
+      await usersRepository.linkGoogleIdentity({
+        userId: existing.userId,
+        googleSub,
+        name: name || null,
+      });
+      // re-fetch not necessary; existing already has role/email/userId
+      return issueTokensForUser(existing);
+    }
+
+    // 3) else create new google user
+    const nowISO = nowProvider().toISOString();
+    const newUserId = idGenerator();
+
+    await usersRepository.createGoogleUser({
+      userId: newUserId,
+      email: normalizedEmail,
+      googleSub,
+      name: name || null,
+      role: 'customer',
+      createdAt: nowISO,
+      updatedAt: nowISO,
+    });
+
+    const createdUser = await usersRepository.findById(newUserId);
+    return issueTokensForUser(createdUser);
   }
 
   async function refresh(refreshToken) {
@@ -275,7 +345,10 @@ function createAuthService({
     const expectedHash = reqRecord.codeHash;
     const providedHash = hashResetCode(code.trim(), RESET_CODE_PEPPER || '');
 
-    if (providedHash !== expectedHash) {
+    if (!crypto.timingSafeEqual(
+        Buffer.from(providedHash),
+        Buffer.from(expectedHash)
+    )) {
       throw new AppError('Invalid code', 400);
     }
 
@@ -302,6 +375,7 @@ function createAuthService({
     logoutAll,
     requestPasswordReset,
     resetPasswordWithCode,
+    loginWithGoogle,
   };
 }
 

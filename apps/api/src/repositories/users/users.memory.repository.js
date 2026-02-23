@@ -13,6 +13,7 @@ class InMemoryUsersRepository {
   constructor() {
     this.usersById = new Map();
     this.userIdsByEmail = new Map();
+    this.userIdsByGoogleSub = new Map();
   }
 
   /**
@@ -25,6 +26,12 @@ class InMemoryUsersRepository {
     }
     this.usersById.set(user.userId, { ...user });
     this.userIdsByEmail.set(user.email, user.userId);
+    if (user.googleSub) {
+      if (this.userIdsByGoogleSub.has(user.googleSub)) {
+        throw new Error('Google sub already exists');
+      }
+      this.userIdsByGoogleSub.set(user.googleSub, user.userId);
+    }
     return { userId: user.userId };
   }
 
@@ -47,11 +54,38 @@ class InMemoryUsersRepository {
     return user ? { ...user } : null;
   }
 
-    async findByGoogleSub(googleSub) {
-    for (const user of this.usersById.values()) {
-      if (user.googleSub === googleSub) return { ...user };
-    }
-    return null;
+  async findByGoogleSub(googleSub) {
+    const userId = this.userIdsByGoogleSub.get(googleSub);
+    if (!userId) return null;
+    return { ...this.usersById.get(userId) };
+  }
+
+  async linkGoogleIdentity({ userId, googleSub, name }) {
+    const user = this.usersById.get(userId);
+    if (!user) return;
+
+    user.googleSub = googleSub;
+    user.name = name || null;
+    user.authProvider = 'google';
+
+    this.userIdsByGoogleSub.set(googleSub, userId);
+  }
+
+  async createGoogleUser({ userId, email, googleSub, name, role = 'customer' }) {
+    const user = {
+      userId,
+      email,
+      passwordHash: null,
+      role,
+      googleSub,
+      name: name || null,
+      authProvider: 'google',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.create(user);
+    return { userId };
   }
 
   async updatePasswordHash(userId, passwordHash) {
