@@ -3,11 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { register as apiRegister } from "../authCommand";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { useCart } from "../../../context/CartContext.jsx";
+import { useTranslation } from "../../../shared/i18n/useTranslation";
 
 export function RegisterView() {
   const nav = useNavigate();
   const { login } = useAuth();
   const { syncUserCart } = useCart();
+  const { t } = useTranslation();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -79,10 +81,10 @@ export function RegisterView() {
         <div className="p-8 md:p-10">
           <div className="text-center mb-10">
             <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-              Create Account
+              {t("auth.register.title")}
             </h1>
             <p className="text-sm text-slate-400">
-              Join ElectroVar and start shopping
+              {t("auth.register.subtitle")}
             </p>
           </div>
 
@@ -90,7 +92,7 @@ export function RegisterView() {
             {/* Name */}
             <div className="flex flex-col gap-2">
               <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Full Name
+                {t("auth.register.nameLabel")}
               </label>
               <div className="relative group">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-400 transition-colors">
@@ -99,7 +101,7 @@ export function RegisterView() {
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
+                  placeholder={t("auth.register.namePlaceholder")}
                   className="w-full rounded-lg border border-white/10 bg-[#282018] py-3 pl-11 pr-4 text-white placeholder:text-slate-500 outline-none transition-all focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/40"
                 />
               </div>
@@ -108,7 +110,7 @@ export function RegisterView() {
             {/* Email */}
             <div className="flex flex-col gap-2">
               <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Email Address
+                {t("auth.register.emailLabel")}
               </label>
               <div className="relative group">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-400 transition-colors">
@@ -119,7 +121,7 @@ export function RegisterView() {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
+                  placeholder={t("auth.register.emailPlaceholder")}
                   className="w-full rounded-lg border border-white/10 bg-[#282018] py-3 pl-11 pr-4 text-white placeholder:text-slate-500 outline-none transition-all focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/40"
                 />
               </div>
@@ -128,7 +130,7 @@ export function RegisterView() {
             {/* Password */}
             <div className="flex flex-col gap-2">
               <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Password
+                {t("auth.register.passwordLabel")}
               </label>
               <div className="relative group">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-400 transition-colors">
@@ -140,7 +142,7 @@ export function RegisterView() {
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder={t("auth.register.passwordPlaceholder")}
                   className="w-full rounded-lg border border-white/10 bg-[#282018] py-3 pl-11 pr-12 text-white placeholder:text-slate-500 outline-none transition-all focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/40"
                 />
 
@@ -148,7 +150,7 @@ export function RegisterView() {
                   type="button"
                   onClick={() => setShowPwd((v) => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
-                  aria-label={showPwd ? "Hide password" : "Show password"}
+                  aria-label={showPwd ? t("auth.register.hidePassword") : t("auth.register.showPassword")}
                 >
                   {showPwd ? "🙈" : "👁️"}
                 </button>
@@ -158,7 +160,7 @@ export function RegisterView() {
             {/* Confirm */}
             <div className="flex flex-col gap-2">
               <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Confirm Password
+                {t("auth.register.confirmPasswordLabel")}
               </label>
 
               <div className="relative group">
@@ -171,7 +173,7 @@ export function RegisterView() {
                   autoComplete="new-password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder={t("auth.register.confirmPasswordPlaceholder")}
                   className={[
                     "w-full rounded-lg border bg-[#282018] py-3 pl-11 pr-12 text-white placeholder:text-slate-500 outline-none transition-all focus:ring-2",
                     pwdMismatch
@@ -184,21 +186,21 @@ export function RegisterView() {
                   type="button"
                   onClick={() => setShowConfirm((v) => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
-                  aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                  aria-label={showConfirm ? t("auth.register.hidePassword") : t("auth.register.showPassword")}
                 >
                   {showConfirm ? "🙈" : "👁️"}
                 </button>
               </div>
 
               {pwdMismatch && (
-                <p className="text-xs text-red-200 ml-1">Passwords do not match.</p>
+                <p className="text-xs text-red-200 ml-1">{t("auth.register.mismatch")}</p>
               )}
             </div>
 
             {/* Error */}
             {err && (
               <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                <div className="font-semibold">Something went wrong</div>
+                <div className="font-semibold">{t("auth.register.errorTitle")}</div>
                 <div className="opacity-90">{err}</div>
               </div>
             )}
@@ -209,15 +211,15 @@ export function RegisterView() {
               disabled={!canSubmit}
               className="w-full rounded-lg bg-orange-500 py-4 font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:bg-orange-500/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? "Creating..." : "Create account"}
+              {loading ? t("auth.register.signingUp") : t("auth.register.signUp")}
               <span className="text-lg">→</span>
             </button>
           </form>
 
           <p className="mt-10 text-center text-sm text-slate-400">
-            Already have an account?{" "}
+            {t("auth.register.haveAccount")}{" "}
             <Link to="/login" className="font-bold text-orange-400 hover:underline">
-              Sign in
+              {t("auth.register.goToLogin")}
             </Link>
           </p>
         </div>

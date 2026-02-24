@@ -3,8 +3,10 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "../../../config";
 import { setAccessToken, clearAccessToken } from "../authStorage";
 import { useCart } from "../../../context/CartContext.jsx";
+import { useTranslation } from "../../../shared/i18n/useTranslation";
 
 export function AuthCallbackView() {
+  const { t } = useTranslation();
   const nav = useNavigate();
   const [params] = useSearchParams();
   const { syncUserCart } = useCart();
@@ -52,7 +54,7 @@ export function AuthCallbackView() {
         clearAccessToken();
         if (!cancelled) {
             setStatus("error");
-            setErr(e?.message || "Google login failed");
+            setErr(e?.message || t("auth.callback.googleLoginFailed"));
         }
         }
     }
@@ -64,10 +66,10 @@ export function AuthCallbackView() {
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
       {status === "loading" ? (
-        <p className="text-slate-300">Signing you in...</p>
+        <p className="text-slate-300">{t("auth.callback.signingIn")}</p>
       ) : (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
-          <p className="font-bold text-red-200">Authentication failed</p>
+          <p className="font-bold text-red-200">{t("auth.callback.authenticationFailed")}</p>
           <p className="text-red-200/80">{err}</p>
         </div>
       )}

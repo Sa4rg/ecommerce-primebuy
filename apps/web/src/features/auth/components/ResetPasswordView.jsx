@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { resetPassword } from "../authCommand";
+import { useTranslation } from "../../../shared/i18n/useTranslation";
 
 export function ResetPasswordView() {
+  const { t } = useTranslation();
   const nav = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -51,17 +53,17 @@ export function ResetPasswordView() {
         <div className="p-8 md:p-10">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-              Reset password
+              {t("auth.reset.title")}
             </h1>
             <p className="text-sm text-slate-400">
-              Enter the code from your email and choose a new password.
+              {t("auth.reset.subtitle")}
             </p>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-5">
             <div className="flex flex-col gap-2">
               <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Email Address
+                {t("auth.common.emailLabel")}
               </label>
               <input
                 type="email"
@@ -75,7 +77,7 @@ export function ResetPasswordView() {
 
             <div className="flex flex-col gap-2">
               <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Code
+                {t("auth.reset.codeLabel")}
               </label>
               <input
                 value={code}
@@ -87,7 +89,7 @@ export function ResetPasswordView() {
 
             <div className="flex flex-col gap-2">
               <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                New Password
+                {t("auth.reset.newPasswordLabel")}
               </label>
 
               <div className="relative">
@@ -103,7 +105,7 @@ export function ResetPasswordView() {
                   type="button"
                   onClick={() => setShowPwd((v) => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
-                  aria-label={showPwd ? "Hide password" : "Show password"}
+                  aria-label={showPwd ? t("auth.reset.hidePassword") : t("auth.reset.showPassword")}
                 >
                   {showPwd ? "🙈" : "👁️"}
                 </button>
@@ -112,7 +114,7 @@ export function ResetPasswordView() {
 
             <div className="flex flex-col gap-2">
               <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Confirm Password
+                {t("auth.reset.confirmPasswordLabel")}
               </label>
               <input
                 type={showPwd ? "text" : "password"}
@@ -128,13 +130,13 @@ export function ResetPasswordView() {
                 ].join(" ")}
               />
               {mismatch && (
-                <p className="text-xs text-red-200 ml-1">Passwords do not match.</p>
+                <p className="text-xs text-red-200 ml-1">{t("auth.reset.mismatch")}</p>
               )}
             </div>
 
             {err && (
               <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                <div className="font-semibold">Something went wrong</div>
+                <div className="font-semibold">{t("auth.reset.errorTitle")}</div>
                 <div className="opacity-90">{err}</div>
               </div>
             )}
@@ -144,15 +146,15 @@ export function ResetPasswordView() {
               disabled={!canSubmit}
               className="w-full rounded-lg bg-orange-500 py-4 font-bold text-white hover:bg-orange-500/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? "Resetting..." : "Reset password"}
+              {loading ? t("auth.reset.resetting") : t("auth.reset.resetPassword")}
             </button>
 
             <div className="flex items-center justify-between text-sm">
               <Link to="/forgot-password" className="text-slate-400 hover:text-orange-400">
-                Need a code?
+                {t("auth.reset.needCode")}
               </Link>
               <Link to="/login" className="text-slate-400 hover:text-orange-400">
-                Back to login
+                {t("auth.common.backToLogin")}
               </Link>
             </div>
           </form>

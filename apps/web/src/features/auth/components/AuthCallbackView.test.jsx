@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { AuthCallbackView } from "./AuthCallbackView";
+import { LanguageProvider } from "../../../shared/i18n/LanguageContext.jsx";
 
 const syncUserCartMock = vi.fn();
 
@@ -32,12 +33,14 @@ describe("AuthCallbackView", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/auth/callback?returnTo=%2Fcheckout"]}>
-        <Routes>
-          <Route path="/auth/callback" element={<AuthCallbackView />} />
-          <Route path="/checkout" element={<h2>Checkout</h2>} />
-        </Routes>
-      </MemoryRouter>
+      <LanguageProvider>
+        <MemoryRouter initialEntries={["/auth/callback?returnTo=%2Fcheckout"]}>
+          <Routes>
+            <Route path="/auth/callback" element={<AuthCallbackView />} />
+            <Route path="/checkout" element={<h2>Checkout</h2>} />
+          </Routes>
+        </MemoryRouter>
+      </LanguageProvider>
     );
 
     await waitFor(() => {

@@ -4,8 +4,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { useCart } from "../../../context/CartContext.jsx";
 import { API_BASE_URL } from "../../../config";
+import { useTranslation } from "../../../shared/i18n/useTranslation";
 
 export function LoginView() {
+  const { t } = useTranslation();
   const nav = useNavigate();
   const location = useLocation();
   const returnTo =
@@ -64,10 +66,10 @@ export function LoginView() {
         <div className="p-8 md:p-10">
           <div className="text-center mb-10">
             <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-              Welcome Back
+              {t("auth.login.title")}
             </h1>
             <p className="text-sm text-slate-400">
-              Log in to your ElectroVar account
+              {t("auth.login.subtitle")}
             </p>
           </div>
 
@@ -75,7 +77,7 @@ export function LoginView() {
             {/* Email */}
             <div className="flex flex-col gap-2">
               <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Email Address
+                {t("auth.common.emailLabel")}
               </label>
 
               <div className="relative group">
@@ -97,7 +99,7 @@ export function LoginView() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between px-1">
                 <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Password
+                  {t("auth.common.passwordLabel")}
                 </label>
 
                 {/* ✅ ahora es link real */}
@@ -105,7 +107,7 @@ export function LoginView() {
                   to="/forgot-password"
                   className="text-xs font-medium text-orange-400 hover:underline"
                 >
-                  Forgot password?
+                  {t("auth.login.forgotPassword")}
                 </Link>
               </div>
 
@@ -127,8 +129,8 @@ export function LoginView() {
                   type="button"
                   onClick={() => setShowPwd((v) => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
-                  aria-label={showPwd ? "Hide password" : "Show password"}
-                  title={showPwd ? "Hide password" : "Show password"}
+                  aria-label={showPwd ? t("auth.common.hidePassword") : t("auth.common.showPassword")}
+                  title={showPwd ? t("auth.common.hidePassword") : t("auth.common.showPassword")}
                 >
                   {showPwd ? "🙈" : "👁️"}
                 </button>
@@ -138,7 +140,7 @@ export function LoginView() {
             {/* Error */}
             {err && (
               <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                <div className="font-semibold">Something went wrong</div>
+                <div className="font-semibold">{t("auth.login.errorTitle")}</div>
                 <div className="opacity-90">{err}</div>
               </div>
             )}
@@ -149,7 +151,7 @@ export function LoginView() {
               disabled={!canSubmit}
               className="w-full rounded-lg bg-orange-500 py-4 font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:bg-orange-500/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? t("auth.login.signingIn") : t("auth.login.signIn")}
               <span className="text-lg">→</span>
             </button>
           </form>
@@ -161,7 +163,7 @@ export function LoginView() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-[#1c1610] px-3 text-slate-500">
-                Or continue with
+                {t("auth.common.continueWith")}
               </span>
             </div>
           </div>
@@ -175,15 +177,15 @@ export function LoginView() {
                 window.location.href = `${API_BASE_URL}/api/auth/oauth/google/start?returnTo=${encodeURIComponent(returnTo)}`;
               }}
             >
-              <span>🟦</span> Continue with Google
+              <span>🟦</span> {t("auth.common.continueWithGoogle")}
             </button>
           </div>
 
           {/* Footer link */}
           <p className="mt-10 text-center text-sm text-slate-400">
-            Don't have an account?{" "}
+            {t("auth.login.noAccount")}{" "}
             <Link to="/register" className="font-bold text-orange-400 hover:underline">
-              Create account
+              {t("auth.login.createAccount")}
             </Link>
           </p>
         </div>

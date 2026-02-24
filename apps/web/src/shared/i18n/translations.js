@@ -1,3 +1,5 @@
+import { resetPassword } from "../../features/auth/authCommand";
+
 export const translations = {
   es: {
     navbar: {
@@ -118,7 +120,91 @@ export const translations = {
         continueGuestHint: "con un carrito nuevo vacío",
       },
     },
+  auth: {
+    common: {
+      emailLabel: "Correo electrónico",
+      passwordLabel: "Contraseña",
+      confirmPasswordLabel: "Confirmar contraseña",
+      backToLogin: "Volver al login",
+      continueWith: "O continuar con",
+      continueWithGoogle: "Continuar con Google",
+      showPassword: "Mostrar contraseña",
+      hidePassword: "Ocultar contraseña",
+    },
+
+    login: {
+      title: "Bienvenida de vuelta",
+      subtitle: "Inicia sesión en tu cuenta de ElectroVar",
+      forgotPassword: "¿Olvidaste tu contraseña?",
+      signIn: "Iniciar sesión",
+      signingIn: "Iniciando...",
+      noAccount: "¿No tienes una cuenta?",
+      createAccount: "Crear cuenta",
+      errorTitle: "Algo salió mal",
+      defaultError: "Falló el inicio de sesión",
+    },
+
+    register: {
+      title: "Crear cuenta",
+      subtitle: "Crea tu cuenta de ElectroVar",
+      nameLabel: "Nombre (opcional)",
+      namePlaceholder: "Tu nombre",
+      signUp: "Crear cuenta",
+      signingUp: "Creando...",
+      haveAccount: "¿Ya tienes cuenta?",
+      goToLogin: "Ir al login",
+      errorTitle: "Algo salió mal",
+      defaultError: "Falló el registro",
+      emailLabel: "Correo electrónico",
+      emailPlaceholder: "name@company.com",
+      passwordLabel: "Contraseña",
+      passwordPlaceholder: "••••••••",
+      confirmPasswordLabel: "Confirmar contraseña",
+      confirmPasswordPlaceholder: "••••••••",
+      showPassword: "Mostrar contraseña",
+      hidePassword: "Ocultar contraseña",
+      mismatch: "Las contraseñas no coinciden.",
+    },
+
+    forgot: {
+      title: "Olvidé mi contraseña",
+      subtitle: "Te enviaremos un código para resetear tu contraseña.",
+      sendCode: "Enviar código",
+      sending: "Enviando...",
+      successTitle: "Revisa tu email",
+      successBody: "Si el email existe, enviamos un código de verificación.",
+      iHaveCode: "Tengo un código",
+      backToLogin: "Volver al login",
+      checkEmail: "Revisa tu email",
+      emailSent: "Si el email existe, enviamos un código de verificación.",
+      errorTitle: "Algo salió mal",
+      defaultError: "Falló la solicitud",
+    },
+
+    reset: {
+      title: "Resetear contraseña",
+      subtitle: "Ingresa el código del email y elige una nueva contraseña.",
+      codeLabel: "Código",
+      codePlaceholder: "123456",
+      newPasswordLabel: "Nueva contraseña",
+      confirmPasswordLabel: "Confirmar contraseña",
+      mismatch: "Las contraseñas no coinciden.",
+      resetPassword: "Resetear contraseña",
+      resetBtn: "Resetear contraseña",
+      resetting: "Reseteando...",
+      needCode: "¿Necesitas un código?",
+      errorTitle: "Algo salió mal",
+      defaultError: "Falló el reseteo",
+    },
+
+    callback: {
+      signingIn: "Iniciando sesión...",
+      failedTitle: "Falló la autenticación",
+      defaultError: "Falló el login con Google",
+    },
   },
+},
+ 
   en: {
     navbar: {
       electronics: "Electronics",
@@ -240,5 +326,85 @@ export const translations = {
         continueGuestHint: "with a new empty cart",
       },
     },
-  },
+    auth: {
+      common: {
+        emailLabel: "Email address",
+        passwordLabel: "Password",
+        confirmPasswordLabel: "Confirm password",
+        backToLogin: "Back to login",
+        continueWith: "Or continue with",
+        continueWithGoogle: "Continue with Google",
+        showPassword: "Show password",
+        hidePassword: "Hide password",
+      },
+
+      login: {
+        title: "Welcome Back",
+        subtitle: "Log in to your ElectroVar account",
+        forgotPassword: "Forgot password?",
+        signIn: "Sign In",
+        signingIn: "Signing in...",
+        noAccount: "Don't have an account?",
+        createAccount: "Create account",
+        errorTitle: "Something went wrong",
+        defaultError: "Login failed",
+      },
+
+      register: {
+        title: "Create account",
+        subtitle: "Create your ElectroVar account",
+        nameLabel: "Name (optional)",
+        namePlaceholder: "Your name",
+        signUp: "Create account",
+        signingUp: "Creating...",
+        haveAccount: "Already have an account?",
+        goToLogin: "Go to login",
+        errorTitle: "Something went wrong",
+        defaultError: "Register failed",
+        emailLabel: "Email address",
+        emailPlaceholder: "name@company.com",
+        passwordLabel: "Password",
+        passwordPlaceholder: "••••••••",
+        confirmPasswordLabel: "Confirm password",
+        confirmPasswordPlaceholder: "••••••••",
+        showPassword: "Show password",
+        hidePassword: "Hide password",
+        mismatch: "Passwords do not match.",
+      },
+
+      forgot: {
+        title: "Forgot password",
+        subtitle: "We’ll send you a code to reset your password.",
+        sendCode: "Send code",
+        sending: "Sending...",
+        successTitle: "Check your email",
+        successBody: "If the email exists, we sent a verification code.",
+        iHaveCode: "I have a code",
+        errorTitle: "Something went wrong",
+        defaultError: "Failed to request reset",
+      },
+
+      reset: {
+        title: "Reset password",
+        subtitle: "Enter the code from your email and choose a new password.",
+        codeLabel: "Code",
+        codePlaceholder: "123456",
+        newPasswordLabel: "New Password",
+        confirmPasswordLabel: "Confirm Password",
+        mismatch: "Passwords do not match.",
+        resetPassword: "Reset password",
+        resetBtn: "Reset password",
+        resetting: "Resetting...",
+        needCode: "Need a code?",
+        errorTitle: "Something went wrong",
+        defaultError: "Failed to reset password",
+      },
+
+      callback: {
+        signingIn: "Signing you in...",
+        failedTitle: "Authentication failed",
+        defaultError: "Google login failed",
+      },
+    },
+  }
 };

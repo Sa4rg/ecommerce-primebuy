@@ -5,6 +5,7 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../../../context/AuthContext.jsx";
 import { CartProvider } from "../../../context/CartContext.jsx";
 import { LoginView } from "./LoginView";
+import { LanguageProvider } from "../../../shared/i18n/LanguageContext.jsx";
 
 describe("LoginView", () => {
   beforeEach(() => {
@@ -24,23 +25,25 @@ describe("LoginView", () => {
     });
 
     render(
-      <AuthProvider>
-        <CartProvider>
-          <MemoryRouter initialEntries={[{ pathname: "/login", state: { from: { pathname: "/checkout" } } }]}>
-            <Routes>
-              <Route path="/login" element={<LoginView />} />
-              <Route path="/checkout" element={<h2>Checkout</h2>} />
-            </Routes>
-          </MemoryRouter>
-        </CartProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <CartProvider>
+            <MemoryRouter initialEntries={[{ pathname: "/login", state: { from: { pathname: "/checkout" } } }]}>
+              <Routes>
+                <Route path="/login" element={<LoginView />} />
+                <Route path="/checkout" element={<h2>Checkout</h2>} />
+              </Routes>
+            </MemoryRouter>
+          </CartProvider>
+        </AuthProvider>
+      </LanguageProvider>
     );
 
     const user = userEvent.setup();
 
     await user.type(screen.getByPlaceholderText(/name@company\.com/i), "test@example.com");
     await user.type(screen.getByPlaceholderText(/••••/), "password123");
-    await user.click(screen.getByRole("button", { name: /sign in/i }));
+    await user.click(screen.getByRole("button", { name: /iniciar sesión/i }));
 
     await waitFor(() => {
       expect(localStorage.getItem("accessToken")).toBe("token-123");
