@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext.jsx";
 import { useTranslation } from "../i18n/useTranslation.js";
@@ -9,18 +9,39 @@ function formatMoneyUSD(value) {
   return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
+function normalizeUrl(u) {
+  const s = String(u || "").trim();
+  return s;
+}
+
+function getFirstGalleryUrl(product) {
+  const g = Array.isArray(product?.gallery) ? product.gallery : [];
+  if (!g.length) return "";
+
+  // gallery puede venir como strings o como objetos {url, publicId}
+  const first = g[0];
+  const url = typeof first === "string" ? first : first?.url;
+  return normalizeUrl(url);
+}
+
 export function ProductCard({ product, isFavorite, onToggleFavorite }) {
   const { addItem } = useCart();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+
   const [isAdding, setIsAdding] = useState(false);
   const [localFav, setLocalFav] = useState(false);
   const [addError, setAddError] = useState("");
 
   const fav = typeof isFavorite === "boolean" ? isFavorite : localFav;
 
-  const baseStock = Number(product.stock || 0);
-  const inStock = Boolean(product.inStock) && baseStock > 0;
+  const baseStock = Number(product?.stock || 0);
+  const inStock = typeof product?.inStock === "boolean" ? product.inStock && baseStock > 0 : baseStock > 0;
   const isDisabled = isAdding || !inStock;
+
+  const displayName = useMemo(() => {
+    if (language === "es") return product?.nameES || product?.name || "";
+    return product?.nameEN || product?.name || "";
+  }, [language, product]);
 
   function getErrorMessage(message) {
     if (/insufficient stock/i.test(message)) return t("productCard.errors.insufficientStock");
@@ -42,27 +63,37 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
     }
   }
 
-  const imgUrl =
-    product.imageUrl ||
-    product.image ||
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='1100'%3E%3Crect width='100%25' height='100%25' fill='%232a2a2a'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23888888' font-family='Arial' font-size='36'%3ENo image%3C/text%3E%3C/svg%3E";
+  const imgUrl = useMemo(() => {
+    const cover = normalizeUrl(product?.imageUrl);
+    const firstGallery = getFirstGalleryUrl(product);
+    const legacy = normalizeUrl(product?.image);
+
+    return (
+      cover ||
+      firstGallery ||
+      legacy ||
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='1100'%3E%3Crect width='100%25' height='100%25' fill='%232a2a2a'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23888888' font-family='Arial' font-size='36'%3ENo image%3C/text%3E%3C/svg%3E"
+    );
+  }, [product]);
+
+  const productId = product?.productId || product?.id;
 
   return (
     <div className="group relative">
       {/* Media */}
       <div className="relative mb-4 aspect-[4/5] overflow-hidden rounded-2xl bg-white/5 border border-white/10">
         {/* Click in image opens detail */}
-        <Link
-          to={`/products/${product.productId || product.id}`}
-          className="absolute inset-0 z-10"
-          aria-label={product.name}
-        />
+        <Link to={`/products/${productId}`} className="absolute inset-0 z-10" aria-label={displayName || product?.name} />
 
         <img
           src={imgUrl}
-          alt={product.name}
+          alt={displayName || product?.name || "Product"}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
           loading="lazy"
+          onError={(e) => {
+            // si la URL falla, baja opacidad (para depurar rápido)
+            e.currentTarget.style.opacity = "0.35";
+          }}
         />
 
         {/* Badge */}
@@ -111,16 +142,14 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
             "absolute bottom-4 left-4 right-4 z-20 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-2xl",
             "opacity-0 translate-y-4 transition-all duration-300",
             "group-hover:opacity-100 group-hover:translate-y-0",
-            isDisabled
-              ? "bg-white/20 text-white/60 cursor-not-allowed"
-              : "bg-white text-black hover:bg-orange-500 hover:text-white",
+            isDisabled ? "bg-white/20 text-white/60 cursor-not-allowed" : "bg-white text-black hover:bg-orange-500 hover:text-white",
           ].join(" ")}
         >
           <span className="text-base">🛒</span>
           {isAdding ? t("productCard.actions.adding") : inStock ? t("productCard.actions.addToCart") : t("productCard.stock.out")}
         </button>
 
-        {/* Inline error (catalog) */}
+        {/* Inline error */}
         {addError && (
           <div
             role="alert"
@@ -135,17 +164,18 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h3 className="truncate text-lg font-bold text-white group-hover:text-orange-400 transition-colors">
-            <Link to={`/products/${product.productId || product.id}`} className="hover:text-orange-400">
-              {product.name}
+            <Link to={`/products/${productId}`} className="hover:text-orange-400">
+              {displayName}
             </Link>
           </h3>
+
           <p className="mt-1 text-sm text-slate-400">
-            {product.category ? `${product.category}` : t("productCard.category.general")} <span className="opacity-60">/</span>{" "}
+            {product?.category ? `${product.category}` : t("productCard.category.general")} <span className="opacity-60">/</span>{" "}
             {inStock ? t("productCard.stock.available") : t("productCard.stock.out")}
           </p>
         </div>
 
-        <span className="shrink-0 text-xl font-bold text-orange-400">${formatMoneyUSD(product.priceUSD)}</span>
+        <span className="shrink-0 text-xl font-bold text-orange-400">${formatMoneyUSD(product?.priceUSD)}</span>
       </div>
     </div>
   );

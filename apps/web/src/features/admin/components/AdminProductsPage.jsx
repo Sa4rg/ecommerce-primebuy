@@ -1,6 +1,7 @@
-// src/features/admin/components/AdminProductsPage.jsx
+// web/src/features/admin/components/AdminProductsPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { adminProductsService } from "../adminProductsService";
+import { useTranslation } from "../../../shared/i18n/useTranslation";
 
 function toNumberOrNull(v) {
   if (v === "" || v === null || v === undefined) return null;
@@ -27,6 +28,7 @@ function sortList(list, sortKey) {
   const arr = [...list];
   if (sortKey === "price") return arr.sort((a, b) => Number(a.priceUSD) - Number(b.priceUSD));
   if (sortKey === "stock") return arr.sort((a, b) => Number(a.stock || 0) - Number(b.stock || 0));
+
   return arr.sort((a, b) => {
     const an = String(a.nameES || a.nameEN || a.name || "");
     const bn = String(b.nameES || b.nameEN || b.name || "");
@@ -37,6 +39,7 @@ function sortList(list, sortKey) {
 function normalizeUrl(u) {
   const s = String(u || "").trim();
   if (!s) return "";
+  if (s.startsWith("http://") || s.startsWith("https://") || s.startsWith("data:")) return s;
   return s;
 }
 
@@ -53,13 +56,6 @@ function uniq(list) {
   return out;
 }
 
-function toUrl(x) {
-  if (!x) return "";
-  if (typeof x === "string") return x.trim();
-  if (typeof x === "object") return String(x.url || "").trim();
-  return String(x).trim();
-}
-
 const EMPTY = {
   id: "",
   nameES: "",
@@ -70,14 +66,14 @@ const EMPTY = {
   stock: "",
   category: "",
   specs: [],
-
-  // images
   imageUrl: "",
   imagePublicId: "",
-  gallery: [], // array de urls string
+  gallery: [],
 };
 
 export function AdminProductsPage() {
+  const { t, language } = useTranslation();
+
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [products, setProducts] = useState([]);
@@ -88,15 +84,10 @@ export function AdminProductsPage() {
 
   const isEditing = Boolean(form?.id);
 
-  // Catalog UI state
   const [q, setQ] = useState("");
-  const [sortBy, setSortBy] = useState("name");
+  const [sortBy, setSortBy] = useState("name"); // name | price | stock
   const [page, setPage] = useState(1);
   const pageSize = 10;
-
-  // ✅ Cloudinary uploads
-  const [coverFile, setCoverFile] = useState(null);
-  const [newGalleryFiles, setNewGalleryFiles] = useState([]);
 
   async function load() {
     setStatus("loading");
@@ -107,26 +98,22 @@ export function AdminProductsPage() {
       setStatus("ready");
     } catch (e) {
       setStatus("error");
-      setError(e?.message || "Failed to load products");
+      setError(e?.message || t("adminProducts.errors.load"));
     }
   }
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function startCreate() {
     setError("");
-    setCoverFile(null);
-    setNewGalleryFiles([]);
     setForm(EMPTY);
   }
 
   function startEdit(p) {
     setError("");
-    setCoverFile(null);
-    setNewGalleryFiles([]);
-
     setForm({
       id: String(p.id),
 
@@ -142,11 +129,9 @@ export function AdminProductsPage() {
 
       specs: Array.isArray(p.specs) ? p.specs : [],
 
-      // ✅ images
       imageUrl: p.imageUrl ?? "",
       imagePublicId: p.imagePublicId ?? "",
-      // ✅ gallery SIEMPRE urls
-      gallery: Array.isArray(p.gallery) ? p.gallery.map(toUrl).filter(Boolean) : [],
+      gallery: Array.isArray(p.gallery) ? p.gallery : [],
     });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -156,9 +141,11 @@ export function AdminProductsPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  // Gallery editor
   function addGalleryRow() {
-    setForm((prev) => ({ ...prev, gallery: [...(prev.gallery || []), ""] }));
+    setForm((prev) => ({
+      ...prev,
+      gallery: [...(prev.gallery || []), ""],
+    }));
   }
 
   function updateGalleryAt(idx, value) {
@@ -183,7 +170,7 @@ export function AdminProductsPage() {
 
     setForm((prev) => {
       const current = Array.isArray(prev.gallery) ? prev.gallery : [];
-      const cleaned = current.map((u) => normalizeUrl(toUrl(u))).filter(Boolean);
+      const cleaned = current.map((u) => normalizeUrl(u)).filter(Boolean);
       const next = uniq([cover, ...cleaned]);
       return { ...prev, imageUrl: cover, gallery: next };
     });
@@ -202,45 +189,12 @@ export function AdminProductsPage() {
     setError("");
 
     if (!formValid) {
-      setError("Please fill name, priceUSD and stock.");
+      setError(t("adminProducts.errors.formInvalid"));
       return;
     }
 
-    // 1) subimos imágenes si hay archivos nuevos
-    let uploaded = null;
-    try {
-      if (coverFile || (newGalleryFiles && newGalleryFiles.length > 0)) {
-        uploaded = await adminProductsService.uploadImages({
-          coverFile,
-          galleryFiles: newGalleryFiles,
-        });
-      }
-    } catch (eUp) {
-      setError(eUp?.message || "Image upload failed");
-      return;
-    }
-
-    // 2) resolvemos cover + gallery final
-    const coverFromUpload = uploaded?.cover?.url || "";
-    const galleryFromUpload = Array.isArray(uploaded?.gallery)
-      ? uploaded.gallery.map((x) => toUrl(x)).filter(Boolean)
-      : [];
-
-    const cover = normalizeUrl(coverFromUpload || form.imageUrl);
-    function isProbablyUrl(s) {
-      const v = String(s || "").trim();
-      return v.startsWith("http://") || v.startsWith("https://") || v.startsWith("data:");
-    }
-
-    const galleryClean = uniq([
-      ...((form.gallery || [])
-        .map((x) => normalizeUrl(toUrl(x)))
-        .filter((s) => s && isProbablyUrl(s))), // ✅ filtra basura
-      ...galleryFromUpload.filter((s) => s && isProbablyUrl(s)),
-    ]);
-
-    // Si hay cover y no está en gallery, opcionalmente lo ponemos primero
-    const finalGallery = cover ? uniq([cover, ...galleryClean]) : galleryClean;
+    const cover = normalizeUrl(form.imageUrl);
+    const galleryClean = uniq((form.gallery || []).map(normalizeUrl).filter(Boolean));
 
     const payload = {
       nameES: String(form.nameES || "").trim(),
@@ -263,10 +217,8 @@ export function AdminProductsPage() {
             .filter((s) => s.labelES || s.labelEN || s.valueES || s.valueEN)
         : [],
 
-      // ✅ images
       imageUrl: cover || null,
-      imagePublicId: uploaded?.cover?.publicId || form.imagePublicId || null,
-      gallery: finalGallery,
+      gallery: galleryClean,
     };
 
     setSaving(true);
@@ -276,14 +228,10 @@ export function AdminProductsPage() {
       } else {
         await adminProductsService.create(payload);
       }
-
-      // reset
-      setCoverFile(null);
-      setNewGalleryFiles([]);
       setForm(EMPTY);
       await load();
     } catch (e2) {
-      setError(e2?.message || "Save failed");
+      setError(e2?.message || t("adminProducts.errors.save"));
     } finally {
       setSaving(false);
     }
@@ -291,7 +239,9 @@ export function AdminProductsPage() {
 
   async function onDelete(p) {
     if (deletingId) return;
-    const ok = window.confirm(`Delete "${p.nameES || p.nameEN || p.name}"? This cannot be undone.`);
+
+    const display = p.nameES || p.nameEN || p.name || "";
+    const ok = window.confirm(t("adminProducts.confirm.delete", { name: display }));
     if (!ok) return;
 
     setError("");
@@ -300,7 +250,7 @@ export function AdminProductsPage() {
       await adminProductsService.remove(p.id);
       await load();
     } catch (e) {
-      setError(e?.message || "Delete failed");
+      setError(e?.message || t("adminProducts.errors.delete"));
     } finally {
       setDeletingId("");
     }
@@ -338,37 +288,38 @@ export function AdminProductsPage() {
     setPage(1);
   }
 
-  // preview images
   const previewCover = useMemo(() => {
     const cover = normalizeUrl(form.imageUrl);
     if (cover) return cover;
-    const g = Array.isArray(form.gallery) ? form.gallery.map((x) => normalizeUrl(toUrl(x))).filter(Boolean) : [];
+    const g = Array.isArray(form.gallery) ? form.gallery.map(normalizeUrl).filter(Boolean) : [];
     return g[0] || "";
   }, [form.imageUrl, form.gallery]);
 
   const previewGallery = useMemo(() => {
-    const g = Array.isArray(form.gallery) ? form.gallery.map((x) => normalizeUrl(toUrl(x))).filter(Boolean) : [];
+    const g = Array.isArray(form.gallery) ? form.gallery.map(normalizeUrl).filter(Boolean) : [];
     const cover = normalizeUrl(form.imageUrl);
     return uniq([...(cover ? [cover] : []), ...g]).slice(0, 8);
   }, [form.imageUrl, form.gallery]);
 
+  const nameLabel = language === "es" ? t("adminProducts.form.nameES") : t("adminProducts.form.nameEN");
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Admin · Products</h1>
-        <p className="text-sm text-slate-400">Create, edit and delete products from the catalog.</p>
+        <h1 className="text-2xl font-bold">{t("adminProducts.title")}</h1>
+        <p className="text-sm text-slate-400">{t("adminProducts.subtitle")}</p>
       </div>
 
       {/* Form */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-lg font-bold">{isEditing ? "Edit product" : "Create product"}</h2>
+          <h2 className="text-lg font-bold">{isEditing ? t("adminProducts.form.editTitle") : t("adminProducts.form.createTitle")}</h2>
           <button
             type="button"
             onClick={startCreate}
             className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
           >
-            New
+            {t("adminProducts.actions.new")}
           </button>
         </div>
 
@@ -379,8 +330,9 @@ export function AdminProductsPage() {
         )}
 
         <form onSubmit={onSubmit} className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Quick name */}
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-300">Name</label>
+            <label className="text-sm text-slate-300">{t("adminProducts.form.nameQuick")}</label>
             <input
               value={form.nameES || form.nameEN || ""}
               onChange={(e) => {
@@ -389,142 +341,120 @@ export function AdminProductsPage() {
                 onChange("nameEN", v);
               }}
               className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder="e.g. Sony A7 IV"
+              placeholder={t("adminProducts.form.placeholders.name")}
             />
+            <p className="mt-2 text-xs text-slate-500">{t("adminProducts.form.help.nameQuick")}</p>
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-300">Name (ES)</label>
+            <label className="text-sm text-slate-300">{t("adminProducts.form.nameES")}</label>
             <input
               value={form.nameES}
               onChange={(e) => onChange("nameES", e.target.value)}
               className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder='Ej: "Cámara Sony A7 IV"'
+              placeholder={t("adminProducts.form.placeholders.nameES")}
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-300">Name (EN)</label>
+            <label className="text-sm text-slate-300">{t("adminProducts.form.nameEN")}</label>
             <input
               value={form.nameEN}
               onChange={(e) => onChange("nameEN", e.target.value)}
               className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder='E.g. "Sony A7 IV Camera"'
+              placeholder={t("adminProducts.form.placeholders.nameEN")}
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-300">Short description (ES)</label>
+            <label className="text-sm text-slate-300">{t("adminProducts.form.shortDescES")}</label>
             <textarea
               value={form.shortDescES}
               onChange={(e) => onChange("shortDescES", e.target.value)}
               className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
               rows={3}
-              placeholder="2-3 líneas cortas..."
+              placeholder={t("adminProducts.form.placeholders.shortDescES")}
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-300">Short description (EN)</label>
+            <label className="text-sm text-slate-300">{t("adminProducts.form.shortDescEN")}</label>
             <textarea
               value={form.shortDescEN}
               onChange={(e) => onChange("shortDescEN", e.target.value)}
               className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
               rows={3}
-              placeholder="2-3 short lines..."
+              placeholder={t("adminProducts.form.placeholders.shortDescEN")}
             />
           </div>
 
-          {/* ✅ Cloudinary uploader */}
+          {/* Images */}
           <div className="md:col-span-2 rounded-2xl border border-white/10 bg-black/20 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-white">Images (Cloudinary)</p>
-                <p className="text-xs text-slate-400">Upload cover + gallery images.</p>
+                <p className="text-sm font-semibold text-white">{t("adminProducts.images.title")}</p>
+                <p className="text-xs text-slate-400">{t("adminProducts.images.subtitle")}</p>
               </div>
 
               <button
                 type="button"
                 onClick={useCoverAsFirst}
                 className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                title={t("adminProducts.images.useCoverAsFirstTitle")}
               >
-                Use cover as first
+                {t("adminProducts.images.useCoverAsFirst")}
               </button>
             </div>
 
             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-              <div className="md:col-span-2 space-y-4">
-                <div>
-                  <label className="text-sm text-slate-300">Cover file</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
-                    className="mt-1 block w-full text-sm text-slate-300"
-                  />
-                  <p className="mt-1 text-xs text-slate-500">
-                    If you upload a cover, it will replace the current one.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="text-sm text-slate-300">Add gallery files</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={(e) => setNewGalleryFiles(Array.from(e.target.files || []))}
-                    className="mt-1 block w-full text-sm text-slate-300"
-                  />
-                  <p className="mt-1 text-xs text-slate-500">
-                    Uploaded images will be appended to gallery.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="text-sm text-slate-300">Cover image URL (current)</label>
-                  <input
-                    value={form.imageUrl}
-                    onChange={(e) => onChange("imageUrl", e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="https://.../cover.jpg"
-                  />
-                </div>
+              <div className="md:col-span-2">
+                <label className="text-sm text-slate-300">{t("adminProducts.images.coverLabel")}</label>
+                <input
+                  value={form.imageUrl}
+                  onChange={(e) => onChange("imageUrl", e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder={t("adminProducts.images.coverPlaceholder")}
+                />
+                <p className="mt-2 text-xs text-slate-500">{t("adminProducts.images.coverHelp")}</p>
               </div>
 
               <div className="md:col-span-1">
-                <div className="text-sm text-slate-300 mb-1">Preview</div>
+                <div className="text-sm text-slate-300 mb-1">{t("adminProducts.images.preview")}</div>
                 <div className="rounded-xl border border-white/10 bg-black/30 overflow-hidden aspect-square">
                   {previewCover ? (
                     <img
                       src={previewCover}
                       alt="cover preview"
                       className="w-full h-full object-cover"
-                      onError={(e) => (e.currentTarget.style.opacity = "0.3")}
+                      onError={(e) => {
+                        e.currentTarget.style.opacity = "0.3";
+                      }}
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs text-slate-500">No cover</div>
+                    <div className="w-full h-full flex items-center justify-center text-xs text-slate-500">
+                      {t("adminProducts.images.noCover")}
+                    </div>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Gallery URLs editor */}
             <div className="mt-5">
               <div className="flex items-center justify-between">
-                <label className="text-sm text-slate-300">Gallery URLs</label>
+                <label className="text-sm text-slate-300">{t("adminProducts.images.galleryLabel")}</label>
+
                 <button
                   type="button"
                   onClick={addGalleryRow}
                   className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
                 >
-                  + Add image URL
+                  {t("adminProducts.images.addImage")}
                 </button>
               </div>
 
               <div className="mt-3 space-y-3">
                 {(form.gallery || []).length === 0 ? (
-                  <div className="text-sm text-slate-500">No gallery images yet.</div>
+                  <div className="text-sm text-slate-500">{t("adminProducts.images.emptyGallery")}</div>
                 ) : (
                   (form.gallery || []).map((url, idx) => (
                     <div key={idx} className="flex gap-3 items-start">
@@ -533,7 +463,7 @@ export function AdminProductsPage() {
                           value={url}
                           onChange={(e) => updateGalleryAt(idx, e.target.value)}
                           className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
-                          placeholder={`https://.../image-${idx + 1}.jpg`}
+                          placeholder={t("adminProducts.images.galleryPlaceholder", { n: idx + 1 })}
                         />
                       </div>
 
@@ -541,8 +471,9 @@ export function AdminProductsPage() {
                         type="button"
                         onClick={() => removeGalleryAt(idx)}
                         className="rounded-xl bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-400 hover:bg-red-500 hover:text-white"
+                        title={t("adminProducts.actions.remove")}
                       >
-                        Remove
+                        {t("adminProducts.actions.remove")}
                       </button>
                     </div>
                   ))
@@ -550,9 +481,9 @@ export function AdminProductsPage() {
               </div>
 
               <div className="mt-5">
-                <div className="text-sm text-slate-300 mb-2">Gallery preview</div>
+                <div className="text-sm text-slate-300 mb-2">{t("adminProducts.images.galleryPreview")}</div>
                 {previewGallery.length === 0 ? (
-                  <div className="text-sm text-slate-500">No images to preview.</div>
+                  <div className="text-sm text-slate-500">{t("adminProducts.images.noPreview")}</div>
                 ) : (
                   <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                     {previewGallery.map((src) => (
@@ -565,7 +496,9 @@ export function AdminProductsPage() {
                           src={src}
                           alt="gallery preview"
                           className="w-full h-full object-cover"
-                          onError={(e) => (e.currentTarget.style.opacity = "0.3")}
+                          onError={(e) => {
+                            e.currentTarget.style.opacity = "0.3";
+                          }}
                         />
                       </div>
                     ))}
@@ -575,10 +508,10 @@ export function AdminProductsPage() {
             </div>
           </div>
 
-          {/* Specs editor */}
+          {/* Specs */}
           <div className="md:col-span-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm text-slate-300">Technical specs</label>
+              <label className="text-sm text-slate-300">{t("adminProducts.specs.title")}</label>
 
               <button
                 type="button"
@@ -590,13 +523,13 @@ export function AdminProductsPage() {
                 }
                 className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
               >
-                + Add spec
+                {t("adminProducts.specs.add")}
               </button>
             </div>
 
             <div className="mt-3 space-y-3">
               {(form.specs || []).length === 0 ? (
-                <div className="text-sm text-slate-500">No specs yet.</div>
+                <div className="text-sm text-slate-500">{t("adminProducts.specs.empty")}</div>
               ) : (
                 (form.specs || []).map((s, idx) => (
                   <div key={idx} className="rounded-xl border border-white/10 bg-black/20 p-4">
@@ -612,7 +545,7 @@ export function AdminProductsPage() {
                           });
                         }}
                         className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white outline-none focus:ring-1 focus:ring-orange-500"
-                        placeholder="Label ES (Ej: Sensor)"
+                        placeholder={t("adminProducts.specs.labelES")}
                       />
 
                       <input
@@ -626,7 +559,7 @@ export function AdminProductsPage() {
                           });
                         }}
                         className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white outline-none focus:ring-1 focus:ring-orange-500"
-                        placeholder="Value ES"
+                        placeholder={t("adminProducts.specs.valueES")}
                       />
 
                       <input
@@ -640,7 +573,7 @@ export function AdminProductsPage() {
                           });
                         }}
                         className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white outline-none focus:ring-1 focus:ring-orange-500"
-                        placeholder="Label EN (e.g. Sensor)"
+                        placeholder={t("adminProducts.specs.labelEN")}
                       />
 
                       <input
@@ -654,7 +587,7 @@ export function AdminProductsPage() {
                           });
                         }}
                         className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white outline-none focus:ring-1 focus:ring-orange-500"
-                        placeholder="Value EN"
+                        placeholder={t("adminProducts.specs.valueEN")}
                       />
                     </div>
 
@@ -670,7 +603,7 @@ export function AdminProductsPage() {
                         }}
                         className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500 hover:text-white"
                       >
-                        Remove
+                        {t("adminProducts.actions.remove")}
                       </button>
                     </div>
                   </div>
@@ -680,34 +613,34 @@ export function AdminProductsPage() {
           </div>
 
           <div>
-            <label className="text-sm text-slate-300">Price (USD)</label>
+            <label className="text-sm text-slate-300">{t("adminProducts.form.price")}</label>
             <input
               value={form.priceUSD}
               onChange={(e) => onChange("priceUSD", e.target.value)}
               className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder="2499"
+              placeholder={t("adminProducts.form.placeholders.price")}
               inputMode="decimal"
             />
           </div>
 
           <div>
-            <label className="text-sm text-slate-300">Stock</label>
+            <label className="text-sm text-slate-300">{t("adminProducts.form.stock")}</label>
             <input
               value={form.stock}
               onChange={(e) => onChange("stock", e.target.value)}
               className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder="10"
+              placeholder={t("adminProducts.form.placeholders.stock")}
               inputMode="numeric"
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-300">Category</label>
+            <label className="text-sm text-slate-300">{t("adminProducts.form.category")}</label>
             <input
               value={form.category}
               onChange={(e) => onChange("category", e.target.value)}
               className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder="e.g. Cameras"
+              placeholder={t("adminProducts.form.placeholders.category")}
             />
           </div>
 
@@ -717,7 +650,7 @@ export function AdminProductsPage() {
               disabled={saving}
               className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-500/90 disabled:opacity-60"
             >
-              {saving ? "Saving..." : isEditing ? "Save changes" : "Create product"}
+              {saving ? t("adminProducts.actions.saving") : isEditing ? t("adminProducts.actions.save") : t("adminProducts.actions.create")}
             </button>
 
             {isEditing && (
@@ -726,7 +659,7 @@ export function AdminProductsPage() {
                 onClick={startCreate}
                 className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold hover:bg-white/10"
               >
-                Cancel
+                {t("adminProducts.actions.cancel")}
               </button>
             )}
           </div>
@@ -737,17 +670,27 @@ export function AdminProductsPage() {
       <section id="catalog-section">
         <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm">
           <div className="p-6 sm:p-8 flex items-center justify-between border-b border-white/10">
-            <h2 className="text-xl font-semibold text-white">Catalog</h2>
+            <h2 className="text-xl font-semibold text-white">{t("adminProducts.catalog.title")}</h2>
 
             <button
               type="button"
               onClick={load}
               className="p-2 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors rounded-xl group"
-              aria-label="Refresh"
-              title="Refresh"
+              aria-label={t("adminProducts.actions.refresh")}
+              title={t("adminProducts.actions.refresh")}
             >
-              <svg className="h-5 w-5 text-slate-400 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <svg
+                className="h-5 w-5 text-slate-400 group-hover:rotate-180 transition-transform duration-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
               </svg>
             </button>
           </div>
@@ -764,37 +707,39 @@ export function AdminProductsPage() {
                 value={q}
                 onChange={(e) => onChangeSearch(e.target.value)}
                 className="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-white placeholder-slate-500 focus:ring-1 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
-                placeholder="Search products..."
+                placeholder={t("adminProducts.catalog.searchPlaceholder")}
                 type="text"
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-400 whitespace-nowrap">Sort by:</label>
+              <label className="text-sm text-slate-400 whitespace-nowrap">{t("adminProducts.catalog.sortBy")}</label>
               <select
                 value={sortBy}
                 onChange={(e) => onChangeSort(e.target.value)}
                 className="bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:ring-1 focus:ring-orange-500 outline-none"
               >
-                <option value="name">Name</option>
-                <option value="price">Price</option>
-                <option value="stock">Stock</option>
+                <option value="name">{t("adminProducts.catalog.sort.name")}</option>
+                <option value="price">{t("adminProducts.catalog.sort.price")}</option>
+                <option value="stock">{t("adminProducts.catalog.sort.stock")}</option>
               </select>
             </div>
           </div>
 
-          {status === "loading" && <div className="p-6 text-slate-300/80">Loading products...</div>}
+          {status === "loading" && <div className="p-6 text-slate-300/80">{t("adminProducts.states.loading")}</div>}
 
           {status === "error" && (
             <div className="p-6">
               <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
-                <p className="font-bold text-red-200">Error</p>
-                <p className="text-red-200/80">{error || "Failed to load products"}</p>
+                <p className="font-bold text-red-200">{t("adminProducts.states.errorTitle")}</p>
+                <p className="text-red-200/80">{error || t("adminProducts.errors.load")}</p>
               </div>
             </div>
           )}
 
-          {status !== "loading" && status !== "error" && total === 0 && <div className="p-6 text-slate-300">No products found.</div>}
+          {status !== "loading" && status !== "error" && total === 0 && (
+            <div className="p-6 text-slate-300">{t("adminProducts.states.empty")}</div>
+          )}
 
           {status !== "loading" && status !== "error" && total > 0 && (
             <>
@@ -802,18 +747,19 @@ export function AdminProductsPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="text-slate-400 text-sm uppercase tracking-wider border-b border-white/10 bg-white/[0.01]">
-                      <th className="px-6 py-4 font-medium">ID</th>
-                      <th className="px-6 py-4 font-medium">Product</th>
-                      <th className="px-6 py-4 font-medium">Category</th>
-                      <th className="px-6 py-4 font-medium">Price</th>
-                      <th className="px-6 py-4 font-medium">Stock</th>
-                      <th className="px-6 py-4 font-medium text-right">Actions</th>
+                      <th className="px-6 py-4 font-medium">{t("adminProducts.table.id")}</th>
+                      <th className="px-6 py-4 font-medium">{t("adminProducts.table.product")}</th>
+                      <th className="px-6 py-4 font-medium">{t("adminProducts.table.category")}</th>
+                      <th className="px-6 py-4 font-medium">{t("adminProducts.table.price")}</th>
+                      <th className="px-6 py-4 font-medium">{t("adminProducts.table.stock")}</th>
+                      <th className="px-6 py-4 font-medium text-right">{t("adminProducts.table.actions")}</th>
                     </tr>
                   </thead>
 
                   <tbody className="divide-y divide-white/5">
                     {pageItems.map((p) => {
-                      const img = p.imageUrl || (Array.isArray(p.gallery) ? toUrl(p.gallery[0]) : "");
+                      const img = p.imageUrl || (Array.isArray(p.gallery) ? p.gallery[0] : "");
+                      const display = p.nameES || p.nameEN || p.name;
                       return (
                         <tr key={p.id} className="hover:bg-white/[0.03] transition-colors group">
                           <td className="px-6 py-4 text-slate-500 text-sm">{`#EV-${String(p.id).padStart(4, "0")}`}</td>
@@ -826,12 +772,14 @@ export function AdminProductsPage() {
                                     src={img}
                                     alt="thumb"
                                     className="h-full w-full object-cover"
-                                    onError={(e) => (e.currentTarget.style.opacity = "0.3")}
+                                    onError={(e) => {
+                                      e.currentTarget.style.opacity = "0.3";
+                                    }}
                                   />
                                 ) : null}
                               </div>
                               <div className="min-w-0">
-                                <div className="text-white font-medium truncate">{p.nameES || p.nameEN || p.name}</div>
+                                <div className="text-white font-medium truncate">{display}</div>
                                 <div className="text-xs text-slate-500 truncate">{p.nameEN || ""}</div>
                               </div>
                             </div>
@@ -839,7 +787,7 @@ export function AdminProductsPage() {
 
                           <td className="px-6 py-4">
                             <span className={["px-2 py-1 rounded-md text-xs font-medium", categoryBadgeClasses(p.category)].join(" ")}>
-                              {p.category || "General"}
+                              {p.category || t("adminProducts.defaults.general")}
                             </span>
                           </td>
 
@@ -855,7 +803,7 @@ export function AdminProductsPage() {
                               onClick={() => startEdit(p)}
                               className="px-3 py-1.5 rounded-lg border border-orange-500/30 text-orange-400 hover:bg-orange-500 hover:text-white transition-all text-xs font-semibold"
                             >
-                              Edit
+                              {t("adminProducts.actions.edit")}
                             </button>
 
                             <button
@@ -864,7 +812,7 @@ export function AdminProductsPage() {
                               disabled={deletingId === String(p.id)}
                               className="px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xs font-semibold disabled:opacity-60"
                             >
-                              {deletingId === String(p.id) ? "Deleting..." : "Delete"}
+                              {deletingId === String(p.id) ? t("adminProducts.actions.deleting") : t("adminProducts.actions.delete")}
                             </button>
                           </td>
                         </tr>
@@ -876,7 +824,10 @@ export function AdminProductsPage() {
 
               <div className="p-6 border-t border-white/10 flex justify-between items-center text-sm text-slate-500">
                 <span>
-                  Showing {Math.min(start + pageItems.length, total)} of {total} products
+                  {t("adminProducts.pagination.showing", {
+                    shown: Math.min(start + pageItems.length, total),
+                    total,
+                  })}
                 </span>
 
                 <div className="flex gap-2">
@@ -886,7 +837,7 @@ export function AdminProductsPage() {
                     disabled={safePage <= 1}
                     className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-30"
                   >
-                    Previous
+                    {t("adminProducts.pagination.prev")}
                   </button>
 
                   <button
@@ -895,7 +846,7 @@ export function AdminProductsPage() {
                     disabled={safePage >= totalPages}
                     className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-30"
                   >
-                    Next
+                    {t("adminProducts.pagination.next")}
                   </button>
                 </div>
               </div>

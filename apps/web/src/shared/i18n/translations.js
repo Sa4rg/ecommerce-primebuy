@@ -1,4 +1,4 @@
-import { resetPassword } from "../../features/auth/authCommand";
+// web/src/shared/i18n/translations.js
 
 export const translations = {
   es: {
@@ -14,6 +14,174 @@ export const translations = {
       login: "Ingresar",
       logout: "Salir",
     },
+
+    adminProducts: {
+      title: "Administrar productos",
+      subtitle: "Gestiona el catálogo de productos",
+
+      // ✅ defaults usados por AdminProductsPage
+      defaults: {
+        general: "General",
+      },
+
+      form: {
+        // ✅ títulos
+        createTitle: "Crear producto",
+        editTitle: "Editar producto",
+
+        // ✅ labels
+        nameQuick: "Nombre",
+        nameES: "Nombre (ES)",
+        nameEN: "Nombre (EN)",
+        shortDescES: "Descripción corta (ES)",
+        shortDescEN: "Descripción corta (EN)",
+        price: "Precio (USD)",
+        stock: "Stock",
+        category: "Categoría",
+
+        // ✅ placeholders + help
+        placeholders: {
+          name: 'Ej: "Sony A7 IV"',
+          nameES: 'Ej: "Cámara Sony A7 IV"',
+          nameEN: 'Ej: "Sony A7 IV Camera"',
+          shortDescES: "2-3 líneas cortas...",
+          shortDescEN: "2-3 short lines...",
+          price: "2499",
+          stock: "10",
+          category: "Ej: Cámaras",
+        },
+        help: {
+          nameQuick: "Este campo sincroniza ES + EN (puedes editarlos después por separado).",
+        },
+
+        // 🔁 compat con tus keys anteriores (no rompe)
+        name: "Nombre",
+        description: "Descripción",
+        save: "Guardar",
+        cancel: "Cancelar",
+        add: "Agregar producto",
+        edit: "Editar producto",
+      },
+
+      images: {
+        title: "Imágenes",
+        subtitle: "Pega URLs (cover + galería). Recomendado: HTTPS.",
+        preview: "Vista previa",
+        noCover: "Sin cover",
+
+        // cover
+        coverLabel: "URL de imagen principal (cover)",
+        coverPlaceholder: "https://.../cover.jpg",
+        coverHelp: "Tip: si no pones cover, se usará la primera imagen de la galería como principal.",
+
+        // gallery
+        galleryLabel: "URLs de galería",
+        addImage: "+ Agregar imagen",
+        emptyGallery: "Aún no hay imágenes en la galería.",
+        galleryPlaceholder: "https://.../image-{n}.jpg",
+        galleryPreview: "Vista previa de galería",
+        noPreview: "No hay imágenes para previsualizar.",
+
+        // action
+        useCoverAsFirst: "Usar cover como primera",
+        useCoverAsFirstTitle: "Pone el cover como primera imagen en la galería (si no está)",
+
+        // 🔁 compat con tus keys anteriores
+        upload: "Subir imagen",
+        remove: "Eliminar imagen",
+      },
+
+      specs: {
+        title: "Especificaciones",
+        add: "+ Agregar especificación",
+        empty: "Aún no hay especificaciones.",
+        labelES: "Label ES (Ej: Sensor)",
+        valueES: "Valor ES",
+        labelEN: "Label EN (e.g. Sensor)",
+        valueEN: "Valor EN",
+
+        // 🔁 compat anterior
+        key: "Clave",
+        value: "Valor",
+        remove: "Eliminar",
+      },
+
+      catalog: {
+        title: "Catálogo",
+        searchPlaceholder: "Buscar productos...",
+        sortBy: "Ordenar por:",
+        sort: {
+          name: "Nombre",
+          price: "Precio",
+          stock: "Stock",
+        },
+
+        // 🔁 compat con tus keys anteriores
+        search: "Buscar por nombre o categoría...",
+      },
+
+      table: {
+        id: "ID",
+        product: "Producto",
+        category: "Categoría",
+        price: "Precio",
+        stock: "Stock",
+        actions: "Acciones",
+
+        // 🔁 compat anterior
+        name: "Nombre",
+        edit: "Editar",
+        delete: "Eliminar",
+      },
+
+      pagination: {
+        prev: "Anterior",
+        next: "Siguiente",
+        showing: "Mostrando {shown} de {total} productos",
+      },
+
+      states: {
+        loading: "Cargando productos...",
+        errorTitle: "Error",
+        empty: "No hay productos para mostrar.",
+      },
+
+      errors: {
+        load: "No se pudieron cargar los productos",
+        save: "No se pudo guardar el producto",
+        delete: "No se pudo eliminar el producto",
+        formInvalid: "Por favor completa nombre, precio y stock.",
+
+        // 🔁 compat anterior
+        required: "Este campo es obligatorio",
+        invalidPrice: "Precio inválido",
+        invalidStock: "Stock inválido",
+        saveFailed: "No se pudo guardar el producto",
+        loadFailed: "No se pudieron cargar los productos",
+      },
+
+      actions: {
+        new: "Nuevo",
+        refresh: "Actualizar",
+        create: "Crear producto",
+        save: "Guardar cambios",
+        saving: "Guardando...",
+        cancel: "Cancelar",
+        edit: "Editar",
+        delete: "Eliminar",
+        deleting: "Eliminando...",
+        remove: "Quitar",
+
+        // 🔁 compat anterior
+        add: "Agregar",
+      },
+
+      confirm: {
+        // ✅ ahora acepta {name}
+        delete: '¿Seguro que quieres eliminar "{name}"? Esto no se puede deshacer.',
+      },
+    },
+
     productCard: {
       favorite: "Favorito",
       stock: {
@@ -32,45 +200,46 @@ export const translations = {
         unknown: "Error desconocido",
       },
     },
+
     productCatalog: {
-        breadcrumbs: {
-            home: "Home",
-            electronics: "Electrónica",
-        },
-        sidebar: {
-            categories: "Categorías",
-            all: "Todos",
-            watches: "Relojes",
-            securityCameras: "Cámaras de seguridad",
-            priceRange: "Rango de precios",
-            minPrice: "Precio mín.",
-            maxPrice: "Precio máx.",
-            resetPrice: "Resetear precio",
-        },
-        header: {
-            titleElectronics: "Electrónica",
-            showing: "Mostrando {showing} de {total} productos",
-        },
-        controls: {
-            favorites: "Favoritos",
-            sortNewest: "Ordenar: Más nuevos",
-            sortPriceAsc: "Precio: Menor a Mayor",
-            sortPriceDesc: "Precio: Mayor a Menor",
-            sortStockDesc: "Stock: Mayor a Menor",
-        },
-        states: {
-            loading: "Cargando productos...",
-            errorTitle: "Error",
-            emptyTitle: "No se encontraron productos.",
-            emptyHint: "Prueba con otro filtro o categoría.",
-        },
-        pagination: {
-            prev: "Página anterior",
-            next: "Página siguiente",
-        },
+      breadcrumbs: {
+        home: "Home",
+        electronics: "Electrónica",
+      },
+      sidebar: {
+        categories: "Categorías",
+        all: "Todos",
+        watches: "Relojes",
+        securityCameras: "Cámaras de seguridad",
+        priceRange: "Rango de precios",
+        minPrice: "Precio mín.",
+        maxPrice: "Precio máx.",
+        resetPrice: "Resetear precio",
+      },
+      header: {
+        titleElectronics: "Electrónica",
+        showing: "Mostrando {showing} de {total} productos",
+      },
+      controls: {
+        favorites: "Favoritos",
+        sortNewest: "Ordenar: Más nuevos",
+        sortPriceAsc: "Precio: Menor a Mayor",
+        sortPriceDesc: "Precio: Mayor a Menor",
+        sortStockDesc: "Stock: Mayor a Menor",
+      },
+      states: {
+        loading: "Cargando productos...",
+        errorTitle: "Error",
+        emptyTitle: "No se encontraron productos.",
+        emptyHint: "Prueba con otro filtro o categoría.",
+      },
+      pagination: {
+        prev: "Página anterior",
+        next: "Página siguiente",
+      },
     },
-   
-        cart: {
+
+    cart: {
       breadcrumb: {
         home: "Home",
         cart: "Carrito",
@@ -120,116 +289,113 @@ export const translations = {
         continueGuestHint: "con un carrito nuevo vacío",
       },
     },
-  auth: {
-    common: {
-      emailLabel: "Correo electrónico",
-      passwordLabel: "Contraseña",
-      confirmPasswordLabel: "Confirmar contraseña",
-      backToLogin: "Volver al login",
-      continueWith: "O continuar con",
-      continueWithGoogle: "Continuar con Google",
-      showPassword: "Mostrar contraseña",
-      hidePassword: "Ocultar contraseña",
+
+    auth: {
+      common: {
+        emailLabel: "Correo electrónico",
+        passwordLabel: "Contraseña",
+        confirmPasswordLabel: "Confirmar contraseña",
+        backToLogin: "Volver al login",
+        continueWith: "O continuar con",
+        continueWithGoogle: "Continuar con Google",
+        showPassword: "Mostrar contraseña",
+        hidePassword: "Ocultar contraseña",
+      },
+      login: {
+        title: "Bienvenida de vuelta",
+        subtitle: "Inicia sesión en tu cuenta de ElectroVar",
+        forgotPassword: "¿Olvidaste tu contraseña?",
+        signIn: "Iniciar sesión",
+        signingIn: "Iniciando...",
+        noAccount: "¿No tienes una cuenta?",
+        createAccount: "Crear cuenta",
+        errorTitle: "Algo salió mal",
+        defaultError: "Falló el inicio de sesión",
+      },
+      register: {
+        title: "Crear cuenta",
+        subtitle: "Crea tu cuenta de ElectroVar",
+        nameLabel: "Nombre (opcional)",
+        namePlaceholder: "Tu nombre",
+        signUp: "Crear cuenta",
+        signingUp: "Creando...",
+        haveAccount: "¿Ya tienes cuenta?",
+        goToLogin: "Ir al login",
+        errorTitle: "Algo salió mal",
+        defaultError: "Falló el registro",
+        emailLabel: "Correo electrónico",
+        emailPlaceholder: "name@company.com",
+        passwordLabel: "Contraseña",
+        passwordPlaceholder: "••••••••",
+        confirmPasswordLabel: "Confirmar contraseña",
+        confirmPasswordPlaceholder: "••••••••",
+        showPassword: "Mostrar contraseña",
+        hidePassword: "Ocultar contraseña",
+        mismatch: "Las contraseñas no coinciden.",
+      },
+      forgot: {
+        title: "Olvidé mi contraseña",
+        subtitle: "Te enviaremos un código para resetear tu contraseña.",
+        sendCode: "Enviar código",
+        sending: "Enviando...",
+        successTitle: "Revisa tu email",
+        successBody: "Si el email existe, enviamos un código de verificación.",
+        iHaveCode: "Tengo un código",
+        backToLogin: "Volver al login",
+        checkEmail: "Revisa tu email",
+        emailSent: "Si el email existe, enviamos un código de verificación.",
+        errorTitle: "Algo salió mal",
+        defaultError: "Falló la solicitud",
+      },
+      reset: {
+        title: "Resetear contraseña",
+        subtitle: "Ingresa el código del email y elige una nueva contraseña.",
+        codeLabel: "Código",
+        codePlaceholder: "123456",
+        newPasswordLabel: "Nueva contraseña",
+        confirmPasswordLabel: "Confirmar contraseña",
+        mismatch: "Las contraseñas no coinciden.",
+        resetPassword: "Resetear contraseña",
+        resetBtn: "Resetear contraseña",
+        resetting: "Reseteando...",
+        needCode: "¿Necesitas un código?",
+        errorTitle: "Algo salió mal",
+        defaultError: "Falló el reseteo",
+      },
+      callback: {
+        signingIn: "Iniciando sesión...",
+        failedTitle: "Falló la autenticación",
+        defaultError: "Falló el login con Google",
+      },
     },
 
-    login: {
-      title: "Bienvenida de vuelta",
-      subtitle: "Inicia sesión en tu cuenta de ElectroVar",
-      forgotPassword: "¿Olvidaste tu contraseña?",
-      signIn: "Iniciar sesión",
-      signingIn: "Iniciando...",
-      noAccount: "¿No tienes una cuenta?",
-      createAccount: "Crear cuenta",
-      errorTitle: "Algo salió mal",
-      defaultError: "Falló el inicio de sesión",
-    },
-
-    register: {
-      title: "Crear cuenta",
-      subtitle: "Crea tu cuenta de ElectroVar",
-      nameLabel: "Nombre (opcional)",
-      namePlaceholder: "Tu nombre",
-      signUp: "Crear cuenta",
-      signingUp: "Creando...",
-      haveAccount: "¿Ya tienes cuenta?",
-      goToLogin: "Ir al login",
-      errorTitle: "Algo salió mal",
-      defaultError: "Falló el registro",
-      emailLabel: "Correo electrónico",
-      emailPlaceholder: "name@company.com",
-      passwordLabel: "Contraseña",
-      passwordPlaceholder: "••••••••",
-      confirmPasswordLabel: "Confirmar contraseña",
-      confirmPasswordPlaceholder: "••••••••",
-      showPassword: "Mostrar contraseña",
-      hidePassword: "Ocultar contraseña",
-      mismatch: "Las contraseñas no coinciden.",
-    },
-
-    forgot: {
-      title: "Olvidé mi contraseña",
-      subtitle: "Te enviaremos un código para resetear tu contraseña.",
-      sendCode: "Enviar código",
-      sending: "Enviando...",
-      successTitle: "Revisa tu email",
-      successBody: "Si el email existe, enviamos un código de verificación.",
-      iHaveCode: "Tengo un código",
-      backToLogin: "Volver al login",
-      checkEmail: "Revisa tu email",
-      emailSent: "Si el email existe, enviamos un código de verificación.",
-      errorTitle: "Algo salió mal",
-      defaultError: "Falló la solicitud",
-    },
-
-    reset: {
-      title: "Resetear contraseña",
-      subtitle: "Ingresa el código del email y elige una nueva contraseña.",
-      codeLabel: "Código",
-      codePlaceholder: "123456",
-      newPasswordLabel: "Nueva contraseña",
-      confirmPasswordLabel: "Confirmar contraseña",
-      mismatch: "Las contraseñas no coinciden.",
-      resetPassword: "Resetear contraseña",
-      resetBtn: "Resetear contraseña",
-      resetting: "Reseteando...",
-      needCode: "¿Necesitas un código?",
-      errorTitle: "Algo salió mal",
-      defaultError: "Falló el reseteo",
-    },
-
-    callback: {
-      signingIn: "Iniciando sesión...",
-      failedTitle: "Falló la autenticación",
-      defaultError: "Falló el login con Google",
+    productDetail: {
+      breadcrumbs: { home: "Home", products: "Products" },
+      stock: { available: "Disponible", out: "Sin stock" },
+      actions: {
+        addToCart: "Agregar al carrito",
+        adding: "Agregando...",
+        added: "Agregado ✓",
+        // buyNow ya no lo usas, pero si existe no molesta
+        buyNow: "Comprar ahora",
+      },
+      perks: {
+        shipping: "Envío nacional",
+        returns: "30 días de devolución",
+      },
+      specs: {
+        title: "Especificaciones técnicas",
+        empty: "Este producto no tiene especificaciones aún.",
+        downloadPdf: "Descargar PDF completo",
+      },
+      states: {
+        loading: "Cargando producto...",
+        errorTitle: "Algo salió mal",
+        backToCatalog: "Volver al catálogo",
+      },
     },
   },
 
-  productDetail: {
-    breadcrumbs: { home: "Home", products: "Products" },
-    stock: { available: "Disponible", out: "Sin stock" },
-    actions: {
-      addToCart: "Agregar al carrito",
-      adding: "Agregando...",
-      added: "Agregado ✓",
-      buyNow: "Comprar ahora",
-    },
-    perks: {
-      shipping: "Envío nacional",
-      returns: "30 días de devolución",
-    },
-    specs: {
-      title: "Especificaciones técnicas",
-      empty: "Este producto no tiene especificaciones aún.",
-      downloadPdf: "Descargar PDF completo",
-    },
-    states: {
-      loading: "Cargando producto...",
-      errorTitle: "Algo salió mal",
-      backToCatalog: "Volver al catálogo",
-    },
-  }
-},
- 
   en: {
     navbar: {
       electronics: "Electronics",
@@ -242,6 +408,167 @@ export const translations = {
       products: "Products",
       login: "Login",
       logout: "Logout",
+    },
+
+    adminProducts: {
+      title: "Manage products",
+      subtitle: "Manage the product catalog",
+
+      defaults: {
+        general: "General",
+      },
+
+      form: {
+        createTitle: "Create product",
+        editTitle: "Edit product",
+
+        nameQuick: "Name",
+        nameES: "Name (ES)",
+        nameEN: "Name (EN)",
+        shortDescES: "Short description (ES)",
+        shortDescEN: "Short description (EN)",
+        price: "Price (USD)",
+        stock: "Stock",
+        category: "Category",
+
+        placeholders: {
+          name: 'e.g. "Sony A7 IV"',
+          nameES: 'e.g. "Sony A7 IV Camera"',
+          nameEN: 'e.g. "Sony A7 IV Camera"',
+          shortDescES: "2-3 short lines...",
+          shortDescEN: "2-3 short lines...",
+          price: "2499",
+          stock: "10",
+          category: "e.g. Cameras",
+        },
+        help: {
+          nameQuick: "This field syncs ES + EN (you can edit them separately below).",
+        },
+
+        // compat anterior
+        name: "Name",
+        price: "Price",
+        category: "Category",
+        description: "Description",
+        save: "Save",
+        cancel: "Cancel",
+        add: "Add product",
+        edit: "Edit product",
+      },
+
+      images: {
+        title: "Images",
+        subtitle: "Paste URLs (cover + gallery). Recommended: HTTPS.",
+        preview: "Preview",
+        noCover: "No cover",
+
+        coverLabel: "Cover image URL",
+        coverPlaceholder: "https://.../cover.jpg",
+        coverHelp: "Tip: if you don’t set a cover, the first gallery image will be used as the main image.",
+
+        galleryLabel: "Gallery URLs",
+        addImage: "+ Add image",
+        emptyGallery: "No gallery images yet.",
+        galleryPlaceholder: "https://.../image-{n}.jpg",
+        galleryPreview: "Gallery preview",
+        noPreview: "No images to preview.",
+
+        useCoverAsFirst: "Use cover as first",
+        useCoverAsFirstTitle: "Adds the cover as the first gallery image (if it isn’t already).",
+
+        // compat
+        upload: "Upload image",
+        remove: "Remove image",
+      },
+
+      specs: {
+        title: "Specifications",
+        add: "+ Add spec",
+        empty: "No specs yet.",
+        labelES: "Label ES (e.g. Sensor)",
+        valueES: "Value ES",
+        labelEN: "Label EN (e.g. Sensor)",
+        valueEN: "Value EN",
+
+        // compat
+        key: "Key",
+        value: "Value",
+        remove: "Remove",
+      },
+
+      catalog: {
+        title: "Catalog",
+        searchPlaceholder: "Search products...",
+        sortBy: "Sort by:",
+        sort: {
+          name: "Name",
+          price: "Price",
+          stock: "Stock",
+        },
+
+        // compat
+        search: "Search by name or category...",
+      },
+
+      table: {
+        id: "ID",
+        product: "Product",
+        category: "Category",
+        price: "Price",
+        stock: "Stock",
+        actions: "Actions",
+
+        // compat
+        name: "Name",
+        edit: "Edit",
+        delete: "Delete",
+      },
+
+      pagination: {
+        prev: "Previous",
+        next: "Next",
+        showing: "Showing {shown} of {total} products",
+      },
+
+      states: {
+        loading: "Loading products...",
+        errorTitle: "Error",
+        empty: "No products to display.",
+      },
+
+      errors: {
+        load: "Failed to load products",
+        save: "Failed to save product",
+        delete: "Failed to delete product",
+        formInvalid: "Please fill name, price and stock.",
+
+        // compat
+        required: "This field is required",
+        invalidPrice: "Invalid price",
+        invalidStock: "Invalid stock",
+        saveFailed: "Failed to save product",
+        loadFailed: "Failed to load products",
+      },
+
+      actions: {
+        new: "New",
+        refresh: "Refresh",
+        create: "Create product",
+        save: "Save changes",
+        saving: "Saving...",
+        cancel: "Cancel",
+        edit: "Edit",
+        delete: "Delete",
+        deleting: "Deleting...",
+        remove: "Remove",
+
+        // compat
+        add: "Add",
+      },
+
+      confirm: {
+        delete: 'Delete "{name}"? This cannot be undone.',
+      },
     },
 
     productCard: {
@@ -264,44 +591,44 @@ export const translations = {
     },
 
     productCatalog: {
-        breadcrumbs: {
-            home: "Home",
-            electronics: "Electronics",
-        },
-        sidebar: {
-            categories: "Categories",
-            all: "All",
-            watches: "Watches",
-            securityCameras: "Security Cameras",
-            priceRange: "Price Range",
-            minPrice: "Min price",
-            maxPrice: "Max price",
-            resetPrice: "Reset price",
-        },
-        header: {
-            titleElectronics: "Electronics",
-            showing: "Showing {showing} of {total} products",
-        },
-        controls: {
-            favorites: "Favorites",
-            sortNewest: "Sort by: Newest",
-            sortPriceAsc: "Price: Low to High",
-            sortPriceDesc: "Price: High to Low",
-            sortStockDesc: "Stock: High to Low",
-        },
-        states: {
-            loading: "Loading products...",
-            errorTitle: "Error",
-            emptyTitle: "No products found.",
-            emptyHint: "Try another filter or category.",
-        },
-        pagination: {
-            prev: "Previous page",
-            next: "Next page",
-        },
-        },
+      breadcrumbs: {
+        home: "Home",
+        electronics: "Electronics",
+      },
+      sidebar: {
+        categories: "Categories",
+        all: "All",
+        watches: "Watches",
+        securityCameras: "Security Cameras",
+        priceRange: "Price Range",
+        minPrice: "Min price",
+        maxPrice: "Max price",
+        resetPrice: "Reset price",
+      },
+      header: {
+        titleElectronics: "Electronics",
+        showing: "Showing {showing} of {total} products",
+      },
+      controls: {
+        favorites: "Favorites",
+        sortNewest: "Sort by: Newest",
+        sortPriceAsc: "Price: Low to High",
+        sortPriceDesc: "Price: High to Low",
+        sortStockDesc: "Stock: High to Low",
+      },
+      states: {
+        loading: "Loading products...",
+        errorTitle: "Error",
+        emptyTitle: "No products found.",
+        emptyHint: "Try another filter or category.",
+      },
+      pagination: {
+        prev: "Previous page",
+        next: "Next page",
+      },
+    },
 
-        cart: {
+    cart: {
       breadcrumb: {
         home: "Home",
         cart: "Cart",
@@ -351,6 +678,7 @@ export const translations = {
         continueGuestHint: "with a new empty cart",
       },
     },
+
     auth: {
       common: {
         emailLabel: "Email address",
@@ -362,7 +690,6 @@ export const translations = {
         showPassword: "Show password",
         hidePassword: "Hide password",
       },
-
       login: {
         title: "Welcome Back",
         subtitle: "Log in to your ElectroVar account",
@@ -374,7 +701,6 @@ export const translations = {
         errorTitle: "Something went wrong",
         defaultError: "Login failed",
       },
-
       register: {
         title: "Create account",
         subtitle: "Create your ElectroVar account",
@@ -396,7 +722,6 @@ export const translations = {
         hidePassword: "Hide password",
         mismatch: "Passwords do not match.",
       },
-
       forgot: {
         title: "Forgot password",
         subtitle: "We’ll send you a code to reset your password.",
@@ -408,7 +733,6 @@ export const translations = {
         errorTitle: "Something went wrong",
         defaultError: "Failed to request reset",
       },
-
       reset: {
         title: "Reset password",
         subtitle: "Enter the code from your email and choose a new password.",
@@ -424,7 +748,6 @@ export const translations = {
         errorTitle: "Something went wrong",
         defaultError: "Failed to reset password",
       },
-
       callback: {
         signingIn: "Signing you in...",
         failedTitle: "Authentication failed",
@@ -455,6 +778,6 @@ export const translations = {
         errorTitle: "Something went wrong",
         backToCatalog: "Back to catalog",
       },
-    }
-  }
+    },
+  },
 };
