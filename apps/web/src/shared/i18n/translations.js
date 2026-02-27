@@ -203,6 +203,31 @@ export const translations = {
       defaultError: "Falló el login con Google",
     },
   },
+
+  productDetail: {
+    breadcrumbs: { home: "Home", products: "Products" },
+    stock: { available: "Disponible", out: "Sin stock" },
+    actions: {
+      addToCart: "Agregar al carrito",
+      adding: "Agregando...",
+      added: "Agregado ✓",
+      buyNow: "Comprar ahora",
+    },
+    perks: {
+      shipping: "Envío nacional",
+      returns: "30 días de devolución",
+    },
+    specs: {
+      title: "Especificaciones técnicas",
+      empty: "Este producto no tiene especificaciones aún.",
+      downloadPdf: "Descargar PDF completo",
+    },
+    states: {
+      loading: "Cargando producto...",
+      errorTitle: "Algo salió mal",
+      backToCatalog: "Volver al catálogo",
+    },
+  }
 },
  
   en: {
@@ -406,5 +431,30 @@ export const translations = {
         defaultError: "Google login failed",
       },
     },
+
+    productDetail: {
+      breadcrumbs: { home: "Home", products: "Products" },
+      stock: { available: "Available", out: "Out of stock" },
+      actions: {
+        addToCart: "Add to cart",
+        adding: "Adding...",
+        added: "Added ✓",
+        buyNow: "Buy now",
+      },
+      perks: {
+        shipping: "Shipping",
+        returns: "30-day returns",
+      },
+      specs: {
+        title: "Technical specifications",
+        empty: "This product has no specs yet.",
+        downloadPdf: "Download full PDF",
+      },
+      states: {
+        loading: "Loading product...",
+        errorTitle: "Something went wrong",
+        backToCatalog: "Back to catalog",
+      },
+    }
   }
 };

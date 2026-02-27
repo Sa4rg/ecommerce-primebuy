@@ -6,24 +6,53 @@
  *
  * Implementations:
  * - InMemoryProductsRepository (for unit tests)
- * - MySQLProductsRepository (for production / integration tests) [future]
+ * - MySQL Products Repository (for production / integration tests)
+ */
+
+/**
+ * @typedef {Object} ProductSpec
+ * @property {string} [labelES]
+ * @property {string} [valueES]
+ * @property {string} [labelEN]
+ * @property {string} [valueEN]
  */
 
 /**
  * @typedef {Object} Product
  * @property {string} id - Unique identifier (always a string)
- * @property {string} name - Product name
+ *
+ * // Legacy / base fields
+ * @property {string} name - Product name (legacy / fallback)
  * @property {number} priceUSD - Price in USD
  * @property {number} stock - Available stock quantity
  * @property {string} category - Product category
+ *
+ * // i18n optional fields
+ * @property {string|null} [nameES]
+ * @property {string|null} [nameEN]
+ * @property {string|null} [shortDescES]
+ * @property {string|null} [shortDescEN]
+ *
+ * // specs optional
+ * @property {ProductSpec[]} [specs]
  */
 
 /**
  * @typedef {Object} ProductData
- * @property {string} name - Product name
- * @property {number} priceUSD - Price in USD
- * @property {number} stock - Available stock quantity
- * @property {string} category - Product category
+ * // Legacy / base fields (required by older tests)
+ * @property {string} name
+ * @property {number} priceUSD
+ * @property {number} stock
+ * @property {string} category
+ *
+ * // i18n (optional)
+ * @property {string} [nameES]
+ * @property {string} [nameEN]
+ * @property {string} [shortDescES]
+ * @property {string} [shortDescEN]
+ *
+ * // specs (optional)
+ * @property {ProductSpec[]} [specs]
  */
 
 /**
@@ -35,27 +64,22 @@
  *
  * @property {function(string): Promise<Product|null>} findById
  * Returns a product by its ID, or null if not found.
- * - id: string
  *
  * @property {function(ProductData): Promise<Product>} create
  * Persists a new product and returns it with a generated string ID.
- * - productData: { name, priceUSD, stock, category }
  *
  * @property {function(string, ProductData): Promise<Product|null>} update
  * Updates an existing product by ID. Returns the updated product, or null if not found.
- * - id: string
- * - productData: partial product fields to update
  *
  * @property {function(string): Promise<Product|null>} delete
  * Deletes a product by ID. Returns the deleted product, or null if not found.
- * - id: string
  */
 
 /**
  * Contract Rules:
  *
  * 1. IDs are ALWAYS strings (input and output).
- * 2. Methods return plain product objects: { id, name, priceUSD, stock, category }
+ * 2. Methods return plain product objects.
  * 3. findById, update, delete return null when product does not exist.
  * 4. No business validation in repositories.
  * 5. No AppError usage in repositories.

@@ -7,6 +7,7 @@ const requestLogger = require('./middlewares/request-logger.middleware');
 const { pingDb } = require('./utils/dbHealth');
 const { NODE_ENV, FRONTEND_ORIGIN } = require('./config/env');
 
+
 const app = express();
 
 // Disable X-Powered-By

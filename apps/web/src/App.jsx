@@ -36,7 +36,8 @@ function App() {
         {/* Checkout */}
         <Route path="/checkout" element={<CheckoutStart />} />
         <Route path="/checkout/:checkoutId" element={<CheckoutView />} />
-        <Route path="/checkout/:checkoutId/payment" element={<PaymentMethodPage />} />
+        {/* no se usa por ahora
+         <Route path="/checkout/:checkoutId/payment" element={<PaymentMethodPage />} /> */}
 
         {/* Payment & Order */}
         <Route path="/payments/:paymentId" element={<PaymentStatusPage />} />

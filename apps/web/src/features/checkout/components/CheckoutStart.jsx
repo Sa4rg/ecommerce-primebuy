@@ -1,12 +1,17 @@
+// web/src/features/checkout/components/CheckoutStart.jsx
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { createCheckout } from "../checkoutCommand";
 import { useCart } from "../../../context/CartContext.jsx";
 import { getCheckoutId, setCheckoutId, clearCheckoutId } from "../checkoutStorage";
 
 export function CheckoutStart() {
-  const { itemsCount } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // 👇 tomamos también addItem por Buy Now
+  const cart = useCart();
+  const { itemsCount } = cart;
 
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
@@ -19,16 +24,45 @@ export function CheckoutStart() {
         setStatus("loading");
         setError("");
 
-        clearCheckoutId();
+        const buyNow = location.state?.buyNow; // { productId, quantity, replaceCart }
 
-        // 1) Reusar checkout si ya existe en storage
-        const existingCheckoutId = getCheckoutId();
-        if (existingCheckoutId) {
-          navigate(`/checkout/${existingCheckoutId}`, { replace: true });
-          return;
+        // ✅ Reusar checkout SOLO si NO es Buy Now
+        if (!buyNow) {
+          const existingCheckoutId = getCheckoutId();
+          if (existingCheckoutId) {
+            navigate(`/checkout/${existingCheckoutId}`, { replace: true });
+            return;
+          }
         }
 
+        // ✅ Si es Buy Now, forzamos un checkout nuevo (porque el carrito cambió)
+        clearCheckoutId();
+
+        // ✅ Buy Now: preparar carrito con 1 item
+        if (buyNow?.productId) {
+          // (Opcional) reemplazar carrito si existe algún método disponible
+          if (buyNow.replaceCart) {
+            try {
+              if (typeof cart.clear === "function") await cart.clear();
+              else if (typeof cart.startNewCart === "function") await cart.startNewCart();
+              else if (typeof cart.resetCart === "function") await cart.resetCart();
+              // si no existe ninguno, seguimos igual sin romper
+            } catch {
+              // ignore
+            }
+          }
+
+          // Agregar el producto al carrito
+          await cart.addItem({
+            productId: buyNow.productId,
+            quantity: buyNow.quantity ?? 1,
+          });
+        }
+
+        if (cancelled) return;
+
         // 2) Crear nuevo checkout
+        // 👇 importante: leer cartId DESPUÉS de Buy Now, por si el cart cambió
         const cartId = localStorage.getItem("cartId");
         const data = await createCheckout({ cartId });
 
@@ -48,7 +82,7 @@ export function CheckoutStart() {
     return () => {
       cancelled = true;
     };
-  }, [navigate]);
+  }, [navigate, location.state, cart]);
 
   return (
     <section>

@@ -1,10 +1,13 @@
 import { describe, test, expect } from "vitest";
 import request from "supertest";
 import app from "../app.js";
+import { createTestProduct } from "../test_helpers/productHelper.js";
 
 describe("GET /api/products/:id", () => {
   test("should return 200 and the product when it exists", async () => {
-    const response = await request(app).get("/api/products/1");
+    // Crea un producto antes de hacer el GET
+    const { productId, product } = await createTestProduct(app, { id: "1" });
+    const response = await request(app).get(`/api/products/${productId}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(
@@ -17,7 +20,7 @@ describe("GET /api/products/:id", () => {
 
     expect(response.body.data).toEqual(
       expect.objectContaining({
-        id: "1",
+        id: productId,
       })
     );
   });

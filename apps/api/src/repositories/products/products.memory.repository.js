@@ -20,9 +20,7 @@ class InMemoryProductsRepository {
   async create(productData) {
     const id = String(this.nextId++);
     const product = { id, ...productData };
-
     this.productsById.set(id, product);
-
     return product;
   }
 
@@ -33,7 +31,6 @@ class InMemoryProductsRepository {
 
     const updated = { ...existing, ...productData, id: key };
     this.productsById.set(key, updated);
-
     return updated;
   }
 
@@ -43,7 +40,6 @@ class InMemoryProductsRepository {
     if (!existing) return null;
 
     this.productsById.delete(key);
-
     return existing;
   }
 }

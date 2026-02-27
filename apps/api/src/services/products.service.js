@@ -1,13 +1,11 @@
+// apps/api/src/services/products.service.js
 const { AppError, NotFoundError } = require("../utils/errors");
-const {
-  InMemoryProductsRepository,
-} = require("../repositories/products/products.memory.repository");
+const { InMemoryProductsRepository } = require("../repositories/products/products.memory.repository");
 
 function toProductReadModel(product) {
   if (typeof product.priceUSD !== "number" || product.priceUSD <= 0) {
     throw new AppError("Invalid product data", 500);
   }
-
   if (typeof product.stock !== "number" || product.stock < 0) {
     throw new AppError("Invalid product data", 500);
   }
@@ -18,14 +16,32 @@ function toProductReadModel(product) {
   };
 }
 
-function validateCreateInput(input) {
+function validateCreateUpdateInput(input) {
   if (!input || typeof input !== "object") {
     throw new AppError("Invalid product input", 400);
   }
 
-  const { name, priceUSD, stock, category } = input;
+  const {
+    name,
+    nameES,
+    nameEN,
+    priceUSD,
+    stock,
+    category,
+    specs,
+    imageUrl,
+    gallery,
+    shortDescES,
+    shortDescEN,
+  } = input;
 
-  if (typeof name !== "string" || name.trim().length === 0) {
+  // ✅ Nombre: aceptamos name OR nameES/nameEN
+  const hasAnyName =
+    (typeof name === "string" && name.trim().length > 0) ||
+    (typeof nameES === "string" && nameES.trim().length > 0) ||
+    (typeof nameEN === "string" && nameEN.trim().length > 0);
+
+  if (!hasAnyName) {
     throw new AppError("Invalid product input", 400);
   }
 
@@ -38,6 +54,26 @@ function validateCreateInput(input) {
   }
 
   if (typeof stock !== "number" || stock < 0) {
+    throw new AppError("Invalid product input", 400);
+  }
+
+  if (specs !== undefined && !Array.isArray(specs)) {
+    throw new AppError("Invalid product input", 400);
+  }
+
+  if (gallery !== undefined && !Array.isArray(gallery)) {
+    throw new AppError("Invalid product input", 400);
+  }
+
+  if (imageUrl !== undefined && imageUrl !== null && typeof imageUrl !== "string") {
+    throw new AppError("Invalid product input", 400);
+  }
+
+  if (shortDescES !== undefined && shortDescES !== null && typeof shortDescES !== "string") {
+    throw new AppError("Invalid product input", 400);
+  }
+
+  if (shortDescEN !== undefined && shortDescEN !== null && typeof shortDescEN !== "string") {
     throw new AppError("Invalid product input", 400);
   }
 }
@@ -57,8 +93,7 @@ function aggregateQuantities(items) {
 }
 
 function createProductsService(deps = {}) {
-  const productsRepository =
-    deps.productsRepository || new InMemoryProductsRepository();
+  const productsRepository = deps.productsRepository || new InMemoryProductsRepository();
 
   async function getProducts() {
     const products = await productsRepository.findAll();
@@ -67,72 +102,68 @@ function createProductsService(deps = {}) {
 
   async function getProductById(id) {
     const product = await productsRepository.findById(id);
-
-    if (!product) {
-      throw new NotFoundError("Product not found");
-    }
-
+    if (!product) throw new NotFoundError("Product not found");
     return toProductReadModel(product);
   }
 
-  async function createProduct(input) {
-    validateCreateInput(input);
+  function buildProductData(input) {
+    const nameES = typeof input.nameES === "string" ? input.nameES.trim() : "";
+    const nameEN = typeof input.nameEN === "string" ? input.nameEN.trim() : "";
+    const legacyName = typeof input.name === "string" ? input.name.trim() : "";
 
-    const productData = {
-      name: input.name.trim(),
+    // ✅ name fallback para compatibilidad
+    const name = nameES || nameEN || legacyName;
+
+    const specs = Array.isArray(input.specs) ? input.specs : [];
+    const gallery = Array.isArray(input.gallery) ? input.gallery : [];
+
+    return {
+      // legacy + core
+      name,
       priceUSD: input.priceUSD,
       stock: input.stock,
-      category: input.category.trim(),
+      category: String(input.category || "").trim(),
+
+      // i18n
+      nameES: nameES || null,
+      nameEN: nameEN || null,
+      shortDescES: typeof input.shortDescES === "string" ? input.shortDescES.trim() : null,
+      shortDescEN: typeof input.shortDescEN === "string" ? input.shortDescEN.trim() : null,
+
+      // specs/images
+      specs,
+      imageUrl: typeof input.imageUrl === "string" ? input.imageUrl.trim() : null,
+      gallery: gallery.map((u) => String(u || "").trim()).filter(Boolean),
     };
+  }
 
+  async function createProduct(input) {
+    validateCreateUpdateInput(input);
+    const productData = buildProductData(input);
     const newProduct = await productsRepository.create(productData);
-
     return toProductReadModel(newProduct);
   }
 
   async function updateProduct(id, input) {
     const existing = await productsRepository.findById(id);
+    if (!existing) throw new NotFoundError("Product not found");
 
-    if (!existing) {
-      throw new NotFoundError("Product not found");
-    }
-
-    validateCreateInput(input);
-
-    const productData = {
-      name: input.name.trim(),
-      priceUSD: input.priceUSD,
-      stock: input.stock,
-      category: input.category.trim(),
-    };
+    validateCreateUpdateInput(input);
+    const productData = buildProductData(input);
 
     const updatedProduct = await productsRepository.update(id, productData);
-
     return toProductReadModel(updatedProduct);
   }
 
   async function deleteProduct(id) {
     const deletedProduct = await productsRepository.delete(id);
-
-    if (!deletedProduct) {
-      throw new NotFoundError("Product not found");
-    }
-
+    if (!deletedProduct) throw new NotFoundError("Product not found");
     return toProductReadModel(deletedProduct);
   }
 
-  /**
-   * ✅ Decrement stock when an order is created (after payment confirm)
-   * items: [{ productId, quantity, ... }]
-   *
-   * - Validates product exists
-   * - Validates stock is sufficient
-   * - Updates stock in repository
-   */
   async function decrementStockForItems(items) {
     const qtyMap = aggregateQuantities(items);
 
-    // 1) Validate all products exist and have enough stock
     for (const [productId, qty] of qtyMap.entries()) {
       const p = await productsRepository.findById(productId);
       if (!p) throw new NotFoundError("Product not found");
@@ -143,11 +174,10 @@ function createProductsService(deps = {}) {
       }
     }
 
-    // 2) Apply updates
     for (const [productId, qty] of qtyMap.entries()) {
       const p = await productsRepository.findById(productId);
       const nextStock = Number(p.stock || 0) - qty;
-      await productsRepository.update(productId, { stock: nextStock });
+      await productsRepository.update(productId, { ...p, stock: nextStock });
     }
 
     return true;
@@ -159,11 +189,10 @@ function createProductsService(deps = {}) {
     createProduct,
     updateProduct,
     deleteProduct,
-    decrementStockForItems, // ✅ new
+    decrementStockForItems,
   };
 }
 
-// Initial seed data for backward compatibility with existing tests
 const SEED_PRODUCTS = [
   { name: "Laptop", priceUSD: 1000, stock: 10, category: "Electronics" },
   { name: "Mouse", priceUSD: 20, stock: 50, category: "Electronics" },
@@ -171,7 +200,6 @@ const SEED_PRODUCTS = [
   { name: "USB Cable", priceUSD: 5, stock: 0, category: "Electronics" },
 ];
 
-// Default instance for backward compatibility
 const defaultService = createProductsService({
   productsRepository: new InMemoryProductsRepository(SEED_PRODUCTS),
 });
@@ -183,5 +211,5 @@ module.exports = {
   createProduct: defaultService.createProduct,
   updateProduct: defaultService.updateProduct,
   deleteProduct: defaultService.deleteProduct,
-  decrementStockForItems: defaultService.decrementStockForItems, // ✅ export
+  decrementStockForItems: defaultService.decrementStockForItems,
 };
