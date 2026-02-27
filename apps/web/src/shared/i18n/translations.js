@@ -15,6 +15,74 @@ export const translations = {
       logout: "Salir",
     },
 
+    checkout: {
+      title: {
+        shippingInfo: "Información de envío",
+        deliveryType: "Tipo de entrega",
+        paymentMethod: "Método de pago",
+        orderSummary: "Resumen del pedido",
+      },
+      form: {
+        fullName: "Nombre completo",
+        email: "Correo",
+        phone: "Teléfono",
+        city: "Ciudad",
+        street: "Dirección",
+        state: "Estado",
+        reference: "Referencia (opcional)",
+        pickupHint: "Para Pickup no se requiere dirección completa.",
+      },
+      placeholders: {
+        fullName: "Alexander Wright",
+        email: "you@email.com",
+        phone: "+58 414 123 4567",
+        city: "Caracas",
+        street: "Av Principal, Casa #1",
+        state: "Carabobo",
+        reference: "Near the park",
+      },
+      methods: {
+        shipping: {
+          pickup: "Retiro en tienda / Pickup",
+          localDelivery: "Delivery",
+          nationalShipping: "Envío nacional",
+        },
+        payment: {
+          zelle: "Zelle",
+          zinli: "Zinli",
+          bankTransfer: "Transferencia Bancaria",
+          pagoMovil: "Pago Móvil",
+        },
+      },
+      summary: {
+        qty: "Cant.: {qty}",
+        subtotal: "Subtotal",
+        shipping: "Envío",
+        estimatedTaxes: "Impuestos estimados",
+        total: "Total",
+        free: "GRATIS",
+        tbd: "PEND",
+        emptyCart: "Tu carrito está vacío.",
+        perItemLineTotal: "Total del ítem",
+      },
+      actions: {
+        processing: "Procesando...",
+        continueToPayment: "Continuar con el pago",
+      },
+      errors: {
+        checkoutIdMissing: "Falta checkoutId en la URL.",
+        noCart: "No se encontró un carrito. Agrega productos primero.",
+        emptyCart: "Tu carrito está vacío.",
+        incomplete: "Completa tus datos para continuar.",
+        failedToLoad: "No se pudo cargar el checkout.",
+        paymentIdMissing: "No se recibió paymentId desde /api/payments",
+      },
+      trust: {
+        securePayment: "Pago seguro",
+        returns: "Devoluciones 30 días",
+      },
+    },
+
     adminProducts: {
       title: "Administrar productos",
       subtitle: "Gestiona el catálogo de productos",
@@ -408,6 +476,74 @@ export const translations = {
       products: "Products",
       login: "Login",
       logout: "Logout",
+    },
+
+    checkout: {
+      title: {
+        shippingInfo: "Shipping Information",
+        deliveryType: "Delivery Type",
+        paymentMethod: "Payment Method",
+        orderSummary: "Order Summary",
+      },
+      form: {
+        fullName: "Full Name",
+        email: "Email",
+        phone: "Phone Number",
+        city: "City",
+        street: "Street Address",
+        state: "State",
+        reference: "Reference (optional)",
+        pickupHint: "Pickup does not require a full address.",
+      },
+      placeholders: {
+        fullName: "Alexander Wright",
+        email: "you@email.com",
+        phone: "+58 414 123 4567",
+        city: "Caracas",
+        street: "Av Principal, Casa #1",
+        state: "Carabobo",
+        reference: "Near the park",
+      },
+      methods: {
+        shipping: {
+          pickup: "Store pickup",
+          localDelivery: "Delivery",
+          nationalShipping: "National shipping",
+        },
+        payment: {
+          zelle: "Zelle",
+          zinli: "Zinli",
+          bankTransfer: "Bank transfer",
+          pagoMovil: "Pago Móvil",
+        },
+      },
+      summary: {
+        qty: "Qty: {qty}",
+        subtotal: "Subtotal",
+        shipping: "Shipping",
+        estimatedTaxes: "Estimated Taxes",
+        total: "Total",
+        free: "FREE",
+        tbd: "TBD",
+        emptyCart: "Your cart is empty.",
+        perItemLineTotal: "Item total",
+      },
+      actions: {
+        processing: "Processing...",
+        continueToPayment: "Continue to payment",
+      },
+      errors: {
+        checkoutIdMissing: "checkoutId missing in URL.",
+        noCart: "No cart found. Please add items first.",
+        emptyCart: "Your cart is empty.",
+        incomplete: "Please complete your details to continue.",
+        failedToLoad: "Failed to load checkout.",
+        paymentIdMissing: "No paymentId returned from /api/payments",
+      },
+      trust: {
+        securePayment: "Secure payment",
+        returns: "30-day returns",
+      },
     },
 
     adminProducts: {

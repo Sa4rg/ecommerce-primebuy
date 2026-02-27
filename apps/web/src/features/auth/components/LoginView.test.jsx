@@ -13,7 +13,7 @@ describe("LoginView", () => {
     localStorage.clear();
   });
 
-  it("stores accessToken and navigates to /checkout on success", async () => {
+  it("stores accessToken and navigates to /account on success", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       status: 200,
@@ -28,10 +28,10 @@ describe("LoginView", () => {
       <LanguageProvider>
         <AuthProvider>
           <CartProvider>
-            <MemoryRouter initialEntries={[{ pathname: "/login", state: { from: { pathname: "/checkout" } } }]}>
+            <MemoryRouter initialEntries={[{ pathname: "/login", state: { from: { pathname: "/account" } } }]}>
               <Routes>
                 <Route path="/login" element={<LoginView />} />
-                <Route path="/checkout" element={<h2>Checkout</h2>} />
+                <Route path="/account" element={<h1>Mi Cuenta</h1>} />
               </Routes>
             </MemoryRouter>
           </CartProvider>
@@ -49,6 +49,6 @@ describe("LoginView", () => {
       expect(localStorage.getItem("accessToken")).toBe("token-123");
     });
 
-    expect(screen.getByRole("heading", { name: /checkout/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /mi cuenta/i })).toBeInTheDocument();
   });
 });
