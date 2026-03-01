@@ -31,7 +31,22 @@ async function getMyOrders(req, res, next) {
   }
 }
 
+/**
+ * ✅ GET /api/me/last-shipping-address
+ * Returns last shipping address snapshot for the authenticated user, or null.
+ */
+async function getMyLastShippingAddress(req, res, next) {
+  try {
+    const { userId } = req.user;
+    const address = await ordersService.getLastShippingAddressByUserId(userId);
+    success(res, address, 'Last shipping address retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getMyPayments,
   getMyOrders,
+  getMyLastShippingAddress,
 };

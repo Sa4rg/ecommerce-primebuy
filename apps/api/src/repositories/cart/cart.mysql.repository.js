@@ -53,6 +53,7 @@ class MySQLCartRepository {
       unit_price_usd: item.unitPriceUSD,
       quantity: item.quantity,
       line_total_usd: item.lineTotalUSD,
+      image_url: item.imageUrl || null, // ✅ Persist image URL
     }));
   }
 
@@ -71,6 +72,7 @@ class MySQLCartRepository {
       unitPriceUSD: parseFloat(item.unit_price_usd),
       quantity: item.quantity,
       lineTotalUSD: parseFloat(item.line_total_usd),
+      imageUrl: item.image_url || null, // ✅ Load image URL
     }));
 
     // Calculate summary from items

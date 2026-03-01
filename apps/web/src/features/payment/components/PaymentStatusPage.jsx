@@ -1,9 +1,16 @@
-// src/features/payment/pages/PaymentStatusPage.jsx
+// web/src/features/payment/components/PaymentStatusPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { paymentService } from "../paymentService";
+import { clearCheckoutId } from "../../checkout/CheckoutStorage";
+import { clearAllPaymentsForCheckouts } from "../paymentStorage";
 import { useCart } from "../../../context/CartContext.jsx";
 import { getCheckoutById } from "../../checkout/checkoutQuery"; // ajusta ruta real
+
+function unwrapApiResponse(res) {
+  // supports: axios-like { data: { success, data } } or { data } or plain object
+  return res?.data?.data ?? res?.data ?? res;
+}
 
 function methodLabel(method) {
   if (method === "zelle") return "Zelle";
@@ -15,16 +22,40 @@ function methodLabel(method) {
 
 function instructionsByMethod(method) {
   if (method === "zelle") {
-    return { title: "Instrucciones de Pago", subtitle: "Realiza tu pago vía Zelle con los siguientes datos:", receiverLabel: "Correo del Receptor", receiverValue: "payments@tienda.com", note: "Incluye el ID del pedido en la nota de la transferencia." };
+    return {
+      title: "Instrucciones de Pago",
+      subtitle: "Realiza tu pago vía Zelle con los siguientes datos:",
+      receiverLabel: "Correo del Receptor",
+      receiverValue: "payments@tienda.com",
+      note: "Incluye el ID del pedido en la nota de la transferencia.",
+    };
   }
   if (method === "zinli") {
-    return { title: "Instrucciones de Pago", subtitle: "Realiza tu pago vía Zinli con los siguientes datos:", receiverLabel: "Cuenta / Correo", receiverValue: "payments@tienda.com", note: "Incluye el ID del pedido en la nota." };
+    return {
+      title: "Instrucciones de Pago",
+      subtitle: "Realiza tu pago vía Zinli con los siguientes datos:",
+      receiverLabel: "Cuenta / Correo",
+      receiverValue: "payments@tienda.com",
+      note: "Incluye el ID del pedido en la nota.",
+    };
   }
   if (method === "pago_movil") {
-    return { title: "Instrucciones de Pago", subtitle: "Realiza tu Pago Móvil con los siguientes datos:", receiverLabel: "Datos", receiverValue: "Banco 0102, CI..., Tel...", note: "Incluye el ID del pedido en la referencia." };
+    return {
+      title: "Instrucciones de Pago",
+      subtitle: "Realiza tu Pago Móvil con los siguientes datos:",
+      receiverLabel: "Datos",
+      receiverValue: "Banco 0102, CI..., Tel...",
+      note: "Incluye el ID del pedido en la referencia.",
+    };
   }
   if (method === "bank_transfer") {
-    return { title: "Instrucciones de Pago", subtitle: "Realiza tu transferencia con los siguientes datos:", receiverLabel: "Cuenta", receiverValue: "Cuenta: 0102-... Titular: ...", note: "Incluye el ID del pedido en la referencia." };
+    return {
+      title: "Instrucciones de Pago",
+      subtitle: "Realiza tu transferencia con los siguientes datos:",
+      receiverLabel: "Cuenta",
+      receiverValue: "Cuenta: 0102-... Titular: ...",
+      note: "Incluye el ID del pedido en la referencia.",
+    };
   }
   return null;
 }
@@ -46,17 +77,23 @@ export function PaymentStatusPage() {
   const didCreateNewCartRef = useRef(false);
 
   async function load() {
-    const p = await paymentService.getPayment(paymentId);
+    // 1) payment
+    const paymentRes = await paymentService.getPayment(paymentId);
+    const p = unwrapApiResponse(paymentRes);
     setPayment(p);
 
-    // Para sidebar/resumen tipo Stitch
+    // 2) checkout snapshot for sidebar
     if (p?.checkoutId) {
       try {
-        const c = await getCheckoutById(p.checkoutId);
+        const checkoutRes = await getCheckoutById(p.checkoutId);
+        const c = unwrapApiResponse(checkoutRes);
         setCheckout(c);
       } catch {
-        // no bloquees la pantalla si falla el resumen
+        // don't block page if summary fails
+        setCheckout(null);
       }
+    } else {
+      setCheckout(null);
     }
 
     return p;
@@ -65,7 +102,8 @@ export function PaymentStatusPage() {
   useEffect(() => {
     setErr("");
     didCreateNewCartRef.current = false;
-    load().catch((e) => setErr(e.message || "Failed to load payment"));
+
+    load().catch((e) => setErr(e?.message || "Failed to load payment"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentId]);
 
@@ -81,6 +119,8 @@ export function PaymentStatusPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, paymentId]);
 
+  // ✅ Business rule:
+  // Start a new cart ONLY after proof is submitted (SUBMITTED) or confirmed.
   useEffect(() => {
     if (!status) return;
 
@@ -97,6 +137,10 @@ export function PaymentStatusPage() {
 
   async function continueShopping() {
     try {
+      // ✅ reset local persistence so next purchase doesn't reuse old payment/checkout
+      clearCheckoutId();
+      clearAllPaymentsForCheckouts();
+
       await startNewCart();
     } catch {}
     nav("/", { replace: true });
@@ -107,7 +151,8 @@ export function PaymentStatusPage() {
     setLoading(true);
 
     try {
-      const updated = await paymentService.submitPayment({ paymentId, reference });
+      const updatedRes = await paymentService.submitPayment({ paymentId, reference });
+      const updated = unwrapApiResponse(updatedRes);
       setPayment(updated);
 
       if ((updated?.status === "submitted" || updated?.status === "confirmed") && !didCreateNewCartRef.current) {
@@ -115,7 +160,7 @@ export function PaymentStatusPage() {
         await startNewCart();
       }
     } catch (e) {
-      setErr(e.message || "Failed to submit proof");
+      setErr(e?.message || "Failed to submit proof");
     } finally {
       setLoading(false);
     }
@@ -139,11 +184,20 @@ export function PaymentStatusPage() {
           <div className="flex-1 space-y-8">
             {/* Breadcrumb / Back */}
             <div className="flex items-center gap-2 text-sm text-white/60">
-              <Link className="hover:text-orange-400 transition-colors" to="/cart">Carrito</Link>
-              <span className="text-white/30">›</span>
-              <Link className="flex items-center gap-1 hover:text-orange-400 transition-colors" to={`/checkout/${payment.checkoutId}`}>
-                ← Volver al checkout
+              <Link className="hover:text-orange-400 transition-colors" to="/cart">
+                Carrito
               </Link>
+              <span className="text-white/30">›</span>
+              {payment?.checkoutId && status === "pending" ? (
+                <Link
+                  className="flex items-center gap-1 hover:text-orange-400 transition-colors"
+                  to={`/checkout/${payment.checkoutId}`}
+                >
+                  ← Volver al checkout
+                </Link>
+              ) : (
+                <span className="text-white/30">Checkout bloqueado</span>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -198,7 +252,7 @@ export function PaymentStatusPage() {
                     onClick={() => copyToClipboard(instructions.receiverValue)}
                     className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold transition-all border border-white/5 active:scale-95"
                   >
-                     {copied ? "Copiado ✅" : "📋 Copiar"}
+                    {copied ? "Copiado ✅" : "📋 Copiar"}
                   </button>
                 </div>
 
@@ -210,11 +264,13 @@ export function PaymentStatusPage() {
 
             {/* Proof */}
             <div className="space-y-6 bg-white/5 border border-white/10 rounded-xl p-6 lg:p-8">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                🧾 Enviar Comprobante
-              </h3>
+              <h3 className="text-xl font-bold flex items-center gap-2">🧾 Enviar Comprobante</h3>
 
-              {err && <p className="text-red-300" role="alert">{err}</p>}
+              {err && (
+                <p className="text-red-300" role="alert">
+                  {err}
+                </p>
+              )}
 
               {status === "pending" && (
                 <div className="space-y-6">
@@ -253,7 +309,11 @@ export function PaymentStatusPage() {
               {status === "submitted" && (
                 <div className="space-y-3">
                   <p className="text-white/70">Comprobante enviado. Esperando confirmación del admin…</p>
-                  <button type="button" onClick={continueShopping} className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">
+                  <button
+                    type="button"
+                    onClick={continueShopping}
+                    className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
+                  >
                     Continuar comprando
                   </button>
                 </div>
@@ -267,7 +327,11 @@ export function PaymentStatusPage() {
                       Ver tu orden
                     </Link>
                   )}
-                  <button type="button" onClick={continueShopping} className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">
+                  <button
+                    type="button"
+                    onClick={continueShopping}
+                    className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
+                  >
                     Continuar comprando
                   </button>
                 </div>
@@ -275,11 +339,8 @@ export function PaymentStatusPage() {
 
               {status === "rejected" && (
                 <div className="space-y-3">
-                  <p className="text-red-300">
-                    Rechazado: {payment.review?.reason || "Sin razón especificada"}
-                  </p>
+                  <p className="text-red-300">Rechazado: {payment.review?.reason || "Sin razón especificada"}</p>
 
-                  {/* En opción 1, vuelves al checkout (ahí cambias método) */}
                   <button
                     type="button"
                     onClick={() => nav(`/checkout/${payment.checkoutId}`)}
@@ -288,7 +349,11 @@ export function PaymentStatusPage() {
                     Volver al checkout
                   </button>
 
-                  <button type="button" onClick={continueShopping} className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">
+                  <button
+                    type="button"
+                    onClick={continueShopping}
+                    className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
+                  >
                     Continuar comprando
                   </button>
                 </div>
@@ -306,18 +371,24 @@ export function PaymentStatusPage() {
               ) : (
                 <>
                   <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-                    {(checkout.items || []).map((it) => (
-                      <div key={it.productId} className="flex gap-3">
-                        <div className="h-12 w-12 rounded-lg bg-white/5 flex-shrink-0 overflow-hidden border border-white/10 flex items-center justify-center">
-                          📦
+                    {(checkout.items || []).map((it) => {
+                      const unit = Number(it.unitPriceUSD ?? 0);
+                      const qty = Number(it.quantity ?? 0);
+                      const lineTotal = unit * qty;
+
+                      return (
+                        <div key={it.productId} className="flex gap-3">
+                          <div className="h-12 w-12 rounded-lg bg-white/5 flex-shrink-0 overflow-hidden border border-white/10 flex items-center justify-center">
+                            📦
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{it.name}</p>
+                            <p className="text-xs text-white/40">Cantidad: {qty}</p>
+                            <p className="text-sm font-bold mt-1">${lineTotal.toFixed(2)}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{it.name}</p>
-                          <p className="text-xs text-white/40">Cantidad: {it.quantity}</p>
-                          <p className="text-sm font-bold mt-1">${Number(it.lineTotalUSD || 0).toFixed(2)}</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="mt-6 pt-6 border-t border-white/10 space-y-3">

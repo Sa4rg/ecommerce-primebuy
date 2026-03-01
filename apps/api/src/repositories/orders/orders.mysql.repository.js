@@ -353,6 +353,58 @@ class MySQLOrdersRepository {
     }
     return orders;
   }
+
+  /**
+ * Returns the most recent shipping address snapshot for a user.
+ * If no previous order with a non-pickup address exists, returns null.
+ * @param {string} userId
+ * @returns {Promise<null|{method:string|null,recipientName:string|null,phone:string|null,state:string|null,city:string|null,line1:string|null,reference:string|null,fromOrderId:string,createdAt:string}>}
+ */
+  async findLastShippingAddressByUserId(userId) {
+    const row = await db("orders as o")
+      .leftJoin("order_shipping as s", "s.order_id", "o.order_id")
+      .select([
+        "o.order_id",
+        "o.created_at",
+        "s.method",
+        "s.address_recipient_name",
+        "s.address_phone",
+        "s.address_state",
+        "s.address_city",
+        "s.address_line1",
+        "s.address_reference",
+      ])
+      .where("o.user_id", userId)
+      .orderBy("o.created_at", "desc")
+      .first();
+
+    if (!row) return null;
+
+    // Rule: most recent order is pickup => null
+    if (row.method === "pickup") return null;
+
+    const hasAny =
+      row.address_recipient_name ||
+      row.address_phone ||
+      row.address_state ||
+      row.address_city ||
+      row.address_line1 ||
+      row.address_reference;
+
+    if (!hasAny) return null;
+
+    return {
+      method: row.method || null,
+      recipientName: row.address_recipient_name || null,
+      phone: row.address_phone || null,
+      state: row.address_state || null,
+      city: row.address_city || null,
+      line1: row.address_line1 || null,
+      reference: row.address_reference || null,
+      fromOrderId: String(row.order_id),
+      createdAt: mysqlDatetimeToISO(row.created_at),
+    };
+  }
 }
 
 module.exports = { MySQLOrdersRepository };

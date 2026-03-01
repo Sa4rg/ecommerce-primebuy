@@ -81,6 +81,7 @@ describe("addItem", () => {
       unitPriceUSD: product.priceUSD,
       quantity: 2,
       lineTotalUSD: 20,
+      imageUrl: product.imageUrl || null,
     });
     expect(cart.summary).toEqual({
       itemsCount: 2,

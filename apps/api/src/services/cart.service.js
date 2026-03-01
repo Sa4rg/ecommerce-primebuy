@@ -139,6 +139,7 @@ function createCartService(deps = {}) {
         unitPriceUSD: product.priceUSD,
         quantity: newQuantity,
         lineTotalUSD: product.priceUSD * newQuantity,
+        imageUrl: product.imageUrl || null, // ✅ Include image for cart/checkout rendering
       });
     }
 

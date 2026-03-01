@@ -1,22 +1,37 @@
-// src/features/payment/paymentStorage.js
-const PAYMENT_ID_KEY = "checkoutPaymentMap"; // { [checkoutId]: paymentId }
+// web/src/features/payment/paymentStorage.js
+const KEY = "paymentByCheckoutId";
+
+function read() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function write(obj) {
+  localStorage.setItem(KEY, JSON.stringify(obj));
+}
 
 export function savePaymentForCheckout(checkoutId, paymentId) {
-  const raw = localStorage.getItem(PAYMENT_ID_KEY);
-  const map = raw ? JSON.parse(raw) : {};
+  const map = read();
   map[checkoutId] = paymentId;
-  localStorage.setItem(PAYMENT_ID_KEY, JSON.stringify(map));
+  write(map);
 }
 
 export function getPaymentForCheckout(checkoutId) {
-  const raw = localStorage.getItem(PAYMENT_ID_KEY);
-  const map = raw ? JSON.parse(raw) : {};
-  return map[checkoutId] || null;
+  const map = read();
+  return map[checkoutId] || "";
 }
 
+// ✅ ADD THIS
 export function clearPaymentForCheckout(checkoutId) {
-  const raw = localStorage.getItem(PAYMENT_ID_KEY);
-  const map = raw ? JSON.parse(raw) : {};
+  const map = read();
   delete map[checkoutId];
-  localStorage.setItem(PAYMENT_ID_KEY, JSON.stringify(map));
+  write(map);
+}
+
+// ✅ ADD THIS (useful when starting a brand-new shopping session)
+export function clearAllPaymentsForCheckouts() {
+  localStorage.removeItem(KEY);
 }

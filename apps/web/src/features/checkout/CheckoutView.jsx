@@ -1,15 +1,22 @@
 // web/src/features/checkout/CheckoutView.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { updateCheckoutCustomer, updateCheckoutShipping } from "./checkoutCommand";
+import {
+  createCheckout,
+  updateCheckoutCustomer,
+  updateCheckoutShipping,
+} from "./checkoutCommand";
 import { useCart } from "../../context/CartContext.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
+import { accountService } from "../account/accountService";
 
 // i18n
 import { useTranslation } from "../../shared/i18n/useTranslation.js";
 
 // Payments
 import { paymentService } from "../payment/paymentService";
-import { savePaymentForCheckout, getPaymentForCheckout } from "../payment/paymentStorage";
+import { savePaymentForCheckout, getPaymentForCheckout, clearPaymentForCheckout } from "../payment/paymentStorage";
+import { clearCheckoutId } from "./CheckoutStorage";
 
 const SHIPPING_METHODS = [
   { value: "pickup", icon: "store", tKey: "checkout.methods.shipping.pickup" },
@@ -33,7 +40,6 @@ function formatUSD(n) {
 function isValidEmail(value) {
   const v = String(value || "").trim();
   if (v.length < 3) return false;
-  // Simple, pragmatic check (no over-engineering)
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 }
 
@@ -74,15 +80,26 @@ function RadioCard({ checked, onClick, icon, title }) {
   );
 }
 
+function isCheckoutLockedError(e) {
+  const msg = String(e?.message || "");
+  // be pragmatic: backend returns "Checkout is not editable"
+  return msg.toLowerCase().includes("checkout is not editable") || msg.includes("409");
+}
+
 export function CheckoutView() {
   const { t } = useTranslation();
 
   const { checkoutId } = useParams();
   const navigate = useNavigate();
   const { cart, status: cartStatus, initializeCart } = useCart();
+  const { isAuthenticated } = useAuth();
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // ✅ Last shipping address prefill
+  const [savedAddress, setSavedAddress] = useState(null);
+  const addressLoadedRef = useRef(false);
 
   // Form
   const [fullName, setFullName] = useState("");
@@ -97,7 +114,6 @@ export function CheckoutView() {
   const [shippingMethod, setShippingMethod] = useState("pickup");
   const [paymentMethod, setPaymentMethod] = useState("zelle");
 
-  // --- Load cart (and show alert on failure) ---
   useEffect(() => {
     let cancelled = false;
 
@@ -117,12 +133,54 @@ export function CheckoutView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartStatus]);
 
-  // --- Derived cart data ---
+  // ✅ Load last shipping address for authenticated users (once)
+  useEffect(() => {
+    if (!isAuthenticated || addressLoadedRef.current) return;
+    addressLoadedRef.current = true;
+
+    async function loadSavedAddress() {
+      try {
+        const res = await accountService.getLastShippingAddress();
+        const addr = res?.data ?? res;
+        // Backend returns null if pickup or no address
+        if (addr && addr.method && addr.method !== "pickup") {
+          setSavedAddress(addr);
+        }
+      } catch {
+        // Silently ignore - prefill is optional
+      }
+    }
+
+    loadSavedAddress();
+  }, [isAuthenticated]);
+
+  /**
+   * Apply the saved address to form fields
+   */
+  function applyLastAddress() {
+    if (!savedAddress) return;
+
+    // Set shipping method first (enables address fields)
+    if (savedAddress.method) {
+      setShippingMethod(savedAddress.method);
+    }
+
+    // Prefill address fields
+    if (savedAddress.recipientName) setFullName(savedAddress.recipientName);
+    if (savedAddress.phone) setPhone(savedAddress.phone);
+    if (savedAddress.state) setStateRegion(savedAddress.state);
+    if (savedAddress.city) setCity(savedAddress.city);
+    if (savedAddress.line1) setStreet(savedAddress.line1);
+    if (savedAddress.reference) setReference(savedAddress.reference);
+
+    // Clear the offer after applying
+    setSavedAddress(null);
+  }
+
   const items = cart?.items || [];
 
   const subtotalUSD = useMemo(() => {
     const totals = cart?.totals || {};
-
     const fromTotals =
       totals.subtotalUSD ??
       totals.amountUSD ??
@@ -149,9 +207,7 @@ export function CheckoutView() {
 
   const estimatedTaxesUSD = useMemo(() => {
     const sub = Number(subtotalUSD) || 0;
-    if (priceIncludesVAT) {
-      return sub * (taxRate / (1 + taxRate));
-    }
+    if (priceIncludesVAT) return sub * (taxRate / (1 + taxRate));
     return sub * taxRate;
   }, [subtotalUSD, taxRate, priceIncludesVAT]);
 
@@ -175,6 +231,31 @@ export function CheckoutView() {
 
     return true;
   }, [fullName, phone, email, needsAddress, street, city, stateRegion]);
+
+  async function recreateCheckoutAndRedirect() {
+    if (!cart?.cartId) {
+      throw new Error(t("checkout.errors.noCart"));
+    }
+
+    // Clean stale linkage for the old checkout
+    if (checkoutId) {
+      clearPaymentForCheckout(checkoutId);
+    }
+    clearCheckoutId();
+
+    const res = await createCheckout({ cartId: cart.cartId });
+
+    const newCheckoutId =
+      res?.data?.checkoutId ??
+      res?.checkoutId ??
+      res?.data?.data?.checkoutId;
+
+    if (!newCheckoutId) {
+      throw new Error("checkoutId is missing after createCheckout");
+    }
+
+    navigate(`/checkout/${newCheckoutId}`, { replace: true });
+  }
 
   async function onContinue() {
     if (saving) return;
@@ -207,10 +288,23 @@ export function CheckoutView() {
           : null,
       });
 
+      // ✅ Only reuse a stored payment if it's still valid (pending)
       const existingPaymentId = getPaymentForCheckout(checkoutId);
       if (existingPaymentId) {
-        navigate(`/payments/${existingPaymentId}`);
-        return;
+        try {
+          const existingPayment = await paymentService.getPayment(existingPaymentId);
+          const p = existingPayment?.data?.data ?? existingPayment?.data ?? existingPayment;
+          // Reuse only if pending and belongs to this checkout
+          if (p?.status === "pending" && p?.checkoutId === checkoutId) {
+            navigate(`/payments/${existingPaymentId}`);
+            return;
+          }
+          // Otherwise clear stale mapping and proceed to create new payment
+          clearPaymentForCheckout(checkoutId);
+        } catch {
+          // Payment not found or error - clear and create new
+          clearPaymentForCheckout(checkoutId);
+        }
       }
 
       const paymentRes = await paymentService.createPayment({
@@ -228,6 +322,17 @@ export function CheckoutView() {
       savePaymentForCheckout(checkoutId, paymentId);
       navigate(`/payments/${paymentId}`);
     } catch (e) {
+      // ✅ Key fix: if checkout got locked, recover by creating a new checkout
+      if (isCheckoutLockedError(e)) {
+        try {
+          await recreateCheckoutAndRedirect();
+          return;
+        } catch (recoveryErr) {
+          setError(recoveryErr?.message || "Failed to recreate checkout");
+          return;
+        }
+      }
+
       setError(e?.message || "Checkout failed");
     } finally {
       setSaving(false);
@@ -247,7 +352,6 @@ export function CheckoutView() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
-        {/* Left: Form */}
         <div className="lg:col-span-7 space-y-10">
           {error && (
             <div
@@ -268,6 +372,32 @@ export function CheckoutView() {
                 {t("checkout.title.shippingInfo")}
               </h2>
             </div>
+
+            {/* ✅ Use last address button */}
+            {savedAddress && (
+              <div className="mb-6 rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📍</span>
+                    <div>
+                      <p className="text-sm font-medium text-slate-100">
+                        {t("checkout.prefill.title")}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {savedAddress.city}, {savedAddress.state}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={applyLastAddress}
+                    className="px-4 py-2 text-sm font-bold text-orange-400 border border-orange-500/40 rounded-lg hover:bg-orange-500/20 transition-colors"
+                  >
+                    {t("checkout.prefill.useButton")}
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
@@ -464,7 +594,18 @@ export function CheckoutView() {
 
                     return (
                       <div key={it.productId} className="flex gap-4">
-                        <div className="h-16 w-16 rounded-lg border border-white/10 bg-black/30" />
+                        {/* Product image */}
+                        {it.imageUrl ? (
+                          <img
+                            src={it.imageUrl}
+                            alt={it.name || "Product"}
+                            className="h-16 w-16 rounded-lg border border-white/10 bg-black/30 object-cover"
+                          />
+                        ) : (
+                          <div className="h-16 w-16 rounded-lg border border-white/10 bg-black/30 flex items-center justify-center text-slate-500 text-xs">
+                            📦
+                          </div>
+                        )}
                         <div className="flex flex-1 flex-col justify-center">
                           <h4 className="font-bold text-slate-100">{it.name}</h4>
                           <p className="text-sm text-slate-400">
@@ -517,28 +658,10 @@ export function CheckoutView() {
                 className="group mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-4 font-bold text-white transition-all hover:bg-orange-500/90 disabled:opacity-60"
               >
                 {saving ? t("checkout.actions.processing") : t("checkout.actions.continueToPayment")}
-                <span
-                  className="material-symbols-outlined transition-transform group-hover:translate-x-1"
-                  aria-hidden="true"
-                >
+                <span className="material-symbols-outlined transition-transform group-hover:translate-x-1" aria-hidden="true">
                   arrow_forward
                 </span>
               </button>
-
-              <div className="mt-6 flex items-center justify-center gap-4">
-                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-400/60">
-                  <span className="material-symbols-outlined text-sm" aria-hidden="true">
-                    verified_user
-                  </span>
-                  {t("checkout.trust.securePayment")}
-                </div>
-                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-400/60">
-                  <span className="material-symbols-outlined text-sm" aria-hidden="true">
-                    assignment_return
-                  </span>
-                  {t("checkout.trust.returns")}
-                </div>
-              </div>
             </div>
           </div>
         </div>

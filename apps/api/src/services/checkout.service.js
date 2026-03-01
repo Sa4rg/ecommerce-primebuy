@@ -114,6 +114,7 @@ function createCheckoutService(deps = {}) {
       unitPriceUSD: i.unitPriceUSD,
       quantity: i.quantity,
       lineTotalUSD: i.lineTotalUSD,
+      imageUrl: i.imageUrl || null, // ✅ Snapshot includes image
     }));
 
     const subtotalUSD = cart.summary.subtotalUSD;

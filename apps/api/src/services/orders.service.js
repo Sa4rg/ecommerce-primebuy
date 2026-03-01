@@ -1,3 +1,4 @@
+// apps/api/src/services/orders.service.js
 const crypto = require("crypto");
 const { AppError } = require("../utils/errors");
 const { InMemoryOrdersRepository } = require("../repositories/orders/orders.memory.repository");
@@ -9,18 +10,18 @@ const defaultCartService = require("./cart.service");
 const defaultCheckoutService = require("./checkout.service");
 const defaultPaymentsService = require("./payments.service");
 
-
 const VALID_SHIPPING_METHODS = ["pickup", "local_delivery", "national_shipping"];
 const VALID_CARRIER_NAMES = ["MRW", "ZOOM", "OTHER"];
 
 function createMapAdapter(map) {
   return {
     async create(order) {
-      // Simulate UNIQUE constraint on payment_id
       for (const existingOrder of map.values()) {
         if (existingOrder.paymentId === order.paymentId) {
-          const error = new Error(`Duplicate entry '${order.paymentId}' for key 'orders_payment_id_unique'`);
-          error.code = 'ER_DUP_ENTRY';
+          const error = new Error(
+            `Duplicate entry '${order.paymentId}' for key 'orders_payment_id_unique'`
+          );
+          error.code = "ER_DUP_ENTRY";
           error.sqlMessage = `Duplicate entry '${order.paymentId}' for key 'orders_payment_id_unique'`;
           throw error;
         }
@@ -40,15 +41,12 @@ function createMapAdapter(map) {
     async findAll() {
       return Array.from(map.values());
     },
-
-    // ✅ FIX: required by payments.service.getPaymentById() and orders.service methods
     async findByPaymentId(paymentId) {
       for (const order of map.values()) {
         if (order.paymentId === paymentId) return order;
       }
       return null;
     },
-
     async findByUserId(userId) {
       const orders = [];
       for (const order of map.values()) {
@@ -63,7 +61,7 @@ function createOrdersService(deps = {}) {
   const cartService = deps.cartService || defaultCartService;
   const checkoutService = deps.checkoutService || defaultCheckoutService;
   const paymentsService = deps.paymentsService || defaultPaymentsService;
-  const productsService = deps.productsService || null; // ✅ injected
+  const productsService = deps.productsService || null;
   const idGenerator = deps.idGenerator || (() => crypto.randomUUID());
 
   let ordersRepository;
@@ -77,9 +75,7 @@ function createOrdersService(deps = {}) {
 
   async function getExistingOrder(orderId) {
     const order = await ordersRepository.findById(orderId);
-    if (!order) {
-      throw new AppError("Order not found", 404);
-    }
+    if (!order) throw new AppError("Order not found", 404);
     return order;
   }
 
@@ -90,9 +86,7 @@ function createOrdersService(deps = {}) {
   }
 
   function validateShippingDetails(details) {
-    if (!details || typeof details !== "object") {
-      throw new AppError("Invalid shipping details", 400);
-    }
+    if (!details || typeof details !== "object") throw new AppError("Invalid shipping details", 400);
 
     if (!VALID_SHIPPING_METHODS.includes(details.method)) {
       throw new AppError("Invalid shipping details", 400);
@@ -140,7 +134,10 @@ function createOrdersService(deps = {}) {
         throw new AppError("Invalid shipping carrier", 400);
       }
 
-      if (typeof carrier.trackingNumber !== "string" || carrier.trackingNumber.trim().length === 0) {
+      if (
+        typeof carrier.trackingNumber !== "string" ||
+        carrier.trackingNumber.trim().length === 0
+      ) {
         throw new AppError("Invalid shipping carrier", 400);
       }
     }
@@ -148,43 +145,77 @@ function createOrdersService(deps = {}) {
 
   async function getOrderById(orderId) {
     const order = await ordersRepository.findById(orderId);
-    if (!order) {
-      throw new AppError("Order not found", 404);
-    }
+    if (!order) throw new AppError("Order not found", 404);
     return order;
   }
 
+  /**
+   * Business rule:
+   * - We only consider the MOST RECENT order.
+   * - If most recent order is pickup or has no address => return null.
+   * - Do NOT fallback to older addresses.
+   */
+  async function getLastShippingAddressByUserId(userId) {
+    if (!userId || typeof userId !== "string") throw new AppError("Unauthorized", 401);
+
+    // Preferred: repository can answer efficiently
+    if (typeof ordersRepository.findLastShippingAddressByUserId === "function") {
+      return await ordersRepository.findLastShippingAddressByUserId(userId);
+    }
+
+    const orders = await ordersRepository.findByUserId(userId);
+    if (!Array.isArray(orders) || orders.length === 0) return null;
+
+    const sorted = [...orders].sort((a, b) => {
+      const ta = Date.parse(a.createdAt || "") || 0;
+      const tb = Date.parse(b.createdAt || "") || 0;
+      return tb - ta;
+    });
+
+    const last = sorted[0];
+    const method = last?.shipping?.method ?? null;
+    if (!method || method === "pickup") return null;
+
+    const addr = last?.shipping?.address ?? null;
+    if (!addr || typeof addr !== "object") return null;
+
+    const hasAny =
+      (typeof addr.recipientName === "string" && addr.recipientName.trim().length > 0) ||
+      (typeof addr.phone === "string" && addr.phone.trim().length > 0) ||
+      (typeof addr.state === "string" && addr.state.trim().length > 0) ||
+      (typeof addr.city === "string" && addr.city.trim().length > 0) ||
+      (typeof addr.line1 === "string" && addr.line1.trim().length > 0) ||
+      (typeof addr.reference === "string" && addr.reference.trim().length > 0);
+
+    if (!hasAny) return null;
+
+    return {
+      method,
+      recipientName: addr.recipientName || null,
+      phone: addr.phone || null,
+      state: addr.state || null,
+      city: addr.city || null,
+      line1: addr.line1 || null,
+      reference: addr.reference || null,
+      fromOrderId: last.orderId,
+      createdAt: last.createdAt,
+    };
+  }
+
   async function createOrderFromPayment(paymentId, userId) {
-    if (!userId || typeof userId !== "string") {
-      throw new AppError("Unauthorized", 401);
-    }
+    if (!userId || typeof userId !== "string") throw new AppError("Unauthorized", 401);
 
-    // 1) Load payment
     const payment = await paymentsService.getPaymentById(paymentId);
+    if (payment.userId !== userId) throw new AppError("Forbidden", 403);
+    if (payment.status !== "confirmed") throw new AppError("Payment is not confirmed", 409);
 
-    if (payment.userId !== userId) {
-      throw new AppError("Forbidden", 403);
-    }
-
-    // 2) Validate payment is confirmed
-    if (payment.status !== "confirmed") {
-      throw new AppError("Payment is not confirmed", 409);
-    }
-
-    // 3) Load checkout
     const checkout = await checkoutService.findById(payment.checkoutId);
-
-    // 4) Load cart
     const cart = await cartService.getCart(checkout.cartId);
 
-    // ✅ 4.5) Decrement stock NOW (this is your desired behavior)
-    // If stock is insufficient, we throw 409 and payment.confirm will rollback to SUBMITTED
     if (productsService && typeof productsService.decrementStockForItems === "function") {
       await productsService.decrementStockForItems(cart.items);
     }
 
-
-    // 5) Build order snapshot
     const orderId = idGenerator();
     const now = new Date().toISOString();
 
@@ -222,14 +253,12 @@ function createOrdersService(deps = {}) {
       updatedAt: now,
     };
 
-    // 6) Finalize cart
     await cartService.updateMetadata(cart.cartId, { status: "checked_out" });
 
-    // 7) Persist - catch UNIQUE constraint violation
     try {
       await ordersRepository.create(order);
     } catch (error) {
-      if (error.code === 'ER_DUP_ENTRY' && error.sqlMessage?.includes('orders_payment_id_unique')) {
+      if (error.code === "ER_DUP_ENTRY" && error.sqlMessage?.includes("orders_payment_id_unique")) {
         throw new AppError("Order already exists for payment", 409);
       }
       throw error;
@@ -240,48 +269,31 @@ function createOrdersService(deps = {}) {
 
   async function processOrder(orderId) {
     const order = await ordersRepository.findById(orderId);
-
-    if (!order) {
-      throw new AppError("Order not found", 404);
-    }
-
-    if (order.status !== OrderStatus.PAID) {
-      throw new AppError("Order cannot be processed", 409);
-    }
+    if (!order) throw new AppError("Order not found", 404);
+    if (order.status !== OrderStatus.PAID) throw new AppError("Order cannot be processed", 409);
 
     order.status = "processing";
     order.updatedAt = nextUpdatedAt(order.updatedAt);
-
     await ordersRepository.save(order);
-
     return order;
   }
 
   async function completeOrder(orderId) {
     const order = await ordersRepository.findById(orderId);
-
-    if (!order) {
-      throw new AppError("Order not found", 404);
-    }
-
+    if (!order) throw new AppError("Order not found", 404);
     if (![OrderStatus.PAID, "processing"].includes(order.status)) {
       throw new AppError("Order cannot be completed", 409);
     }
 
     order.status = OrderStatus.COMPLETED;
     order.updatedAt = nextUpdatedAt(order.updatedAt);
-
     await ordersRepository.save(order);
-
     return order;
   }
 
   async function cancelOrder(orderId, reason) {
     const order = await ordersRepository.findById(orderId);
-
-    if (!order) {
-      throw new AppError("Order not found", 404);
-    }
+    if (!order) throw new AppError("Order not found", 404);
 
     if (typeof reason !== "string" || reason.trim().length === 0) {
       throw new AppError("Invalid cancellation reason", 400);
@@ -294,9 +306,7 @@ function createOrdersService(deps = {}) {
     order.status = OrderStatus.CANCELLED;
     order.cancellation = { reason: reason.trim() };
     order.updatedAt = nextUpdatedAt(order.updatedAt);
-
     await ordersRepository.save(order);
-
     return order;
   }
 
@@ -310,7 +320,6 @@ function createOrdersService(deps = {}) {
     order.updatedAt = nextUpdatedAt(order.updatedAt);
 
     await ordersRepository.save(order);
-
     return order;
   }
 
@@ -322,9 +331,7 @@ function createOrdersService(deps = {}) {
       throw new AppError("Shipping cannot be dispatched", 409);
     }
 
-    if (order.shipping.method === null) {
-      throw new AppError("Invalid shipping details", 400);
-    }
+    if (order.shipping.method === null) throw new AppError("Invalid shipping details", 400);
 
     if (["local_delivery", "national_shipping"].includes(order.shipping.method) && order.shipping.address === null) {
       throw new AppError("Invalid shipping details", 400);
@@ -343,9 +350,7 @@ function createOrdersService(deps = {}) {
     }
 
     order.updatedAt = nextUpdatedAt(order.updatedAt);
-
     await ordersRepository.save(order);
-
     return order;
   }
 
@@ -363,7 +368,6 @@ function createOrdersService(deps = {}) {
     order.updatedAt = nextUpdatedAt(order.updatedAt);
 
     await ordersRepository.save(order);
-
     return order;
   }
 
@@ -386,6 +390,7 @@ function createOrdersService(deps = {}) {
     setShippingDetails,
     markDispatched,
     markDelivered,
+    getLastShippingAddressByUserId,
   };
 }
 

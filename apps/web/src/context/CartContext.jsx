@@ -6,6 +6,20 @@ import {
   removeItemFromCart,
 } from "../features/shopping-cart/cartCommand";
 import { clearCartSession, ensureCartId, fetchMyCart } from "../features/shopping-cart/cartService";
+import { clearCheckoutId, getCheckoutId } from "../features/checkout/CheckoutStorage";
+import { clearAllPaymentsForCheckouts, clearPaymentForCheckout } from "../features/payment/paymentStorage";
+
+/**
+ * Invalidates the current checkout snapshot when the cart changes.
+ * This ensures the user gets a fresh checkout with updated cart data.
+ */
+function invalidateCheckoutSnapshot() {
+  const currentCheckoutId = getCheckoutId();
+  if (currentCheckoutId) {
+    clearPaymentForCheckout(currentCheckoutId);
+    clearCheckoutId();
+  }
+}
 
 const CartContext = createContext(null);
 
@@ -71,7 +85,14 @@ export function CartProvider({ children, initialState }) {
 
   // ✅ ESTA ES LA FUNCIÓN “DENTRO DEL PROVIDER”
   async function startNewCart() {
+    // 1) Clear local storages that can "stick" to old purchases
+    clearCheckoutId();                 // checkoutId global (previous purchase)
+    clearAllPaymentsForCheckouts();    // checkoutId -> paymentId mapping
+
+    // 2) Clear cart session (cartId/cartSecret/etc)
     clearCartSession();
+
+    // 3) Reset state and bootstrap a fresh cart
     setCart(null);
     setStatus("idle");
     setError("");
@@ -106,6 +127,8 @@ export function CartProvider({ children, initialState }) {
       const updatedCart = await addItemToCart({ productId, quantity });
       setCart(updatedCart);
       setStatus("ready");
+      // ✅ Cart changed: invalidate stale checkout snapshot
+      invalidateCheckoutSnapshot();
       return updatedCart;
     } catch (err) {
       const msg = err?.message || "Unknown error";
@@ -135,6 +158,8 @@ export function CartProvider({ children, initialState }) {
 
       setCart(updatedCart);
       setStatus("ready");
+      // ✅ Cart changed: invalidate stale checkout snapshot
+      invalidateCheckoutSnapshot();
       return updatedCart;
     } catch (err) {
       const msg = String(err?.message || "Unknown error");
@@ -166,6 +191,8 @@ export function CartProvider({ children, initialState }) {
       const updatedCart = await removeItemFromCart({ productId });
       setCart(updatedCart);
       setStatus("ready");
+      // ✅ Cart changed: invalidate stale checkout snapshot
+      invalidateCheckoutSnapshot();
       return updatedCart;
     } catch (err) {
       const msg = err?.message || "Unknown error";

@@ -89,6 +89,53 @@ class InMemoryOrdersRepository {
     }
     return orders;
   }
+
+  /**
+ * Returns the most recent shipping address snapshot for a user.
+ * If no previous order with a non-pickup address exists, returns null.
+ * @param {string} userId
+ * @returns {Promise<null|{method:string|null,recipientName:string|null,phone:string|null,state:string|null,city:string|null,line1:string|null,reference:string|null,fromOrderId:string,createdAt:string}>}
+ */
+  async findLastShippingAddressByUserId(userId) {
+    const orders = await this.findByUserId(userId);
+    if (!orders || orders.length === 0) return null;
+
+    // findByUserId in memory does NOT guarantee order, so sort by createdAt desc
+    const sorted = [...orders].sort((a, b) => {
+      const ta = new Date(a.createdAt).getTime();
+      const tb = new Date(b.createdAt).getTime();
+      return tb - ta;
+    });
+
+    const last = sorted[0];
+
+    if (last.shipping?.method === "pickup") return null;
+
+    const addr = last.shipping?.address;
+    if (!addr) return null;
+
+    const hasAny =
+      addr.recipientName ||
+      addr.phone ||
+      addr.state ||
+      addr.city ||
+      addr.line1 ||
+      addr.reference;
+
+    if (!hasAny) return null;
+
+    return {
+      method: last.shipping?.method ?? null,
+      recipientName: addr.recipientName ?? null,
+      phone: addr.phone ?? null,
+      state: addr.state ?? null,
+      city: addr.city ?? null,
+      line1: addr.line1 ?? null,
+      reference: addr.reference ?? null,
+      fromOrderId: last.orderId,
+      createdAt: last.createdAt,
+    };
+  }
 }
 
 module.exports = { InMemoryOrdersRepository };

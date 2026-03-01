@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createCheckout } from "../checkoutCommand";
 import { useCart } from "../../../context/CartContext.jsx";
-import { getCheckoutId, setCheckoutId, clearCheckoutId } from "../checkoutStorage";
+import { getCheckoutId, setCheckoutId, clearCheckoutId } from "../CheckoutStorage";
+import { clearPaymentForCheckout } from "../../payment/paymentStorage";
 
 export function CheckoutStart() {
   const navigate = useNavigate();
@@ -68,7 +69,10 @@ export function CheckoutStart() {
 
         if (cancelled) return;
 
-        // 3) Persistir + navegar
+        // 3) Clear any stale payment mapping for this new checkout
+        clearPaymentForCheckout(data.checkoutId);
+
+        // 4) Persistir + navegar
         setCheckoutId(data.checkoutId);
         navigate(`/checkout/${data.checkoutId}`, { replace: true });
       } catch (err) {

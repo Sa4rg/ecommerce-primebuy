@@ -1,5 +1,5 @@
 // web/src/features/admin/components/AdminProductsPage.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { adminProductsService } from "../adminProductsService";
 import { useTranslation } from "../../../shared/i18n/useTranslation";
 
@@ -81,6 +81,11 @@ export function AdminProductsPage() {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  // File input refs
+  const coverInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   const isEditing = Boolean(form?.id);
 
@@ -174,6 +179,72 @@ export function AdminProductsPage() {
       const next = uniq([cover, ...cleaned]);
       return { ...prev, imageUrl: cover, gallery: next };
     });
+  }
+
+  // ✅ File Upload Handlers
+  async function handleCoverFileSelect(file) {
+    if (!file || uploading) return;
+    setUploading(true);
+    setError("");
+
+    try {
+      const result = await adminProductsService.uploadImages({ coverFile: file, galleryFiles: [] });
+      if (result?.cover?.url) {
+        onChange("imageUrl", result.cover.url);
+        if (result.cover.publicId) {
+          onChange("imagePublicId", result.cover.publicId);
+        }
+      }
+    } catch (e) {
+      setError(e?.message || t("adminProducts.errors.uploadFailed"));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleGalleryFilesSelect(files) {
+    if (!files?.length || uploading) return;
+    setUploading(true);
+    setError("");
+
+    try {
+      const result = await adminProductsService.uploadImages({ coverFile: null, galleryFiles: Array.from(files) });
+      if (result?.gallery?.length) {
+        const urls = result.gallery.map((g) => g.url).filter(Boolean);
+        setForm((prev) => ({
+          ...prev,
+          gallery: [...(prev.gallery || []), ...urls],
+        }));
+      }
+    } catch (e) {
+      setError(e?.message || t("adminProducts.errors.uploadFailed"));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function handleCoverDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      handleCoverFileSelect(file);
+    }
+  }
+
+  function handleGalleryDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.dataTransfer?.files;
+    if (files?.length) {
+      const images = Array.from(files).filter((f) => f.type.startsWith("image/"));
+      if (images.length) handleGalleryFilesSelect(images);
+    }
+  }
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
   }
 
   const formValid = useMemo(() => {
@@ -407,15 +478,64 @@ export function AdminProductsPage() {
             </div>
 
             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+              {/* ✅ Cover Image Dropzone */}
               <div className="md:col-span-2">
                 <label className="text-sm text-slate-300">{t("adminProducts.images.coverLabel")}</label>
+                
+                {/* Hidden file input */}
                 <input
-                  value={form.imageUrl}
-                  onChange={(e) => onChange("imageUrl", e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder={t("adminProducts.images.coverPlaceholder")}
+                  ref={coverInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleCoverFileSelect(file);
+                    e.target.value = "";
+                  }}
                 />
-                <p className="mt-2 text-xs text-slate-500">{t("adminProducts.images.coverHelp")}</p>
+
+                {/* Dropzone area */}
+                <div
+                  onClick={() => coverInputRef.current?.click()}
+                  onDragOver={preventDefaults}
+                  onDragEnter={preventDefaults}
+                  onDragLeave={preventDefaults}
+                  onDrop={handleCoverDrop}
+                  className={`mt-1 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-all ${
+                    uploading
+                      ? "border-orange-500/50 bg-orange-500/10"
+                      : "border-white/20 bg-black/30 hover:border-orange-500/50 hover:bg-orange-500/5"
+                  }`}
+                >
+                  {uploading ? (
+                    <p className="text-sm text-orange-400">{t("adminProducts.images.uploading")}</p>
+                  ) : (
+                    <>
+                      <span className="text-3xl">📷</span>
+                      <p className="text-sm text-slate-400">{t("adminProducts.images.dropOrClick")}</p>
+                      <p className="text-xs text-slate-500">{t("adminProducts.images.coverHelp")}</p>
+                    </>
+                  )}
+                </div>
+
+                {/* URL display (readonly) */}
+                {form.imageUrl && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      value={form.imageUrl}
+                      readOnly
+                      className="flex-1 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => onChange("imageUrl", "")}
+                      className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 hover:bg-red-500/20"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="md:col-span-1">
@@ -439,44 +559,82 @@ export function AdminProductsPage() {
               </div>
             </div>
 
+            {/* ✅ Gallery Section with File Upload */}
             <div className="mt-5">
               <div className="flex items-center justify-between">
                 <label className="text-sm text-slate-300">{t("adminProducts.images.galleryLabel")}</label>
 
+                {/* Hidden file input for gallery */}
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    if (files?.length) handleGalleryFilesSelect(files);
+                    e.target.value = "";
+                  }}
+                />
+
                 <button
                   type="button"
-                  onClick={addGalleryRow}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                  onClick={() => galleryInputRef.current?.click()}
+                  disabled={uploading}
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10 disabled:opacity-50"
                 >
-                  {t("adminProducts.images.addImage")}
+                  {uploading ? t("adminProducts.images.uploading") : t("adminProducts.images.addImage")}
                 </button>
               </div>
 
-              <div className="mt-3 space-y-3">
+              {/* Gallery dropzone */}
+              <div
+                onDragOver={preventDefaults}
+                onDragEnter={preventDefaults}
+                onDragLeave={preventDefaults}
+                onDrop={handleGalleryDrop}
+                className="mt-3 rounded-xl border-2 border-dashed border-white/10 bg-black/20 p-4 transition-all hover:border-orange-500/30"
+              >
                 {(form.gallery || []).length === 0 ? (
-                  <div className="text-sm text-slate-500">{t("adminProducts.images.emptyGallery")}</div>
+                  <div className="text-center py-4">
+                    <p className="text-sm text-slate-500">{t("adminProducts.images.emptyGallery")}</p>
+                    <p className="text-xs text-slate-600 mt-1">{t("adminProducts.images.dropMultiple")}</p>
+                  </div>
                 ) : (
-                  (form.gallery || []).map((url, idx) => (
-                    <div key={idx} className="flex gap-3 items-start">
-                      <div className="flex-1">
+                  <div className="space-y-3">
+                    {(form.gallery || []).map((url, idx) => (
+                      <div key={idx} className="flex gap-3 items-center">
+                        {/* Thumbnail */}
+                        <div className="w-12 h-12 rounded-lg border border-white/10 bg-black/30 overflow-hidden flex-shrink-0">
+                          <img
+                            src={normalizeUrl(url)}
+                            alt={`gallery ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.opacity = "0.3";
+                            }}
+                          />
+                        </div>
+
+                        {/* URL (readonly) */}
                         <input
                           value={url}
-                          onChange={(e) => updateGalleryAt(idx, e.target.value)}
-                          className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
-                          placeholder={t("adminProducts.images.galleryPlaceholder", { n: idx + 1 })}
+                          readOnly
+                          className="flex-1 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400 outline-none truncate"
                         />
-                      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => removeGalleryAt(idx)}
-                        className="rounded-xl bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-400 hover:bg-red-500 hover:text-white"
-                        title={t("adminProducts.actions.remove")}
-                      >
-                        {t("adminProducts.actions.remove")}
-                      </button>
-                    </div>
-                  ))
+                        <button
+                          type="button"
+                          onClick={() => removeGalleryAt(idx)}
+                          className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500 hover:text-white"
+                          title={t("adminProducts.actions.remove")}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
 

@@ -81,6 +81,10 @@ export const translations = {
         securePayment: "Pago seguro",
         returns: "Devoluciones 30 días",
       },
+      prefill: {
+        title: "Usar tu última dirección",
+        useButton: "Usar esta dirección",
+      },
     },
 
     adminProducts: {
@@ -138,9 +142,14 @@ export const translations = {
         noCover: "Sin cover",
 
         // cover
-        coverLabel: "URL de imagen principal (cover)",
+        coverLabel: "Imagen principal (cover)",
         coverPlaceholder: "https://.../cover.jpg",
-        coverHelp: "Tip: si no pones cover, se usará la primera imagen de la galería como principal.",
+        coverHelp: "La imagen principal se mostrará en listados.",
+
+        // upload states
+        uploading: "Subiendo...",
+        dropOrClick: "Arrastra una imagen aquí o haz clic para seleccionar",
+        dropMultiple: "Arrastra archivos aquí para añadirlos a la galería",
 
         // gallery
         galleryLabel: "URLs de galería",
@@ -544,6 +553,10 @@ export const translations = {
         securePayment: "Secure payment",
         returns: "30-day returns",
       },
+      prefill: {
+        title: "Use your last address",
+        useButton: "Use this address",
+      },
     },
 
     adminProducts: {
@@ -598,9 +611,14 @@ export const translations = {
         preview: "Preview",
         noCover: "No cover",
 
-        coverLabel: "Cover image URL",
+        coverLabel: "Cover image",
         coverPlaceholder: "https://.../cover.jpg",
-        coverHelp: "Tip: if you don’t set a cover, the first gallery image will be used as the main image.",
+        coverHelp: "The main image will be displayed in listings.",
+
+        // upload states
+        uploading: "Uploading...",
+        dropOrClick: "Drag an image here or click to select",
+        dropMultiple: "Drag files here to add them to the gallery",
 
         galleryLabel: "Gallery URLs",
         addImage: "+ Add image",
