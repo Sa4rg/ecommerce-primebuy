@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { adminService } from "../adminService";
+import { useTranslation } from "../../../shared/i18n/useTranslation.js";
 
 function formatUSD(n) {
   const num = Number(n);
@@ -9,11 +10,11 @@ function formatUSD(n) {
   return num.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-function formatCompactDate(iso) {
+function formatCompactDate(iso, locale = "en-US") {
   if (!iso) return "-";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "-";
-  return d.toLocaleString("en-US", {
+  return d.toLocaleString(locale, {
     month: "short",
     day: "2-digit",
     year: "numeric",
@@ -22,22 +23,21 @@ function formatCompactDate(iso) {
   });
 }
 
-function prettyMethod(method) {
+function prettyMethod(method, t) {
   const m = String(method || "").toLowerCase();
-  if (m === "zelle") return "Zelle";
-  if (m === "zinli") return "Zinli";
-  if (m === "pago_movil") return "Pago Móvil";
-  if (m === "bank_transfer") return "Bank Transfer";
+  if (m === "zelle") return t("payment.methods.zelle");
+  if (m === "zinli") return t("payment.methods.zinli");
+  if (m === "pago_movil") return t("payment.methods.pago_movil");
+  if (m === "bank_transfer") return t("payment.methods.bank_transfer");
   return method || "-";
 }
 
-function deliveryLabel(method) {
+function deliveryLabel(method, t) {
   const m = String(method || "").toLowerCase();
-  if (m === "pickup") return "Retiro en tienda / Pickup";
-  if (m === "local_delivery") return "Delivery";
-  if (m === "national_shipping") return "Envío Nacional";
-  // fallback viejo
-  if (m === "delivery") return "Delivery";
+  if (m === "pickup") return t("checkout.methods.shipping.pickup");
+  if (m === "local_delivery") return t("checkout.methods.shipping.localDelivery");
+  if (m === "national_shipping") return t("checkout.methods.shipping.nationalShipping");
+  if (m === "delivery") return t("checkout.methods.shipping.localDelivery");
   return method || "—";
 }
 
@@ -46,34 +46,42 @@ function workflowFrom(payment, order) {
   const orderStatus = String(order?.status || "").toLowerCase(); // paid/processing/completed/cancelled
   const ship = String(order?.shipping?.status || "").toLowerCase(); // pending/dispatched/delivered
 
-  // Si aún no hay order, todo es payment-driven
   if (!order) {
     if (p === "confirmed") return "CONFIRMED";
     if (p === "rejected") return "REJECTED";
-    // pending/submitted
     return "PENDING";
   }
 
-  // Con order:
   if (orderStatus === "completed" || ship === "delivered") return "DELIVERED";
   if (ship === "dispatched") return "SHIPPED";
   if (orderStatus === "processing") return "PREPARING";
   if (orderStatus === "paid") return "CONFIRMED";
 
-  // fallback:
   if (p === "confirmed") return "CONFIRMED";
   if (p === "rejected") return "REJECTED";
   return "PENDING";
 }
 
 function stepMeta(activeStep) {
-  // 5 steps: PENDING, CONFIRMED, PREPARING, SHIPPED, DELIVERED
   const steps = ["PENDING", "CONFIRMED", "PREPARING", "SHIPPED", "DELIVERED"];
   const idx = Math.max(0, steps.indexOf(activeStep));
   return { steps, idx };
 }
 
+function workflowTitleKey(step) {
+  if (step === "PENDING") return "adminPaymentsDetail.workflow.states.pending";
+  if (step === "CONFIRMED") return "adminPaymentsDetail.workflow.states.confirmed";
+  if (step === "PREPARING") return "adminPaymentsDetail.workflow.states.preparing";
+  if (step === "SHIPPED") return "adminPaymentsDetail.workflow.states.shipped";
+  if (step === "DELIVERED") return "adminPaymentsDetail.workflow.states.delivered";
+  if (step === "REJECTED") return "adminPaymentsDetail.workflow.states.rejected";
+  return "adminPaymentsDetail.workflow.states.pending";
+}
+
 export function AdminPaymentDetailPage() {
+  const { t, language } = useTranslation();
+  const locale = language === "es" ? "es-VE" : "en-US";
+
   const { paymentId } = useParams();
   const nav = useNavigate();
 
@@ -100,7 +108,6 @@ export function AdminPaymentDetailPage() {
       const p = await adminService.getPayment(paymentId);
       setPayment(p);
 
-      // si hay orderId, cargar order
       if (p?.orderId) {
         const o = await adminService.getOrder(p.orderId);
         setOrder(o);
@@ -108,7 +115,7 @@ export function AdminPaymentDetailPage() {
         setOrder(null);
       }
     } catch (e) {
-      setError(e?.message || "Failed to load payment detail");
+      setError(e?.message || t("adminPaymentsDetail.errors.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -151,7 +158,7 @@ export function AdminPaymentDetailPage() {
 
   async function onConfirm() {
     if (!paymentId) return;
-    const ok = window.confirm("Confirmar este pago? Esto crea la orden y descuenta stock.");
+    const ok = window.confirm(t("adminPaymentsDetail.confirm.confirmPayment"));
     if (!ok) return;
 
     setBusyAction("confirm");
@@ -160,7 +167,7 @@ export function AdminPaymentDetailPage() {
       await adminService.confirmPayment(paymentId);
       await load();
     } catch (e) {
-      setError(e?.message || "Failed to confirm");
+      setError(e?.message || t("adminPaymentsDetail.errors.confirmFailed"));
     } finally {
       setBusyAction("");
     }
@@ -168,7 +175,7 @@ export function AdminPaymentDetailPage() {
 
   async function onReject() {
     if (!rejectReason.trim()) {
-      window.alert("Debes colocar un motivo.");
+      window.alert(t("adminPaymentsDetail.errors.rejectReasonRequired"));
       return;
     }
 
@@ -180,7 +187,7 @@ export function AdminPaymentDetailPage() {
       setRejectReason("");
       await load();
     } catch (e) {
-      setError(e?.message || "Failed to reject");
+      setError(e?.message || t("adminPaymentsDetail.errors.rejectFailed"));
     } finally {
       setBusyAction("");
     }
@@ -193,18 +200,16 @@ export function AdminPaymentDetailPage() {
       await adminService.processOrder(order.orderId);
       await load();
     } catch (e) {
-      setError(e?.message || "Failed to start preparation");
+      setError(e?.message || t("adminPaymentsDetail.errors.prepareFailed"));
     } finally {
       setBusyAction("");
     }
   }
 
   async function onDispatch() {
-    if (needsCarrier) {
-      if (!trackingNumber.trim()) {
-        window.alert("Tracking number requerido para Envío Nacional.");
-        return;
-      }
+    if (needsCarrier && !trackingNumber.trim()) {
+      window.alert(t("adminPaymentsDetail.errors.trackingRequired"));
+      return;
     }
 
     setBusyAction("dispatch");
@@ -218,14 +223,14 @@ export function AdminPaymentDetailPage() {
       await adminService.dispatchShipping(order.orderId, carrier);
       await load();
     } catch (e) {
-      setError(e?.message || "Failed to dispatch");
+      setError(e?.message || t("adminPaymentsDetail.errors.dispatchFailed"));
     } finally {
       setBusyAction("");
     }
   }
 
   async function onDeliver() {
-    const ok = window.confirm("Marcar como entregado? Esto completará la orden.");
+    const ok = window.confirm(t("adminPaymentsDetail.confirm.markDelivered"));
     if (!ok) return;
 
     setBusyAction("deliver");
@@ -234,7 +239,7 @@ export function AdminPaymentDetailPage() {
       await adminService.deliverShipping(order.orderId);
       await load();
     } catch (e) {
-      setError(e?.message || "Failed to mark delivered");
+      setError(e?.message || t("adminPaymentsDetail.errors.deliverFailed"));
     } finally {
       setBusyAction("");
     }
@@ -243,7 +248,7 @@ export function AdminPaymentDetailPage() {
   if (loading) {
     return (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-slate-100">
-        <p className="text-slate-400">Loading…</p>
+        <p className="text-slate-400">{t("adminPaymentsDetail.states.loading")}</p>
       </main>
     );
   }
@@ -251,12 +256,12 @@ export function AdminPaymentDetailPage() {
   if (!payment) {
     return (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-slate-100">
-        <p className="text-red-200">{error || "Payment not found"}</p>
+        <p className="text-red-200">{error || t("adminPaymentsDetail.states.notFound")}</p>
         <button
           className="mt-4 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10"
           onClick={() => nav("/admin/payments")}
         >
-          Back
+          {t("adminPaymentsDetail.actions.back")}
         </button>
       </main>
     );
@@ -275,14 +280,19 @@ export function AdminPaymentDetailPage() {
         <div>
           <div className="flex items-center gap-2 text-slate-500 text-sm mb-2">
             <Link className="hover:text-orange-400 transition-colors" to="/admin/payments">
-              Payments
+              {t("adminPaymentsDetail.breadcrumb.payments")}
             </Link>
             <span className="text-white/30">›</span>
-            <span className="text-slate-300">#{String(payment.paymentId || paymentId).slice(0, 8)}</span>
+            <span className="text-slate-300">
+              #{String(payment.paymentId || paymentId).slice(0, 8)}
+            </span>
           </div>
 
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-            Payment Detail - <span className="text-orange-400">#{String(payment.paymentId || paymentId).slice(0, 8)}</span>
+            {t("adminPaymentsDetail.title")}{" "}
+            <span className="text-orange-400">
+              #{String(payment.paymentId || paymentId).slice(0, 8)}
+            </span>
           </h2>
         </div>
 
@@ -291,7 +301,7 @@ export function AdminPaymentDetailPage() {
           onClick={() => nav("/admin/payments")}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-sm font-semibold"
         >
-          ← Back to List
+          ← {t("adminPaymentsDetail.actions.backToList")}
         </button>
       </div>
 
@@ -307,7 +317,7 @@ export function AdminPaymentDetailPage() {
           {/* Workflow */}
           <div className="rounded-2xl p-6 border border-white/10 bg-white/5">
             <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
-              Workflow Status
+              {t("adminPaymentsDetail.workflow.title")}
             </h3>
 
             <div className="relative flex justify-between items-start">
@@ -335,7 +345,7 @@ export function AdminPaymentDetailPage() {
                         active ? "text-orange-400" : "text-slate-500",
                       ].join(" ")}
                     >
-                      {s}
+                      {t(`adminPaymentsDetail.workflow.steps.${s}`)}
                     </span>
                   </div>
                 );
@@ -346,14 +356,9 @@ export function AdminPaymentDetailPage() {
             <div className="mt-10 flex flex-wrap gap-4 p-4 border border-orange-500/20 bg-orange-500/5 rounded-xl">
               <div className="flex-1 min-w-[220px]">
                 <p className="text-sm text-slate-300 mb-2">
-                  Current State:{" "}
+                  {t("adminPaymentsDetail.workflow.currentState")}{" "}
                   <span className="text-orange-400 font-bold">
-                    {workflow === "PENDING" && "Waiting for verification"}
-                    {workflow === "CONFIRMED" && "Payment confirmed"}
-                    {workflow === "PREPARING" && "Preparing order"}
-                    {workflow === "SHIPPED" && "Dispatched"}
-                    {workflow === "DELIVERED" && "Delivered / Completed"}
-                    {workflow === "REJECTED" && "Rejected"}
+                    {t(workflowTitleKey(workflow))}
                   </span>
                 </p>
 
@@ -364,7 +369,9 @@ export function AdminPaymentDetailPage() {
                       disabled={busyAction}
                       className="px-6 py-2.5 rounded-lg bg-orange-500 text-white font-bold text-sm hover:brightness-110 transition-all"
                     >
-                      {busyAction === "confirm" ? "Confirming..." : "Confirm Payment"}
+                      {busyAction === "confirm"
+                        ? t("adminPaymentsDetail.actions.confirming")
+                        : t("adminPaymentsDetail.actions.confirmPayment")}
                     </button>
                   )}
 
@@ -374,7 +381,7 @@ export function AdminPaymentDetailPage() {
                       disabled={busyAction}
                       className="px-4 py-2.5 rounded-lg border border-red-500/50 text-red-300 font-bold text-sm hover:bg-red-500/10 transition-all"
                     >
-                      Reject
+                      {t("adminPaymentsDetail.actions.reject")}
                     </button>
                   )}
 
@@ -384,7 +391,9 @@ export function AdminPaymentDetailPage() {
                       disabled={busyAction}
                       className="px-4 py-2.5 rounded-lg bg-white/10 text-slate-100 font-bold text-sm hover:bg-white/20 border border-white/10 transition-all"
                     >
-                      {busyAction === "prepare" ? "Starting..." : "Start Preparation"}
+                      {busyAction === "prepare"
+                        ? t("adminPaymentsDetail.actions.starting")
+                        : t("adminPaymentsDetail.actions.startPreparation")}
                     </button>
                   )}
 
@@ -394,7 +403,9 @@ export function AdminPaymentDetailPage() {
                       disabled={busyAction}
                       className="px-4 py-2.5 rounded-lg bg-white/10 text-slate-100 font-bold text-sm hover:bg-white/20 border border-white/10 transition-all"
                     >
-                      {busyAction === "dispatch" ? "Dispatching..." : "Mark Dispatched"}
+                      {busyAction === "dispatch"
+                        ? t("adminPaymentsDetail.actions.dispatching")
+                        : t("adminPaymentsDetail.actions.markDispatched")}
                     </button>
                   )}
 
@@ -404,7 +415,9 @@ export function AdminPaymentDetailPage() {
                       disabled={busyAction}
                       className="px-4 py-2.5 rounded-lg bg-emerald-500 text-white font-bold text-sm hover:bg-emerald-600 transition-all"
                     >
-                      {busyAction === "deliver" ? "Saving..." : "Mark Delivered"}
+                      {busyAction === "deliver"
+                        ? t("adminPaymentsDetail.actions.saving")
+                        : t("adminPaymentsDetail.actions.markDelivered")}
                     </button>
                   )}
                 </div>
@@ -414,7 +427,7 @@ export function AdminPaymentDetailPage() {
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                        Carrier
+                        {t("adminPaymentsDetail.dispatch.carrier")}
                       </label>
                       <select
                         value={carrierName}
@@ -429,13 +442,13 @@ export function AdminPaymentDetailPage() {
 
                     <div>
                       <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                        Tracking Number
+                        {t("adminPaymentsDetail.dispatch.trackingNumber")}
                       </label>
                       <input
                         value={trackingNumber}
                         onChange={(e) => setTrackingNumber(e.target.value)}
                         className="mt-1 w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-sm"
-                        placeholder="Ej: 123456789"
+                        placeholder={t("adminPaymentsDetail.dispatch.trackingPlaceholder")}
                       />
                     </div>
                   </div>
@@ -448,28 +461,36 @@ export function AdminPaymentDetailPage() {
           <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5">
             <div className="p-6 border-b border-white/10 flex justify-between items-center">
               <h3 className="text-lg font-bold flex items-center gap-2">
-                🧾 <span>Payment Summary</span>
+                🧾 <span>{t("adminPaymentsDetail.paymentSummary.title")}</span>
               </h3>
               <span className="text-orange-400 text-xs font-bold px-2 py-1 rounded bg-orange-500/10 border border-orange-500/20">
-                {prettyMethod(payment.method).toUpperCase()}
+                {String(prettyMethod(payment.method, t)).toUpperCase()}
               </span>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/5">
               <div className="p-6">
-                <p className="text-xs text-slate-500 font-medium mb-1">Payment ID</p>
+                <p className="text-xs text-slate-500 font-medium mb-1">
+                  {t("adminPaymentsDetail.paymentSummary.paymentId")}
+                </p>
                 <p className="text-sm font-bold">#{String(payment.paymentId || paymentId).slice(0, 8)}</p>
               </div>
               <div className="p-6">
-                <p className="text-xs text-slate-500 font-medium mb-1">Amount</p>
+                <p className="text-xs text-slate-500 font-medium mb-1">
+                  {t("adminPaymentsDetail.paymentSummary.amount")}
+                </p>
                 <p className="text-xl font-bold text-orange-400">{amountText}</p>
               </div>
               <div className="p-6">
-                <p className="text-xs text-slate-500 font-medium mb-1">Date</p>
-                <p className="text-sm font-bold">{formatCompactDate(payment.updatedAt || payment.createdAt)}</p>
+                <p className="text-xs text-slate-500 font-medium mb-1">
+                  {t("adminPaymentsDetail.paymentSummary.date")}
+                </p>
+                <p className="text-sm font-bold">{formatCompactDate(payment.updatedAt || payment.createdAt, locale)}</p>
               </div>
               <div className="p-6">
-                <p className="text-xs text-slate-500 font-medium mb-1">Reference</p>
+                <p className="text-xs text-slate-500 font-medium mb-1">
+                  {t("adminPaymentsDetail.paymentSummary.reference")}
+                </p>
                 <p className="text-sm font-bold">{payment?.proof?.reference || "-"}</p>
               </div>
             </div>
@@ -478,17 +499,19 @@ export function AdminPaymentDetailPage() {
           {/* Order Items */}
           <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5">
             <div className="p-6 border-b border-white/10">
-              <h3 className="text-lg font-bold flex items-center gap-2">🛒 Order Items</h3>
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                🛒 {t("adminPaymentsDetail.orderItems.title")}
+              </h3>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-white/5 text-[10px] uppercase tracking-widest text-slate-400">
                   <tr>
-                    <th className="px-6 py-4 font-bold">Product</th>
-                    <th className="px-6 py-4 font-bold text-center">Qty</th>
-                    <th className="px-6 py-4 font-bold text-right">Price</th>
-                    <th className="px-6 py-4 font-bold text-right">Total</th>
+                    <th className="px-6 py-4 font-bold">{t("adminPaymentsDetail.orderItems.columns.product")}</th>
+                    <th className="px-6 py-4 font-bold text-center">{t("adminPaymentsDetail.orderItems.columns.qty")}</th>
+                    <th className="px-6 py-4 font-bold text-right">{t("adminPaymentsDetail.orderItems.columns.price")}</th>
+                    <th className="px-6 py-4 font-bold text-right">{t("adminPaymentsDetail.orderItems.columns.total")}</th>
                   </tr>
                 </thead>
 
@@ -496,7 +519,9 @@ export function AdminPaymentDetailPage() {
                   {(order?.items || []).length === 0 ? (
                     <tr>
                       <td className="px-6 py-4 text-slate-400" colSpan={4}>
-                        {order ? "No items" : "Order not created yet (confirm payment first)."}
+                        {order
+                          ? t("adminPaymentsDetail.orderItems.emptyWithOrder")
+                          : t("adminPaymentsDetail.orderItems.emptyNoOrder")}
                       </td>
                     </tr>
                   ) : (
@@ -504,6 +529,7 @@ export function AdminPaymentDetailPage() {
                       <tr key={it.productId} className="hover:bg-white/5 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
+                            {/* Imagen se arregla después: por ahora dejamos el placeholder 📦 */}
                             <div className="size-10 rounded bg-white/10 flex items-center justify-center">📦</div>
                             <span className="text-sm font-medium">{it.name}</span>
                           </div>
@@ -523,7 +549,7 @@ export function AdminPaymentDetailPage() {
                 <tfoot>
                   <tr className="bg-white/5">
                     <td className="px-6 py-4 text-right font-bold text-slate-400" colSpan={3}>
-                      Subtotal:
+                      {t("adminPaymentsDetail.orderItems.subtotal")}
                     </td>
                     <td className="px-6 py-4 text-right font-bold text-slate-100">
                       {order ? formatUSD(order.totals?.subtotalUSD ?? 0) : "—"}
@@ -540,20 +566,24 @@ export function AdminPaymentDetailPage() {
           {/* Delivery badge */}
           <div className="bg-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-500/20 relative overflow-hidden">
             <div className="absolute -right-4 -bottom-4 text-7xl opacity-10">🚚</div>
-            <p className="text-xs font-bold uppercase tracking-widest opacity-80 mb-1">Delivery Method</p>
+            <p className="text-xs font-bold uppercase tracking-widest opacity-80 mb-1">
+              {t("adminPaymentsDetail.delivery.badgeTitle")}
+            </p>
             <h3 className="text-3xl font-bold tracking-tight">
-              {deliveryLabel(shippingMethod || order?.shipping?.method)}
+              {deliveryLabel(shippingMethod || order?.shipping?.method, t)}
             </h3>
 
             <div className="mt-4 flex items-center gap-2 text-sm font-medium bg-white/20 w-fit px-3 py-1 rounded-full">
-              {requiresDispatch ? "Requires Dispatch" : "No Dispatch Needed"}
+              {requiresDispatch
+                ? t("adminPaymentsDetail.delivery.requiresDispatch")
+                : t("adminPaymentsDetail.delivery.noDispatchNeeded")}
             </div>
           </div>
 
           {/* Customer */}
           <div className="rounded-2xl p-6 border border-white/10 bg-white/5">
             <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
-              Customer Details
+              {t("adminPaymentsDetail.customer.title")}
             </h3>
 
             <div className="flex items-center gap-4 mb-6">
@@ -562,7 +592,7 @@ export function AdminPaymentDetailPage() {
               </div>
               <div>
                 <p className="text-lg font-bold">{customer?.name || "—"}</p>
-                <p className="text-sm text-slate-400">Customer snapshot</p>
+                <p className="text-sm text-slate-400">{t("adminPaymentsDetail.customer.subtitle")}</p>
               </div>
             </div>
 
@@ -570,7 +600,9 @@ export function AdminPaymentDetailPage() {
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                 <span className="text-slate-400">✉️</span>
                 <div className="text-sm">
-                  <p className="text-slate-500 text-[10px] uppercase font-bold">Email</p>
+                  <p className="text-slate-500 text-[10px] uppercase font-bold">
+                    {t("adminPaymentsDetail.customer.email")}
+                  </p>
                   <p className="text-slate-200 font-medium">{customer?.email || "—"}</p>
                 </div>
               </div>
@@ -578,40 +610,54 @@ export function AdminPaymentDetailPage() {
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                 <span className="text-slate-400">📞</span>
                 <div className="text-sm">
-                  <p className="text-slate-500 text-[10px] uppercase font-bold">Phone</p>
+                  <p className="text-slate-500 text-[10px] uppercase font-bold">
+                    {t("adminPaymentsDetail.customer.phone")}
+                  </p>
                   <p className="text-slate-200 font-medium">{customer?.phone || "—"}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Shipping address (if any) */}
+          {/* Shipping address */}
           <div className="rounded-2xl p-6 border border-white/10 bg-white/5">
             <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
-              Shipping / Delivery
+              {t("adminPaymentsDetail.shipping.title")}
             </h3>
 
             {!order ? (
-              <p className="text-sm text-slate-400">Order not created yet.</p>
+              <p className="text-sm text-slate-400">{t("adminPaymentsDetail.shipping.noOrder")}</p>
             ) : order.shipping?.address ? (
               <div className="text-sm text-slate-200 space-y-1">
-                <p><b>Recipient:</b> {order.shipping.address.recipientName}</p>
-                <p><b>Phone:</b> {order.shipping.address.phone}</p>
-                <p><b>State:</b> {order.shipping.address.state}</p>
-                <p><b>City:</b> {order.shipping.address.city}</p>
-                <p><b>Line1:</b> {order.shipping.address.line1}</p>
-                <p><b>Ref:</b> {order.shipping.address.reference || "—"}</p>
+                <p>
+                  <b>{t("adminPaymentsDetail.shipping.recipient")}</b> {order.shipping.address.recipientName}
+                </p>
+                <p>
+                  <b>{t("adminPaymentsDetail.shipping.phone")}</b> {order.shipping.address.phone}
+                </p>
+                <p>
+                  <b>{t("adminPaymentsDetail.shipping.state")}</b> {order.shipping.address.state}
+                </p>
+                <p>
+                  <b>{t("adminPaymentsDetail.shipping.city")}</b> {order.shipping.address.city}
+                </p>
+                <p>
+                  <b>{t("adminPaymentsDetail.shipping.line1")}</b> {order.shipping.address.line1}
+                </p>
+                <p>
+                  <b>{t("adminPaymentsDetail.shipping.reference")}</b>{" "}
+                  {order.shipping.address.reference || "—"}
+                </p>
 
                 {order.shipping?.carrier?.trackingNumber && (
                   <p className="mt-2">
-                    <b>Tracking:</b> {order.shipping.carrier.name} · {order.shipping.carrier.trackingNumber}
+                    <b>{t("adminPaymentsDetail.shipping.tracking")}</b>{" "}
+                    {order.shipping.carrier.name} · {order.shipping.carrier.trackingNumber}
                   </p>
                 )}
               </div>
             ) : (
-              <p className="text-sm text-slate-400">
-                No address (Pickup).
-              </p>
+              <p className="text-sm text-slate-400">{t("adminPaymentsDetail.shipping.noAddress")}</p>
             )}
           </div>
         </div>
@@ -621,13 +667,13 @@ export function AdminPaymentDetailPage() {
       {rejectOpen && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 px-4">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#221910] p-6 shadow-2xl">
-            <h3 className="text-xl font-bold text-white">Reject Payment</h3>
-            <p className="mt-2 text-sm text-slate-400">Reason:</p>
+            <h3 className="text-xl font-bold text-white">{t("adminPaymentsDetail.rejectModal.title")}</h3>
+            <p className="mt-2 text-sm text-slate-400">{t("adminPaymentsDetail.rejectModal.reason")}</p>
 
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Reason for rejection..."
+              placeholder={t("adminPaymentsDetail.rejectModal.placeholder")}
               className="mt-4 w-full min-h-[96px] rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-orange-500"
             />
 
@@ -638,7 +684,7 @@ export function AdminPaymentDetailPage() {
                 disabled={busyAction}
                 className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 disabled:opacity-60"
               >
-                Cancel
+                {t("adminPaymentsDetail.actions.cancel")}
               </button>
 
               <button
@@ -647,7 +693,9 @@ export function AdminPaymentDetailPage() {
                 disabled={busyAction}
                 className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-bold text-white hover:bg-rose-500/90 disabled:opacity-60"
               >
-                {busyAction === "reject" ? "Rejecting..." : "Reject Payment"}
+                {busyAction === "reject"
+                  ? t("adminPaymentsDetail.actions.rejecting")
+                  : t("adminPaymentsDetail.actions.rejectPayment")}
               </button>
             </div>
           </div>

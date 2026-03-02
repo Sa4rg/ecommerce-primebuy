@@ -11,6 +11,7 @@ const upload = multer({
   limits: { fileSize: 8 * 1024 * 1024 }, // 8MB por imagen
 });
 
+// ✅ Admin: Subir imágenes de productos
 router.post(
   "/products",
   requireAuth,
@@ -20,6 +21,14 @@ router.post(
     { name: "gallery", maxCount: 12 },
   ]),
   uploadsController.uploadProductImages
+);
+
+// ✅ Usuario autenticado: Subir comprobante de pago
+router.post(
+  "/payments",
+  requireAuth,
+  upload.single("proof"),
+  uploadsController.uploadPaymentProof
 );
 
 router.delete(

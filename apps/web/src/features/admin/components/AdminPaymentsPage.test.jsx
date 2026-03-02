@@ -3,9 +3,14 @@ import { MemoryRouter } from "react-router-dom";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { AdminPaymentsPage } from "./AdminPaymentsPage.jsx";
 import { adminService } from "../adminService";
+import { LanguageProvider } from "../../../shared/i18n/LanguageContext.jsx";
 
 function renderWithRouter(ui, { route = "/admin/payments" } = {}) {
-  return render(<MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>);
+  return render(
+    <LanguageProvider>
+      <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+    </LanguageProvider>
+  );
 }
 
 vi.mock("../adminService");
@@ -34,10 +39,10 @@ describe("AdminPaymentsPage", () => {
 
     renderWithRouter(<AdminPaymentsPage />);
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByText(/cargando/i)).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/cargando/i)).not.toBeInTheDocument();
     });
 
     expect(screen.getByText(/pay-123/i)).toBeInTheDocument();
@@ -62,7 +67,7 @@ describe("AdminPaymentsPage", () => {
     renderWithRouter(<AdminPaymentsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/no payments found/i)).toBeInTheDocument();
+      expect(screen.getByText(/no se encontraron pagos/i)).toBeInTheDocument();
     });
   });
 
@@ -87,10 +92,10 @@ describe("AdminPaymentsPage", () => {
     renderWithRouter(<AdminPaymentsPage />);
 
     await waitFor(() => {
-      expect(screen.getAllByRole("button", { name: /confirm/i }).length).toBeGreaterThan(0);
+      expect(screen.getAllByRole("button", { name: /confirmar/i }).length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getAllByRole("button", { name: /confirm/i })[1]);
+    fireEvent.click(screen.getAllByRole("button", { name: /confirmar/i })[0]);
 
     await waitFor(() => {
       expect(adminService.confirmPayment).toHaveBeenCalledWith("pay-to-confirm");
@@ -116,19 +121,19 @@ describe("AdminPaymentsPage", () => {
     renderWithRouter(<AdminPaymentsPage />);
 
     await waitFor(() => {
-      expect(screen.getAllByRole("button", { name: /reject/i }).length).toBeGreaterThan(0);
+      expect(screen.getAllByRole("button", { name: /rechazar/i }).length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getAllByRole("button", { name: /reject/i })[1]);
+    fireEvent.click(screen.getAllByRole("button", { name: /rechazar/i })[0]);
 
     await waitFor(() => {
-      expect(screen.getByText(/please provide a reason/i)).toBeInTheDocument();
+      expect(screen.getByText(/indica una raz[oó]n para el rechazo/i)).toBeInTheDocument();
     });
 
-    const textarea = screen.getByPlaceholderText(/reason for rejection/i);
+    const textarea = screen.getByPlaceholderText(/raz[oó]n del rechazo/i);
     fireEvent.change(textarea, { target: { value: "Invalid reference number" } });
 
-    fireEvent.click(screen.getByRole("button", { name: /reject payment/i }));
+    fireEvent.click(screen.getByRole("button", { name: /rechazar pago/i }));
 
     await waitFor(() => {
       expect(adminService.rejectPayment).toHaveBeenCalledWith("pay-to-reject", "Invalid reference number");
@@ -144,7 +149,7 @@ describe("AdminPaymentsPage", () => {
       expect(adminService.listPayments).toHaveBeenCalledWith({});
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /confirmed/i }));
+    fireEvent.click(screen.getByRole("button", { name: /confirmados/i }));
 
     await waitFor(() => {
       expect(adminService.listPayments).toHaveBeenCalledWith({ status: "confirmed" });

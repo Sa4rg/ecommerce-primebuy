@@ -4,6 +4,7 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { PaymentStatusPage } from "./PaymentStatusPage.jsx";
 import { CartProvider } from "../../../context/CartContext.jsx";
 import { AuthProvider } from "../../../context/AuthContext.jsx";
+import { LanguageProvider } from "../../../shared/i18n/LanguageContext.jsx";
 
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
@@ -16,16 +17,18 @@ vi.mock("react-router-dom", async () => {
 
 function renderWithRouter(paymentId = "pay-123") {
   return render(
-    <AuthProvider>
-      <CartProvider>
-        <MemoryRouter initialEntries={[`/payment/${paymentId}`]}>
-          <Routes>
-            <Route path="/payment/:paymentId" element={<PaymentStatusPage />} />
-            <Route path="/orders/:orderId" element={<div>Order Page</div>} />
-          </Routes>
-        </MemoryRouter>
-      </CartProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <CartProvider>
+          <MemoryRouter initialEntries={[`/payment/${paymentId}`]}>
+            <Routes>
+              <Route path="/payment/:paymentId" element={<PaymentStatusPage />} />
+              <Route path="/orders/:orderId" element={<div>Order Page</div>} />
+            </Routes>
+          </MemoryRouter>
+        </CartProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 
@@ -37,6 +40,13 @@ function mockFetchPayment(paymentData) {
         ok: true,
         status: 200,
         json: () => Promise.resolve({ success: true, data: paymentData }),
+      });
+    }
+    if (url.includes("/api/uploads/payments") && opts?.method === "POST") {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ success: true, data: { url: "https://cloudinary.com/proof.jpg", publicId: "proof123" } }),
       });
     }
     if (url.includes("/api/payments/") && opts?.method === "PATCH") {
@@ -137,8 +147,17 @@ describe("PaymentStatusPage", () => {
     const input = screen.getByRole("textbox");
     fireEvent.change(input, { target: { value: "REF-12345" } });
 
+    // Simulate file selection
+    const file = new File(["proof"], "proof.png", { type: "image/png" });
+    const fileInput = document.querySelector('input[type="file"]');
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
     // Submit
-    fireEvent.click(screen.getByRole("button", { name: /submit proof|enviar comprobante/i }));
+    const submitButton = screen.getByRole("button", { name: /submit proof|enviar comprobante/i });
+    await waitFor(() => {
+      expect(submitButton).not.toBeDisabled();
+    });
+    fireEvent.click(submitButton);
 
     await waitFor(() => {
       expect(globalThis.fetch).toHaveBeenCalledWith(

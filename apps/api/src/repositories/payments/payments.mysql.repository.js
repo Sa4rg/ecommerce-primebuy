@@ -38,6 +38,7 @@ class MySQLPaymentsRepository {
       };
       if (row.proof_date !== null) proof.date = row.proof_date;
       if (row.proof_note !== null) proof.note = row.proof_note;
+      if (row.proof_url !== null) proof.proofUrl = row.proof_url;
     }
     
     // Map review: undefined if both fields are null, otherwise object with present fields
@@ -85,10 +86,12 @@ class MySQLPaymentsRepository {
       dbData.proof_reference = payment.proof.reference;
       dbData.proof_date = payment.proof.date || null;
       dbData.proof_note = payment.proof.note || null;
+      dbData.proof_url = payment.proof.proofUrl || null;
     } else {
       dbData.proof_reference = null;
       dbData.proof_date = null;
       dbData.proof_note = null;
+      dbData.proof_url = null;
     }
     
     // Map review object to flat columns

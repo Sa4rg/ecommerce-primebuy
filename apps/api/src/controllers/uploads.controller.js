@@ -32,6 +32,29 @@ async function uploadProductImages(req, res, next) {
 }
 
 /**
+ * POST /api/uploads/payments
+ * multipart/form-data
+ * fields:
+ *  - proof: file (comprobante de pago)
+ * Retorna: { url, publicId }
+ */
+async function uploadPaymentProof(req, res, next) {
+  try {
+    const proofFile = req.file || null;
+
+    if (!proofFile?.buffer) {
+      return res.status(400).json({ success: false, message: "No file provided" });
+    }
+
+    const uploaded = await uploadBuffer(proofFile.buffer, { folder: "payments" });
+
+    return success(res, { url: uploaded.url, publicId: uploaded.publicId }, "Payment proof uploaded");
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
  * DELETE /api/uploads
  * body: { publicId: "..." }
  * (opcional, para borrar imágenes sueltas desde admin)
@@ -48,4 +71,4 @@ async function deleteImage(req, res, next) {
   }
 }
 
-module.exports = { uploadProductImages, deleteImage };
+module.exports = { uploadProductImages, uploadPaymentProof, deleteImage };
