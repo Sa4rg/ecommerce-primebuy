@@ -1,17 +1,25 @@
-// src/context/AuthContext.jsx
+// web/src/context/AuthContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import {
-  getAccessToken,
-  setAccessToken,
-  clearAccessToken,
-} from "../features/auth/authStorage";
+import { getAccessToken, setAccessToken, clearAccessToken } from "../features/auth/authStorage";
 import { login as apiLogin, logout as apiLogout } from "../features/auth/authCommand";
+import { apiClient } from "../infrastructure/apiClient";
 
 function getRoleFromToken(token) {
   if (!token) return null;
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
     return payload.role || "customer";
+  } catch {
+    return null;
+  }
+}
+
+async function fetchMeSafe() {
+  try {
+    // Si no existe token, apiClient igual intentará refresh en 401,
+    // pero aquí lo usamos cuando ya creemos estar auth.
+    const me = await apiClient.get("/api/me");
+    return me || null;
   } catch {
     return null;
   }
@@ -24,21 +32,27 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 export function AuthProvider({ children }) {
   const [status, setStatus] = useState("checking"); // checking | ready
   const [token, setToken] = useState(() => getAccessToken() || "");
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function bootstrap() {
       const existing = getAccessToken();
+
+      // 1) Si ya hay token en storage, marcamos ready y cargamos /api/me
       if (existing) {
+        if (!cancelled) setToken(existing);
+
+        const me = await fetchMeSafe();
         if (!cancelled) {
-          setToken(existing);
+          setUser(me);
           setStatus("ready");
         }
         return;
       }
 
-      // Silent refresh
+      // 2) Silent refresh para obtener token
       try {
         const res = await fetch(`${API_BASE}/api/auth/refresh`, {
           method: "POST",
@@ -55,17 +69,24 @@ export function AuthProvider({ children }) {
         const newToken = body?.data?.accessToken;
         if (!newToken) throw new Error("No accessToken in refresh response");
 
-        // Single source of truth (storage) + keep local state in sync
+        // Single source of truth
         setAccessToken(newToken);
 
         if (!cancelled) {
           setToken(newToken);
+        }
+
+        // 3) Ya con token, cargar perfil
+        const me = await fetchMeSafe();
+        if (!cancelled) {
+          setUser(me);
           setStatus("ready");
         }
       } catch {
         clearAccessToken();
         if (!cancelled) {
           setToken("");
+          setUser(null);
           setStatus("ready");
         }
       }
@@ -77,15 +98,30 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // ✅ Keep React state in sync when token changes outside AuthContext (e.g., apiClient refresh)
+  // ✅ Sync when token changes outside AuthContext (e.g., apiClient refresh)
   useEffect(() => {
-    function handleTokenChange(event) {
+    let cancelled = false;
+
+    async function handleTokenChange(event) {
       const nextToken = event?.detail || "";
       setToken(nextToken);
+
+      // si se limpió token -> limpiar user
+      if (!nextToken) {
+        setUser(null);
+        return;
+      }
+
+      // si llegó token nuevo (refresh), re-cargar user
+      const me = await fetchMeSafe();
+      if (!cancelled) setUser(me);
     }
 
     window.addEventListener("auth:token", handleTokenChange);
-    return () => window.removeEventListener("auth:token", handleTokenChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("auth:token", handleTokenChange);
+    };
   }, []);
 
   const role = getRoleFromToken(token);
@@ -97,9 +133,12 @@ export function AuthProvider({ children }) {
     const nextToken = data?.accessToken;
     if (!nextToken) throw new Error("No accessToken returned from login");
 
-    // Persist + update state (Navbar updates without refresh)
     setAccessToken(nextToken);
     setToken(nextToken);
+
+    // Cargar perfil
+    const me = await fetchMeSafe();
+    setUser(me);
 
     return data;
   }
@@ -108,10 +147,11 @@ export function AuthProvider({ children }) {
     try {
       await apiLogout();
     } catch {
-      // If backend fails, still clear client state
+      // ignore
     } finally {
       clearAccessToken();
       setToken("");
+      setUser(null);
     }
   }
 
@@ -119,13 +159,15 @@ export function AuthProvider({ children }) {
     () => ({
       status,
       token,
+      user, // ✅ nuevo
       isAuthenticated,
       role,
       login,
       logout,
-      setToken, // optional, if you rely on it elsewhere
+      setToken, // optional
+      setUser,  // optional (por si luego quieres actualizar profile local)
     }),
-    [status, token, isAuthenticated, role]
+    [status, token, user, isAuthenticated, role]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

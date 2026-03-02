@@ -1,7 +1,33 @@
 const { services } = require('../composition/root');
 const { success } = require('../utils/response');
 
-const { paymentsService, ordersService } = services;
+const { paymentsService, ordersService, authService } = services;
+
+/**
+ * GET /api/me
+ * Returns basic profile for authenticated user
+ */
+async function getMe(req, res, next) {
+  try {
+    const { userId } = req.user;
+
+    // ⚠️ necesitamos usersRepository, así que accedemos vía authService
+    const user = await authService.getUserById(userId);
+
+    if (!user) {
+      return success(res, null, 'User not found');
+    }
+
+    success(res, {
+      userId: user.userId,
+      email: user.email,
+      role: user.role,
+      name: user.name || null,
+    }, 'User retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+}
 
 /**
  * GET /api/me/payments
@@ -49,4 +75,5 @@ module.exports = {
   getMyPayments,
   getMyOrders,
   getMyLastShippingAddress,
+  getMe,
 };

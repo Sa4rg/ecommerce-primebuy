@@ -54,6 +54,7 @@ describe('auth.service', () => {
       userId: FIXED_ID,
       email: 'test@email.com',
       role: 'customer',
+      name: null,
       createdAt: FIXED_DATE_ISO,
       updatedAt: FIXED_DATE_ISO,
     });

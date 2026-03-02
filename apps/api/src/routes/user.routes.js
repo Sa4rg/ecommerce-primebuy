@@ -8,6 +8,9 @@ const router = express.Router();
 // All routes require authentication
 router.use(requireAuth);
 
+// GET /api/me - Get current authenticated user
+router.get('/', userController.getMe);
+
 // GET /api/me/payments - Get current user's payments
 router.get('/payments', userController.getMyPayments);
 

@@ -53,7 +53,7 @@ function createAuthService({
   if (!passwordResetRequestsRepository) throw new Error('passwordResetRequestsRepository is required');
   if (!emailSender) throw new Error('emailSender is required');
 
-  async function register(email, password) {
+  async function register(email, password, name = null) {
     // Minimal validation
     if (!email || typeof email !== 'string') {
       throw new AppError('Email is required', 400);
@@ -62,6 +62,7 @@ function createAuthService({
       throw new AppError('Password must be at least 8 characters', 400);
     }
     const normalizedEmail = email.trim().toLowerCase();
+    const normalizedName = name && typeof name === 'string' ? name.trim() : null;
     const passwordHash = await argon2.hash(password);
     const now = nowProvider();
     const nowISO = now.toISOString();
@@ -70,6 +71,7 @@ function createAuthService({
       email: normalizedEmail,
       passwordHash,
       role: 'customer',
+      name: normalizedName,
       createdAt: nowISO,
       updatedAt: nowISO,
     };
@@ -87,6 +89,7 @@ function createAuthService({
       userId: user.userId,
       email: user.email,
       role: user.role,
+      name: user.name,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -367,6 +370,10 @@ function createAuthService({
     return { success: true };
   }
 
+  async function getUserById(userId) {
+    return usersRepository.findById(userId);
+  }
+
   return {
     register,
     login,
@@ -376,6 +383,7 @@ function createAuthService({
     requestPasswordReset,
     resetPasswordWithCode,
     loginWithGoogle,
+    getUserById,
   };
 }
 

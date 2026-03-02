@@ -16,6 +16,7 @@ class MySQLUsersRepository {
       email: user.email,
       password_hash: user.passwordHash,
       role: user.role || 'customer',
+      name: user.name || null,
       created_at: now,
       updated_at: now,
     };

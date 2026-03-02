@@ -39,8 +39,8 @@ const cookieOptions = {
 
 async function register(req, res, next) {
   try {
-    const { email, password } = req.body;
-    const user = await authService.register(email, password);
+    const { email, password, name } = req.body;
+    const user = await authService.register(email, password, name);
     res.status(201);
     success(res, user, 'User registered successfully');
   } catch (err) {

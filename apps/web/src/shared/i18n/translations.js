@@ -653,6 +653,81 @@ export const translations = {
       },
     },
 
+    account: {
+      breadcrumb: {
+        home: "Inicio",
+        account: "Mi Cuenta",
+      },
+      header: {
+        greeting: "Hola {name}, esta es tu cuenta",
+        title: "Mi Cuenta",
+        subtitle: "Aquí puedes gestionar tus pedidos y pagos.",
+      },
+      actions: {
+        backToCatalog: "Volver al catálogo",
+        goToCart: "Ir al carrito",
+        startNewCart: "Iniciar nuevo carrito",
+        refresh: "Refresh",
+      },
+      tabs: {
+        orders: "Mis Pedidos",
+        payments: "Mis Pagos",
+      },
+      states: {
+        loading: "Loading...",
+      },
+      errors: {
+        loadFailed: "Failed to load account data",
+      },
+      badges: {
+        pending: "PENDIENTE",
+        confirmed: "CONFIRMADO",
+        rejected: "RECHAZADO",
+        paid: "PAGADO",
+        processing: "PROCESANDO",
+        completed: "COMPLETADO",
+        cancelled: "CANCELADO",
+      },
+      orders: {
+        empty: {
+          title: "No tienes pedidos aún",
+          body: "Cuando completes una compra, tus pedidos aparecerán aquí.",
+        },
+        card: {
+          title: "Pedido",
+          itemsLabel: "Items:",
+          viewDetails: "Ver detalles",
+        },
+        info: {
+          title: "Seguimiento y estados",
+          body: "Dentro de cada pedido podrás ver el estado de envío y los detalles completos.",
+        },
+      },
+      payments: {
+        empty: {
+          title: "No tienes pagos aún",
+          body: "Cuando envíes un comprobante de pago, aparecerá aquí con su estatus.",
+        },
+        card: {
+          id: "ID:",
+          ref: "Ref:",
+          viewStatus: "Ver estatus",
+          viewOrder: "Ver pedido",
+        },
+        rejected: {
+          title: "Pago Rechazado",
+          reason: "Motivo:",
+        },
+      },
+      help: {
+        title: "¿Tienes dudas con un pago?",
+        body: "Nuestro equipo de soporte está disponible para ayudarte con cualquier inconveniente con tus transacciones.",
+        cta: "Contactar Soporte",
+        ctaPlaceholder: "Soporte: próximamente (placeholder)",
+        whatsappMessage: "Hola, necesito ayuda con un pago en ElectroVar.",
+      },
+    },
+
     auth: {
       common: {
         emailLabel: "Correo electrónico",
@@ -1402,6 +1477,81 @@ export const translations = {
         loginHint: "to recover your cart",
         continueGuest: "Continue as guest",
         continueGuestHint: "with a new empty cart",
+      },
+    },
+
+    account: {
+      breadcrumb: {
+        home: "Home",
+        account: "My Account",
+      },
+      header: {
+        greeting: "Hi {name}, this is your account",
+        title: "My Account",
+        subtitle: "Here you can manage your orders and payments.",
+      },
+      actions: {
+        backToCatalog: "Back to catalog",
+        goToCart: "Go to cart",
+        startNewCart: "Start a new cart",
+        refresh: "Refresh",
+      },
+      tabs: {
+        orders: "My Orders",
+        payments: "My Payments",
+      },
+      states: {
+        loading: "Loading...",
+      },
+      errors: {
+        loadFailed: "Failed to load account data",
+      },
+      badges: {
+        pending: "PENDING",
+        confirmed: "CONFIRMED",
+        rejected: "REJECTED",
+        paid: "PAID",
+        processing: "PROCESSING",
+        completed: "COMPLETED",
+        cancelled: "CANCELLED",
+      },
+      orders: {
+        empty: {
+          title: "You have no orders yet",
+          body: "Once you complete a purchase, your orders will appear here.",
+        },
+        card: {
+          title: "Order",
+          itemsLabel: "Items:",
+          viewDetails: "View details",
+        },
+        info: {
+          title: "Tracking and statuses",
+          body: "Inside each order you can view shipping status and full details.",
+        },
+      },
+      payments: {
+        empty: {
+          title: "You have no payments yet",
+          body: "Once you submit a payment proof, it will appear here with its status.",
+        },
+        card: {
+          id: "ID:",
+          ref: "Ref:",
+          viewStatus: "View status",
+          viewOrder: "View order",
+        },
+        rejected: {
+          title: "Payment Rejected",
+          reason: "Reason:",
+        },
+      },
+      help: {
+        title: "Need help with a payment?",
+        body: "Our support team is available to help you with any issues regarding your transactions.",
+        cta: "Contact support",
+        ctaPlaceholder: "Support: coming soon (placeholder)",
+        whatsappMessage: "Hi, I need help with a payment on ElectroVar.",
       },
     },
 
