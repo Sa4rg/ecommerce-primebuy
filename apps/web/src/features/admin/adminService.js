@@ -43,4 +43,13 @@ export const adminService = {
   deliverShipping(orderId) {
     return apiClient.patch(`/api/orders/${orderId}/shipping/deliver`);
   },
+
+  // FX Rates
+  async getFxRate() {
+    return apiClient.get("/api/fx/usd-ves");
+  },
+
+  async setFxRate(rate) {
+    return apiClient.post("/api/admin/fx/usd-ves", { rate });
+  },
 };

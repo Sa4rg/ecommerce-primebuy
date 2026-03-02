@@ -18,6 +18,9 @@ import { paymentService } from "../payment/paymentService";
 import { savePaymentForCheckout, getPaymentForCheckout, clearPaymentForCheckout } from "../payment/paymentStorage";
 import { clearCheckoutId } from "./CheckoutStorage";
 
+// FX
+import { fxService } from "../fx/fxService.js";
+
 const SHIPPING_METHODS = [
   { value: "pickup", icon: "store", tKey: "checkout.methods.shipping.pickup" },
   { value: "local_delivery", icon: "moped", tKey: "checkout.methods.shipping.localDelivery" },
@@ -27,7 +30,7 @@ const SHIPPING_METHODS = [
 const PAYMENT_METHODS = [
   { value: "zelle", icon: "account_balance_wallet", tKey: "checkout.methods.payment.zelle" },
   { value: "zinli", icon: "payments", tKey: "checkout.methods.payment.zinli" },
-  { value: "transferencia", icon: "account_balance", tKey: "checkout.methods.payment.bankTransfer" },
+  { value: "bank_transfer", icon: "account_balance", tKey: "checkout.methods.payment.bankTransfer" },
   { value: "pago_movil", icon: "smartphone", tKey: "checkout.methods.payment.pagoMovil" },
 ];
 
@@ -113,6 +116,19 @@ export function CheckoutView() {
 
   const [shippingMethod, setShippingMethod] = useState("pickup");
   const [paymentMethod, setPaymentMethod] = useState("zelle");
+
+  // FX Rate for VES calculations
+  const [fxRate, setFxRate] = useState(null);
+
+  useEffect(() => {
+    fxService.getUsdVesRate()
+      .then((data) => {
+        if (data) setFxRate(data.rate);
+      })
+      .catch(() => {
+        // Silently ignore - FX rate display is optional
+      });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -211,7 +227,21 @@ export function CheckoutView() {
     return sub * taxRate;
   }, [subtotalUSD, taxRate, priceIncludesVAT]);
 
-  const totalUSD = useMemo(() => Number(subtotalUSD) || 0, [subtotalUSD]);
+  // Shipping cost based on method
+  const shippingCostUSD = useMemo(() => {
+    if (shippingMethod === "pickup") return 0;
+    if (shippingMethod === "national_shipping") return 5;
+    // local_delivery requires WhatsApp coordination
+    return null;
+  }, [shippingMethod]);
+
+  const isLocalDelivery = shippingMethod === "local_delivery";
+
+  const totalUSD = useMemo(() => {
+    const sub = Number(subtotalUSD) || 0;
+    const shipping = shippingCostUSD ?? 0;
+    return sub + shipping;
+  }, [subtotalUSD, shippingCostUSD]);
 
   const needsAddress = shippingMethod !== "pickup";
 
@@ -631,12 +661,24 @@ export function CheckoutView() {
                   <span className="opacity-70">{t("checkout.summary.subtotal")}</span>
                   <span className="font-medium">{formatUSD(subtotalUSD)}</span>
                 </div>
-                <div className="flex justify-between text-slate-300">
-                  <span className="opacity-70">{t("checkout.summary.shipping")}</span>
-                  <span className="text-emerald-400 font-bold uppercase tracking-wider text-xs">
-                    {shippingMethod === "pickup" ? t("checkout.summary.free") : t("checkout.summary.tbd")}
-                  </span>
-                </div>
+
+                {/* Shipping line - only show for national_shipping */}
+                {shippingMethod === "national_shipping" && (
+                  <div className="flex justify-between text-slate-300">
+                    <span className="opacity-70">{t("checkout.summary.shipping")}</span>
+                    <span className="font-medium">{formatUSD(shippingCostUSD)}</span>
+                  </div>
+                )}
+
+                {/* Local delivery notice */}
+                {isLocalDelivery && (
+                  <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                    <p className="text-xs text-orange-300">
+                      {t("checkout.delivery.whatsappNotice")}
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-slate-300">
                   <span className="opacity-70">{t("checkout.summary.estimatedTaxes")}</span>
                   <span className="font-medium">{formatUSD(estimatedTaxesUSD)}</span>
@@ -646,22 +688,50 @@ export function CheckoutView() {
                     {t("checkout.summary.total")}
                   </span>
                   <span className="text-2xl font-bold tracking-tight text-orange-400">
-                    {formatUSD(totalUSD)}
+                    {isLocalDelivery ? `${formatUSD(subtotalUSD)} + envío` : formatUSD(totalUSD)}
                   </span>
                 </div>
+
+                {/* Equivalencia en VES */}
+                {fxRate && !isLocalDelivery && (
+                  <div className="mt-2 text-sm text-slate-400">
+                    <div className="flex justify-between">
+                      <span>{t("checkout.summary.equivalentVES")}</span>
+                      <span className="text-slate-300">
+                        Bs. {(totalUSD * fxRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 text-right mt-1">
+                      {t("checkout.summary.rateInfo", { rate: fxRate.toLocaleString("es-VE") })}
+                    </p>
+                  </div>
+                )}
               </div>
 
-              <button
-                type="button"
-                disabled={saving || !canContinue}
-                onClick={onContinue}
-                className="group mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-4 font-bold text-white transition-all hover:bg-orange-500/90 disabled:opacity-60"
-              >
-                {saving ? t("checkout.actions.processing") : t("checkout.actions.continueToPayment")}
-                <span className="material-symbols-outlined transition-transform group-hover:translate-x-1" aria-hidden="true">
-                  arrow_forward
-                </span>
-              </button>
+              {/* Action button */}
+              {isLocalDelivery ? (
+                <a
+                  href={`https://wa.me/584126216402?text=${encodeURIComponent(t("checkout.delivery.whatsappMessage", { total: formatUSD(subtotalUSD), items: items.length }))}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-4 font-bold text-white transition-all hover:bg-green-500"
+                >
+                  {t("checkout.delivery.contactWhatsApp")}
+                  <span className="text-xl" aria-hidden="true">💬</span>
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled={saving || !canContinue}
+                  onClick={onContinue}
+                  className="group mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-4 font-bold text-white transition-all hover:bg-orange-500/90 disabled:opacity-60"
+                >
+                  {saving ? t("checkout.actions.processing") : t("checkout.actions.continueToPayment")}
+                  <span className="material-symbols-outlined transition-transform group-hover:translate-x-1" aria-hidden="true">
+                    arrow_forward
+                  </span>
+                </button>
+              )}
             </div>
           </div>
         </div>

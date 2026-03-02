@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "../../../shared/i18n/useTranslation.js";
+import { fxService } from "../../fx/fxService.js";
 
 function formatMoneyUSD(value) {
   const n = Number(value);
@@ -6,12 +8,30 @@ function formatMoneyUSD(value) {
   return n.toFixed(2);
 }
 
+function formatMoneyVES(value) {
+  const n = Number(value);
+  if (Number.isNaN(n)) return String(value ?? "");
+  return n.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export function CartSummary({ summary, disabled, onCheckout }) {
   const { t } = useTranslation();
+  const [fxRate, setFxRate] = useState(null);
+
+  useEffect(() => {
+    fxService.getUsdVesRate()
+      .then((data) => {
+        if (data) setFxRate(data.rate);
+      })
+      .catch(() => {
+        // Silently ignore - FX rate display is optional
+      });
+  }, []);
 
   const subtotal = summary?.subtotalUSD ?? 0;
   const taxes = 0;
   const total = Number(subtotal) + taxes;
+  const totalVES = fxRate ? total * fxRate : null;
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-6 lg:p-8">
@@ -32,6 +52,20 @@ export function CartSummary({ summary, disabled, onCheckout }) {
           <span className="text-lg font-bold text-white">{t("cart.summary.total")}</span>
           <span className="text-2xl font-bold text-orange-400">${formatMoneyUSD(total)}</span>
         </div>
+
+        {/* Equivalencia en VES */}
+        {totalVES && (
+          <div className="flex justify-between items-center text-sm text-slate-400">
+            <span>{t("cart.summary.equivalentVES")}</span>
+            <span className="text-slate-300">Bs. {formatMoneyVES(totalVES)}</span>
+          </div>
+        )}
+
+        {fxRate && (
+          <p className="text-xs text-slate-500 text-right">
+            {t("cart.summary.rateInfo", { rate: fxRate.toLocaleString("es-VE") })}
+          </p>
+        )}
       </div>
 
       <button

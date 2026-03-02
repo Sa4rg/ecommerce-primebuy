@@ -41,6 +41,7 @@ function createCheckoutService(deps = {}) {
   const productsService = deps.productsService || defaultProductsService;
   const idGenerator = deps.idGenerator || (() => crypto.randomUUID());
   const paymentsRepository = deps.paymentsRepository || null;
+  const fxService = deps.fxService || null;
 
   // Support both new repository pattern and legacy checkoutsStore
   let checkoutRepository;
@@ -121,13 +122,25 @@ function createCheckoutService(deps = {}) {
     let subtotalVES = null;
     let exchangeRate = null;
 
-    const usdToVes = cart.metadata.exchangeRate?.usdToVes;
-    const asOf = cart.metadata.exchangeRate?.asOf;
+    // First, try to get exchange rate from cart metadata
+    let usdToVes = cart.metadata.exchangeRate?.usdToVes;
+    let asOf = cart.metadata.exchangeRate?.asOf;
+    let provider = "BCV";
 
-    if (typeof usdToVes === "number" && usdToVes > 0 && typeof asOf === "string" && asOf.length > 0) {
-      subtotalVES = subtotalUSD * usdToVes;
+    // If no rate in cart, try to get latest from fxService
+    if ((!usdToVes || usdToVes <= 0) && fxService) {
+      const latestRate = await fxService.getLatestRate("USD", "VES");
+      if (latestRate) {
+        usdToVes = latestRate.rate;
+        asOf = latestRate.rateDate;
+        provider = latestRate.source || "manual";
+      }
+    }
+
+    if (typeof usdToVes === "number" && usdToVes > 0 && asOf) {
+      subtotalVES = Math.round(subtotalUSD * usdToVes * 100) / 100;
       exchangeRate = {
-        provider: "BCV",
+        provider,
         usdToVes,
         asOf,
       };

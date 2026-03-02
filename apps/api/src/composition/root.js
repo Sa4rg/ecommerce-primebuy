@@ -16,6 +16,7 @@ const { createOrdersRepository } = require("./factories/orders.repository.factor
 const { createUsersRepository } = require("./factories/users/users.factory");
 const { createRefreshTokensRepository } = require("./factories/refreshTokens.repository.factory");
 const { createPasswordResetRequestsRepository } = require("./factories/passwordResetRequests.repository.factory");
+const { createFxRatesRepository } = require("./factories/fxRates.repository.factory");
 
 
 // ============================================================================
@@ -28,6 +29,7 @@ const { createPaymentsService } = require("../services/payments.service");
 const { createOrdersService } = require("../services/orders.service");
 const { createAuthService } = require("../services/auth.service");
 const { createPasswordResetService } = require("../services/passwordReset.service");
+const { createFxService } = require("../services/fx.service");
 const emailService = require("../services/email.service");
 
 // ============================================================================
@@ -43,6 +45,7 @@ const ordersRepository = createOrdersRepository();
 const usersRepository = createUsersRepository();
 const refreshTokensRepository = createRefreshTokensRepository();
 const passwordResetRequestsRepository = createPasswordResetRequestsRepository();
+const fxRatesRepository = createFxRatesRepository();
 
 
 // Services
@@ -50,11 +53,16 @@ const productsService = createProductsService({ productsRepository });
 
 const cartService = createCartService({ productsService, cartRepository });
 
+const fxService = createFxService({
+  fxRatesRepository,
+});
+
 const checkoutService = createCheckoutService({
   cartService,
   productsService,
   checkoutRepository,
   paymentsRepository,
+  fxService,
 });
 
 const paymentsService = createPaymentsService({
@@ -99,5 +107,6 @@ module.exports = {
     ordersService,
     authService,
     passwordResetService,
+    fxService,
   },
 };

@@ -10,6 +10,7 @@ import { OrderDetailPage } from "./features/orders/components/OrderDetailPage.js
 import { LoginView } from "./features/auth/components/LoginView.jsx";
 import { RegisterView } from "./features/auth/components/RegisterView.jsx";
 import { AdminPaymentsPage } from "./features/admin/components/AdminPaymentsPage.jsx";
+import { AdminFxPage } from "./features/admin/components/AdminFxPage.jsx";
 import { RequireAdmin } from "./shared/components/RequireAdmin.jsx";
 import { AccountPage } from "./features/account/components/AccountPage.jsx";
 import { RequireAuth } from "./shared/components/RequireAuth.jsx";
@@ -85,6 +86,14 @@ function App() {
           element={
             <RequireAdmin>
               <AdminPaymentsPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/admin/fx"
+          element={
+            <RequireAdmin>
+              <AdminFxPage />
             </RequireAdmin>
           }
         />

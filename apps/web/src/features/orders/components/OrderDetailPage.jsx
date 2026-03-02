@@ -1,7 +1,9 @@
-// web/src/features/order/components/OrderDetailPage.jsx
+// web/src/features/orders/components/OrderDetailPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { orderService } from "../orderService";
+import { useTranslation } from "../../../shared/i18n/useTranslation.js";
+import { WHATSAPP_SUPPORT } from "../../../config.js";
 
 // --- Helpers ---
 function formatMoneyUSD(n) {
@@ -10,11 +12,12 @@ function formatMoneyUSD(n) {
   return num.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-function formatDateHuman(iso) {
+function formatDateHuman(iso, language) {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleString("es-VE", {
+  const locale = language === "en" ? "en-US" : "es-VE";
+  return d.toLocaleString(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -28,14 +31,18 @@ function shortId(id) {
   return String(id).slice(0, 8);
 }
 
-function statusLabelES(status) {
-  const s = String(status || "").toLowerCase();
-  if (s === "paid") return "Pagado";
-  if (s === "processing") return "En preparación";
-  if (s === "completed") return "Completado";
-  if (s === "cancelled") return "Cancelado";
-  if (s === "created") return "Creado";
-  return status || "-";
+function cx(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function capitalizeWords(value) {
+  const s = String(value || "").trim();
+  if (!s) return "";
+  return s
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 }
 
 function statusBadgeClass(status) {
@@ -51,7 +58,7 @@ function statusBadgeClass(status) {
 function normalizeCarrier(shipping) {
   const rawCarrier = shipping?.carrier;
 
-  // Caso 1: carrier es string
+  // carrier string
   if (typeof rawCarrier === "string") {
     return {
       carrierName: rawCarrier || "",
@@ -60,7 +67,7 @@ function normalizeCarrier(shipping) {
     };
   }
 
-  // Caso 2: carrier es objeto { name, trackingNumber, trackingUrl? }
+  // carrier object
   if (rawCarrier && typeof rawCarrier === "object") {
     const carrierName = typeof rawCarrier.name === "string" ? rawCarrier.name : "";
     const trackingNumber =
@@ -80,7 +87,6 @@ function normalizeCarrier(shipping) {
     return { carrierName, trackingNumber, trackingUrl };
   }
 
-  // Caso 3: no hay carrier
   return {
     carrierName: "",
     trackingNumber: typeof shipping?.trackingNumber === "string" ? shipping.trackingNumber : "",
@@ -88,8 +94,216 @@ function normalizeCarrier(shipping) {
   };
 }
 
+function getItemImageUrl(it) {
+  // Compatible con lo que ya usan carrito/checkout: imageUrl
+  return it?.imageUrl || it?.image?.url || it?.product?.imageUrl || it?.productImageUrl || "";
+}
+
+function buildWhatsAppLink({ phone, message }) {
+  const digits = String(phone || "").replace(/[^\d]/g, "");
+  const text = encodeURIComponent(message || "");
+  return `https://wa.me/${digits}?text=${text}`;
+}
+
+function escapeHtml(s) {
+  // ✅ más compatible que replaceAll
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// ✅ Factura PDF básica: abre ventana + print (guardar como PDF)
+function openInvoicePrint({ order, derived, t, language }) {
+  // 🔥 IMPORTANT: NO uses "noreferrer" aquí (puede bloquear acceso al document)
+  const w = window.open("", "_blank");
+  if (!w) {
+    window.alert(
+      "El navegador bloqueó la ventana emergente. Permite popups para generar la factura."
+    );
+    return;
+  }
+
+  try {
+    const title = t("orderDetail.invoiceTitle", { id: shortId(order?.orderId) });
+
+    const rowsHtml = (derived.items || [])
+      .map((it) => {
+        const qty = Number(it.quantity) || 0;
+        const unit = Number(it.unitPriceUSD ?? 0);
+        const line = Number(it.lineTotalUSD ?? unit * qty);
+
+        return `
+          <tr>
+            <td>
+              <div style="font-weight:700">${escapeHtml(it.name || "-")}</div>
+              <div style="color:#666;font-size:12px">ID: ${escapeHtml(it.productId || "")}</div>
+            </td>
+            <td style="text-align:center">${qty}</td>
+            <td style="text-align:right">${escapeHtml(formatMoneyUSD(unit))}</td>
+            <td style="text-align:right;font-weight:700">${escapeHtml(formatMoneyUSD(line))}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    const currency = String(order?.totals?.currency || "USD").toUpperCase();
+    const totalText =
+      currency === "USD"
+        ? formatMoneyUSD(Number(derived.totalUSD ?? 0))
+        : `${order?.totals?.amountPaid ?? 0} ${currency}`;
+
+    const createdAt = order?.createdAt || order?.updatedAt || "";
+    const createdAtHuman = createdAt ? formatDateHuman(createdAt, language) : "—";
+
+    const shipAddr = derived.shippingAddress;
+    const addressBlock = shipAddr
+      ? `
+        <div>${escapeHtml(derived.addressLine || "—")}</div>
+        <div>${escapeHtml([derived.addressCity, derived.addressState].filter(Boolean).join(", "))}</div>
+        ${derived.addressRef ? `<div>${escapeHtml(derived.addressRef)}</div>` : ""}
+      `
+      : `<div>—</div>`;
+
+    const trackingBlock =
+      derived.trackingNumber || derived.carrier
+        ? `
+          <div style="margin-top:8px">
+            ${derived.carrier ? `<div><b>${escapeHtml(t("orderDetail.shippingCompany"))}:</b> ${escapeHtml(derived.carrier)}</div>` : ""}
+            ${derived.trackingNumber ? `<div><b>${escapeHtml(t("orderDetail.shippingTracking"))}:</b> ${escapeHtml(derived.trackingNumber)}</div>` : ""}
+          </div>
+        `
+        : "";
+
+    // Datos básicos tienda (ajusta si quieres)
+    const shopName = "ElectroVar";
+    const shopEmail = "support@electrovar.com";
+    const shopPhone = "+58 412 621 6402";
+
+    const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color:#111; margin:24px; }
+    .top { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
+    .brand { font-size:20px; font-weight:800; }
+    .muted { color:#666; font-size:12px; }
+    .card { border:1px solid #e5e5e5; border-radius:12px; padding:16px; margin-top:16px; }
+    h1 { font-size:18px; margin:0; }
+    h2 { font-size:14px; margin:0 0 8px 0; }
+    table { width:100%; border-collapse:collapse; margin-top:10px; }
+    th, td { border-bottom:1px solid #eee; padding:10px 8px; vertical-align:top; }
+    th { text-align:left; font-size:12px; color:#444; text-transform:uppercase; letter-spacing:0.06em; }
+    .totalRow { display:flex; justify-content:flex-end; gap:16px; margin-top:12px; }
+    .totalLabel { color:#666; font-weight:700; }
+    .totalValue { font-weight:900; font-size:18px; }
+    @media print { .noPrint { display:none; } body { margin:0; } }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div>
+      <div class="brand">${escapeHtml(shopName)}</div>
+      <div class="muted">${escapeHtml(shopEmail)} · ${escapeHtml(shopPhone)}</div>
+    </div>
+    <div style="text-align:right">
+      <h1>${escapeHtml(t("orderDetail.invoiceTitle", { id: shortId(order?.orderId) }))}</h1>
+      <div class="muted">${escapeHtml(t("orderDetail.invoiceDate"))}: ${escapeHtml(createdAtHuman)}</div>
+      <div class="muted">${escapeHtml(t("orderDetail.orderIdLabel"))}: ${escapeHtml(String(order?.orderId || ""))}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>${escapeHtml(t("orderDetail.customerTitle"))}</h2>
+    <div><b>${escapeHtml(t("orderDetail.customerName"))}:</b> ${escapeHtml(derived.customerName || "—")}</div>
+    <div><b>${escapeHtml(t("orderDetail.customerEmail"))}:</b> ${escapeHtml(derived.customerEmail || "—")}</div>
+    <div><b>${escapeHtml(t("orderDetail.customerPhone"))}:</b> ${escapeHtml(derived.customerPhone || "—")}</div>
+  </div>
+
+  <div class="card">
+    <h2>${escapeHtml(t("orderDetail.shippingTitle"))}</h2>
+    <div><b>${escapeHtml(t("orderDetail.shippingMethod"))}:</b> ${escapeHtml(derived.shippingMethod || "—")}</div>
+    <div style="margin-top:6px"><b>${escapeHtml(t("orderDetail.shippingAddress"))}:</b></div>
+    ${addressBlock}
+    ${trackingBlock}
+  </div>
+
+  <div class="card">
+    <h2>${escapeHtml(t("orderDetail.itemsTitle"))}</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>${escapeHtml(t("orderDetail.table.product"))}</th>
+          <th style="text-align:center">${escapeHtml(t("orderDetail.table.qty"))}</th>
+          <th style="text-align:right">${escapeHtml(t("orderDetail.table.unitPrice"))}</th>
+          <th style="text-align:right">${escapeHtml(t("orderDetail.table.subtotal"))}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml || ""}
+      </tbody>
+    </table>
+
+    <div class="totalRow">
+      <div class="totalLabel">${escapeHtml(t("orderDetail.total"))}</div>
+      <div class="totalValue">${escapeHtml(totalText)}</div>
+    </div>
+
+    <div class="muted" style="margin-top:8px; text-align:right">
+      ${escapeHtml(t("orderDetail.pricesIn", { currency })) }
+    </div>
+  </div>
+
+  <div class="noPrint" style="margin-top:16px; display:flex; gap:10px;">
+    <button onclick="window.print()" style="padding:10px 14px; border-radius:10px; border:1px solid #ddd; background:#111; color:#fff; font-weight:700; cursor:pointer;">
+      ${escapeHtml(t("orderDetail.printOrSavePdf"))}
+    </button>
+    <button onclick="window.close()" style="padding:10px 14px; border-radius:10px; border:1px solid #ddd; background:#fff; color:#111; font-weight:700; cursor:pointer;">
+      ${escapeHtml(t("orderDetail.close"))}
+    </button>
+  </div>
+
+  <script>
+    setTimeout(function () { window.print(); }, 250);
+  </script>
+</body>
+</html>`;
+
+    // ✅ Forma más estable: write completo
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+
+    // ✅ seguridad extra
+    try {
+      w.opener = null;
+    } catch {}
+  } catch (e) {
+    // Si algo falla, igual pintamos algo visible
+    const msg = e?.message || String(e);
+    w.document.open();
+    w.document.write(`<!doctype html>
+<html><head><meta charset="utf-8"><title>Invoice error</title></head>
+<body style="font-family:Arial,sans-serif;padding:24px;">
+  <h2 style="color:#b91c1c;">Error generando factura</h2>
+  <pre style="white-space:pre-wrap;background:#fef2f2;border:1px solid #fecaca;padding:12px;border-radius:8px;">${escapeHtml(
+    msg
+  )}</pre>
+  <p>Revisa la consola del navegador en la pestaña original.</p>
+</body></html>`);
+    w.document.close();
+    // eslint-disable-next-line no-console
+    console.error("Invoice error:", e);
+  }
+}
+
 export function OrderDetailPage() {
   const { orderId } = useParams();
+  const { t, language } = useTranslation();
 
   const [order, setOrder] = useState(null);
   const [status, setStatus] = useState("loading"); // loading | ready | error
@@ -109,7 +323,7 @@ export function OrderDetailPage() {
         }
       } catch (e) {
         if (!cancelled) {
-          setErr(e?.message || "Failed to load order");
+          setErr(e?.message || t("orderDetail.errors.loadFailed"));
           setStatus("error");
         }
       }
@@ -119,7 +333,7 @@ export function OrderDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [orderId]);
+  }, [orderId, t]);
 
   const derived = useMemo(() => {
     if (!order) return null;
@@ -129,51 +343,81 @@ export function OrderDetailPage() {
 
     const totalUSD = Number(order?.totals?.amountPaid ?? 0);
 
-    const customerName = order?.customer?.name || "—";
+    const customerName = capitalizeWords(order?.customer?.name || "");
     const customerEmail = order?.customer?.email || "—";
     const customerPhone = order?.customer?.phone || "—";
 
-    const shippingMethod = order?.shipping?.method || "—";
+    const shippingMethodRaw = order?.shipping?.method || "—";
+    const shippingMethod = capitalizeWords(String(shippingMethodRaw).replaceAll("_", " "));
+
     const shippingAddress =
-      order?.shipping?.address && String(shippingMethod).toLowerCase() !== "pickup"
+      order?.shipping?.address && String(shippingMethodRaw).toLowerCase() !== "pickup"
         ? order.shipping.address
         : null;
 
-    const addressLine = shippingAddress?.line1 || "—";
-    const addressCity = shippingAddress?.city || "";
-    const addressState = shippingAddress?.state || "";
-    const addressRef = shippingAddress?.reference || "";
+    const addressLine = capitalizeWords(shippingAddress?.line1 || "");
+    const addressCity = capitalizeWords(shippingAddress?.city || "");
+    const addressState = capitalizeWords(shippingAddress?.state || "");
+    const addressRef = shippingAddress?.reference ? capitalizeWords(shippingAddress.reference) : "";
 
     const createdAt = order?.createdAt || order?.updatedAt || "";
-    const createdAtHuman = createdAt ? formatDateHuman(createdAt) : "";
+    const createdAtHuman = createdAt ? formatDateHuman(createdAt, language) : "";
 
-    // ✅ Carrier + tracking normalizados (para que nunca renderice un objeto)
     const { carrierName, trackingNumber, trackingUrl } = normalizeCarrier(order?.shipping);
 
     return {
       items,
       itemsCount,
       totalUSD,
-      customerName,
+      customerName: customerName || "—",
       customerEmail,
       customerPhone,
       shippingMethod,
+      shippingMethodRaw,
       shippingAddress,
-      addressLine,
+      addressLine: addressLine || "—",
       addressCity,
       addressState,
       addressRef,
       createdAtHuman,
-      carrier: carrierName,
+      carrier: carrierName ? capitalizeWords(carrierName) : "",
       trackingNumber,
       trackingUrl,
     };
-  }, [order]);
+  }, [order, language]);
+
+  const supportLinks = useMemo(() => {
+    const orderShort = shortId(orderId);
+    const support = buildWhatsAppLink({
+      phone: WHATSAPP_SUPPORT,
+      message: t("support.whatsappMessageOrder", { orderId: orderShort }),
+    });
+    const problem = buildWhatsAppLink({
+      phone: WHATSAPP_SUPPORT,
+      message: t("support.whatsappMessageProblemOrder", { orderId: orderShort }),
+    });
+    return { support, problem };
+  }, [orderId, t]);
+
+  const tracking = useMemo(() => {
+    if (!derived) return { canTrack: false, url: "" };
+
+    // si backend trae trackingUrl, úsalo
+    if (derived.trackingUrl) return { canTrack: true, url: derived.trackingUrl };
+
+    // fallback útil: Google con carrier + tracking
+    if (derived.trackingNumber) {
+      const q = encodeURIComponent(`${derived.carrier || ""} ${derived.trackingNumber}`.trim());
+      return { canTrack: true, url: `https://www.google.com/search?q=${q}` };
+    }
+
+    return { canTrack: false, url: "" };
+  }, [derived]);
 
   if (status === "loading") {
     return (
       <div className="mx-auto max-w-5xl px-4 py-10">
-        <p className="text-slate-400">Cargando pedido…</p>
+        <p className="text-slate-400">{t("orderDetail.loading")}</p>
       </div>
     );
   }
@@ -182,19 +426,18 @@ export function OrderDetailPage() {
     return (
       <div className="mx-auto max-w-5xl px-4 py-10">
         <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-6 text-rose-100">
-          {err || "No se pudo cargar el pedido."}
+          {err || t("orderDetail.errors.loadFailed")}
         </div>
         <div className="mt-6">
-          <Link
-            to="/account"
-            className="inline-flex items-center gap-2 text-sm font-bold text-orange-400 hover:underline"
-          >
-            ← Volver a Mi Cuenta
+          <Link to="/account" className="inline-flex items-center gap-2 text-sm font-bold text-orange-400 hover:underline">
+            ← {t("orderDetail.backToAccount")}
           </Link>
         </div>
       </div>
     );
   }
+
+  const statusKey = String(order.status || "").toLowerCase();
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -202,18 +445,17 @@ export function OrderDetailPage() {
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2 text-sm text-slate-400">
           <Link to="/account" className="hover:text-orange-400 transition-colors">
-            Mi Cuenta
+            {t("orderDetail.breadcrumb.account")}
           </Link>
           <span className="text-slate-600">/</span>
-          <span className="font-medium text-slate-100">Pedido #{shortId(order.orderId)}</span>
+          <span className="font-medium text-slate-100">
+            {t("orderDetail.breadcrumb.order", { id: shortId(order.orderId) })}
+          </span>
         </div>
 
-        <Link
-          to="/account"
-          className="inline-flex items-center gap-2 text-sm font-bold text-orange-400 hover:underline"
-        >
+        <Link to="/account" className="inline-flex items-center gap-2 text-sm font-bold text-orange-400 hover:underline">
           <span aria-hidden>←</span>
-          Volver a mis pedidos
+          {t("orderDetail.backToOrders")}
         </Link>
       </div>
 
@@ -222,10 +464,10 @@ export function OrderDetailPage() {
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-slate-100">
-              Detalle del Pedido #{shortId(order.orderId)}
+              {t("orderDetail.title", { id: shortId(order.orderId) })}
             </h1>
             <p className="mt-2 text-sm text-slate-400">
-              {derived.createdAtHuman ? `Realizado el ${derived.createdAtHuman}` : "—"}
+              {derived.createdAtHuman ? t("orderDetail.placedOn", { date: derived.createdAtHuman }) : "—"}
             </p>
           </div>
 
@@ -233,19 +475,20 @@ export function OrderDetailPage() {
             <button
               type="button"
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-sm font-bold text-orange-300 hover:bg-orange-500/15 transition-colors"
-              onClick={() => alert("Factura PDF (placeholder)")}
+              onClick={() => openInvoicePrint({ order, derived, t, language })}
             >
               <span aria-hidden>⬇</span>
-              Factura PDF
+              {t("orderDetail.invoiceBtn")}
             </button>
 
             <div
-              className={`inline-flex items-center justify-center rounded-xl border px-6 py-2 text-sm font-bold ${statusBadgeClass(
-                order.status
-              )}`}
+              className={cx(
+                "inline-flex items-center justify-center rounded-xl border px-6 py-2 text-sm font-bold",
+                statusBadgeClass(statusKey)
+              )}
               title={String(order.status || "")}
             >
-              {statusLabelES(order.status)}
+              {t(`orderDetail.status.${statusKey}`, { fallback: String(order.status || "-") })}
             </div>
           </div>
         </div>
@@ -257,13 +500,13 @@ export function OrderDetailPage() {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <div className="mb-4 flex items-center gap-3 text-orange-300">
             <span aria-hidden>👤</span>
-            <h3 className="text-xs font-bold uppercase tracking-wider">Datos del Cliente</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider">{t("orderDetail.customerTitle")}</h3>
           </div>
 
-          <div className="space-y-1">
-            <p className="text-lg font-semibold text-slate-100">{derived.customerName}</p>
-            <p className="text-sm text-slate-400">{derived.customerEmail}</p>
-            <p className="text-sm text-slate-400">{derived.customerPhone}</p>
+          <div className="space-y-2">
+            <p className="text-xl font-semibold text-slate-100">{derived.customerName}</p>
+            <p className="text-sm text-slate-300">{derived.customerEmail}</p>
+            <p className="text-sm text-slate-300">{derived.customerPhone}</p>
           </div>
         </div>
 
@@ -271,41 +514,44 @@ export function OrderDetailPage() {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <div className="mb-4 flex items-center gap-3 text-orange-300">
             <span aria-hidden>🚚</span>
-            <h3 className="text-xs font-bold uppercase tracking-wider">Envío / Entrega</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider">{t("orderDetail.shippingTitle")}</h3>
           </div>
 
-          <div className="space-y-1">
-            <p className="font-semibold text-slate-100">
-              {String(derived.shippingMethod).toLowerCase() === "pickup"
-                ? "Retiro en tienda"
+          <div className="space-y-2">
+            <p className="text-lg font-semibold text-slate-100">
+              {String(derived.shippingMethodRaw).toLowerCase() === "pickup"
+                ? t("orderDetail.shipping.pickup")
                 : derived.shippingMethod}
             </p>
 
             {derived.shippingAddress ? (
               <>
-                <p className="text-sm text-slate-400">{derived.addressLine}</p>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-300">{derived.addressLine}</p>
+                <p className="text-sm text-slate-300">
                   {[derived.addressCity, derived.addressState].filter(Boolean).join(", ")}
                 </p>
-                {derived.addressRef ? <p className="text-sm text-slate-400">{derived.addressRef}</p> : null}
+                {derived.addressRef ? <p className="text-sm text-slate-300">{derived.addressRef}</p> : null}
               </>
             ) : (
               <p className="text-sm text-slate-400">—</p>
             )}
 
-            {/* ✅ Carrier + Tracking */}
             {(derived.carrier || derived.trackingNumber) && (
-              <div className="mt-3 space-y-1 rounded-xl border border-white/10 bg-white/5 p-3">
+              <div className="mt-3 space-y-2 rounded-xl border border-white/10 bg-white/5 p-3">
                 {derived.carrier && (
-                  <p className="text-sm text-slate-300">
-                    <span className="text-slate-500 text-xs font-bold uppercase mr-2">Empresa</span>
+                  <p className="text-sm text-slate-200">
+                    <span className="text-slate-500 text-xs font-bold uppercase mr-2">
+                      {t("orderDetail.shippingCompany")}
+                    </span>
                     {derived.carrier}
                   </p>
                 )}
 
                 {derived.trackingNumber && (
-                  <p className="text-sm text-slate-300">
-                    <span className="text-slate-500 text-xs font-bold uppercase mr-2">Tracking</span>
+                  <p className="text-sm text-slate-200">
+                    <span className="text-slate-500 text-xs font-bold uppercase mr-2">
+                      {t("orderDetail.shippingTracking")}
+                    </span>
                     {derived.trackingUrl ? (
                       <a
                         href={derived.trackingUrl}
@@ -329,87 +575,83 @@ export function OrderDetailPage() {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <div className="mb-4 flex items-center gap-3 text-orange-300">
             <span aria-hidden>🧭</span>
-            <h3 className="text-xs font-bold uppercase tracking-wider">Estado Actual</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider">{t("orderDetail.currentStatusTitle")}</h3>
           </div>
 
           {(() => {
             const shipMethod = String(order?.shipping?.method || "").toLowerCase();
             const shipStatus = String(order?.shipping?.status || "").toLowerCase();
-
             const isPickup = shipMethod === "pickup";
 
-            const dispatchedAtHuman = order?.shipping?.dispatchedAt
-              ? formatDateHuman(order.shipping.dispatchedAt)
-              : "";
-            const deliveredAtHuman = order?.shipping?.deliveredAt
-              ? formatDateHuman(order.shipping.deliveredAt)
-              : "";
+            const dispatchedAtHuman = order?.shipping?.dispatchedAt ? formatDateHuman(order.shipping.dispatchedAt, language) : "";
+            const deliveredAtHuman = order?.shipping?.deliveredAt ? formatDateHuman(order.shipping.deliveredAt, language) : "";
 
             const isDispatched = shipStatus === "dispatched" || shipStatus === "delivered";
             const isDelivered = shipStatus === "delivered";
-
             const pickupDone = String(order?.status || "").toLowerCase() === "completed";
 
             return (
               <div className="relative space-y-4 border-l-2 border-orange-500/20 pl-6">
                 <div className="relative">
                   <div className="absolute -left-[31px] top-1 h-4 w-4 rounded-full bg-orange-500 ring-4 ring-orange-500/20" />
-                  <p className="text-sm font-bold text-slate-100">Pedido creado</p>
+                  <p className="text-sm font-bold text-slate-100">{t("orderDetail.timeline.created")}</p>
                   <p className="text-xs text-slate-400">{derived.createdAtHuman || "—"}</p>
                 </div>
 
                 <div className="relative">
                   <div className="absolute -left-[31px] top-1 h-4 w-4 rounded-full bg-orange-500 ring-4 ring-orange-500/20" />
                   <p className="text-sm font-bold text-slate-100">
-                    Estado: {statusLabelES(order.status)}
+                    {t("orderDetail.timeline.current", {
+                      status: t(`orderDetail.status.${statusKey}`, { fallback: String(order.status || "-") }),
+                    })}
                   </p>
-                  <p className="text-xs text-slate-400">Actual</p>
+                  <p className="text-xs text-slate-400">{t("orderDetail.timeline.currentLabel")}</p>
                 </div>
 
                 {isPickup ? (
                   <div className="relative">
                     <div
-                      className={[
+                      className={cx(
                         "absolute -left-[31px] top-1 h-4 w-4 rounded-full",
-                        pickupDone ? "bg-emerald-500" : "bg-slate-600",
-                      ].join(" ")}
+                        pickupDone ? "bg-emerald-500" : "bg-slate-600"
+                      )}
                     />
                     <p className={pickupDone ? "text-sm font-bold text-slate-100" : "text-sm font-bold text-slate-400"}>
-                      {pickupDone ? "Retirado en tienda" : "Listo para retiro"}
+                      {pickupDone ? t("orderDetail.timeline.pickupDone") : t("orderDetail.timeline.pickupReady")}
                     </p>
                     <p className={pickupDone ? "text-xs text-slate-400" : "text-xs text-slate-500"}>
-                      {pickupDone ? "Completado" : "Pendiente"}
+                      {pickupDone ? t("orderDetail.timeline.completed") : t("orderDetail.timeline.pending")}
                     </p>
                   </div>
                 ) : (
                   <>
                     <div className="relative">
                       <div
-                        className={[
+                        className={cx(
                           "absolute -left-[31px] top-1 h-4 w-4 rounded-full",
-                          isDispatched ? "bg-orange-500 ring-4 ring-orange-500/20" : "bg-slate-600",
-                        ].join(" ")}
+                          isDispatched ? "bg-orange-500 ring-4 ring-orange-500/20" : "bg-slate-600"
+                        )}
                       />
                       <p className={isDispatched ? "text-sm font-bold text-slate-100" : "text-sm font-bold text-slate-400"}>
-                        Despachado
+                        {t("orderDetail.timeline.dispatched")}
                       </p>
                       <p className={isDispatched ? "text-xs text-slate-400" : "text-xs text-slate-500"}>
-                        {isDispatched ? (dispatchedAtHuman || "Listo") : "Pendiente"}
+                        {isDispatched ? (dispatchedAtHuman || t("orderDetail.timeline.ready")) : t("orderDetail.timeline.pending")}
                       </p>
                     </div>
 
                     <div className="relative">
                       <div
-                        className={[
+                        className={cx(
                           "absolute -left-[31px] top-1 h-4 w-4 rounded-full",
-                          isDelivered ? "bg-emerald-500 ring-4 ring-emerald-500/20" : "bg-slate-600",
-                        ].join(" ")}
+                          isDelivered ? "bg-emerald-500 ring-4 ring-emerald-500/20" : "bg-slate-600"
+                        )}
                       />
                       <p className={isDelivered ? "text-sm font-bold text-slate-100" : "text-sm font-bold text-slate-400"}>
-                        Entregado
+                        {t("orderDetail.timeline.delivered")}
                       </p>
                       <p className={isDelivered ? "text-xs text-slate-400" : "text-xs text-slate-500"}>
-                        {isDelivered ? (deliveredAtHuman || "Completado") : "Pendiente"}
+                        {isDelivered ? (deliveredAtHuman || t("orderDetail.timeline.completed")) : t("orderDetail.timeline.pending")}
                       </p>
                     </div>
                   </>
@@ -423,9 +665,9 @@ export function OrderDetailPage() {
       {/* Items table */}
       <div className="mb-8 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-          <h3 className="text-lg font-bold text-slate-100">Productos en este pedido</h3>
+          <h3 className="text-lg font-bold text-slate-100">{t("orderDetail.itemsTitle")}</h3>
           <span className="rounded-lg bg-orange-500/10 px-2 py-1 text-xs font-bold text-orange-300">
-            {derived.itemsCount} ítems
+            {t("orderDetail.itemsCount", { count: derived.itemsCount })}
           </span>
         </div>
 
@@ -433,10 +675,10 @@ export function OrderDetailPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-white/[0.03] text-xs uppercase tracking-wider text-slate-400">
               <tr>
-                <th className="px-6 py-4 font-bold">Producto</th>
-                <th className="px-6 py-4 text-center font-bold">Cantidad</th>
-                <th className="px-6 py-4 text-right font-bold">Precio Unit.</th>
-                <th className="px-6 py-4 text-right font-bold">Subtotal</th>
+                <th className="px-6 py-4 font-bold">{t("orderDetail.table.product")}</th>
+                <th className="px-6 py-4 text-center font-bold">{t("orderDetail.table.qty")}</th>
+                <th className="px-6 py-4 text-right font-bold">{t("orderDetail.table.unitPrice")}</th>
+                <th className="px-6 py-4 text-right font-bold">{t("orderDetail.table.subtotal")}</th>
               </tr>
             </thead>
 
@@ -444,22 +686,37 @@ export function OrderDetailPage() {
               {derived.items.map((it) => {
                 const unit = Number(it.unitPriceUSD ?? 0);
                 const line = Number(it.lineTotalUSD ?? unit * (Number(it.quantity) || 0));
+                const img = getItemImageUrl(it);
+
                 return (
                   <tr key={it.productId} className="hover:bg-white/[0.03] transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-xl border border-white/10 bg-black/20" />
+                        <div className="h-14 w-14 rounded-xl border border-white/10 bg-black/20 overflow-hidden flex items-center justify-center">
+                          {img ? (
+                            <img
+                              src={img}
+                              alt={it.name || "Product"}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <span className="text-slate-500 text-lg" aria-hidden>
+                              📦
+                            </span>
+                          )}
+                        </div>
                         <div>
                           <p className="font-bold text-slate-100">{it.name}</p>
-                          <p className="text-xs text-slate-500">ID: {it.productId}</p>
+                          <p className="text-xs text-slate-500">
+                            {t("orderDetail.table.productId")}: {it.productId}
+                          </p>
                         </div>
                       </div>
                     </td>
 
                     <td className="px-6 py-4 text-center font-medium text-slate-200">{it.quantity}</td>
-
                     <td className="px-6 py-4 text-right font-medium text-slate-200">{formatMoneyUSD(unit)}</td>
-
                     <td className="px-6 py-4 text-right font-bold text-slate-100">{formatMoneyUSD(line)}</td>
                   </tr>
                 );
@@ -473,7 +730,7 @@ export function OrderDetailPage() {
       <div className="flex flex-col justify-end gap-8 md:flex-row">
         <div className="w-full md:w-80 space-y-3">
           <div className="flex justify-between text-slate-400">
-            <span>Total</span>
+            <span>{t("orderDetail.total")}</span>
             <span className="font-medium text-slate-100">
               {String(order?.totals?.currency || "").toUpperCase() === "USD"
                 ? formatMoneyUSD(derived.totalUSD)
@@ -482,7 +739,9 @@ export function OrderDetailPage() {
           </div>
 
           <div className="flex items-end justify-between border-t border-white/10 pt-3">
-            <span className="text-lg font-bold uppercase tracking-tight text-slate-200">Total del Pedido</span>
+            <span className="text-lg font-bold uppercase tracking-tight text-slate-200">
+              {t("orderDetail.totalOrder")}
+            </span>
             <span className="text-3xl font-bold text-orange-400">
               {String(order?.totals?.currency || "").toUpperCase() === "USD"
                 ? formatMoneyUSD(derived.totalUSD)
@@ -491,7 +750,7 @@ export function OrderDetailPage() {
           </div>
 
           <p className="text-right text-[10px] italic text-slate-500">
-            {order?.totals?.currency ? `Precios expresados en ${order.totals.currency}` : ""}
+            {order?.totals?.currency ? t("orderDetail.pricesIn", { currency: order.totals.currency }) : ""}
           </p>
         </div>
       </div>
@@ -499,28 +758,29 @@ export function OrderDetailPage() {
       {/* Footer actions */}
       <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 py-6 md:flex-row">
         <p className="text-sm text-slate-400">
-          ¿Necesitas ayuda con este pedido?{" "}
-          <a className="font-bold text-orange-400 hover:underline" href="#">
-            Contactar Soporte
+          {t("orderDetail.needHelp")}{" "}
+          <a className="font-bold text-orange-400 hover:underline" href={supportLinks.support} target="_blank" rel="noreferrer">
+            {t("orderDetail.contactSupport")}
+          </a>{" "}
+          {t("orderDetail.or")}{" "}
+          <a className="font-bold text-orange-400 hover:underline" href={supportLinks.problem} target="_blank" rel="noreferrer">
+            {t("orderDetail.reportProblem")}
           </a>
         </p>
 
         <div className="flex gap-4">
-          <button
-            type="button"
-            className="rounded-xl bg-white/5 px-6 py-2.5 text-sm font-bold text-slate-200 hover:bg-white/10 transition-colors border border-white/10"
-            onClick={() => alert("Reportar problema (placeholder)")}
+          <a
+            href={tracking.url || "#"}
+            target="_blank"
+            rel="noreferrer"
+            className={cx(
+              "rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition-colors",
+              tracking.canTrack ? "hover:bg-orange-500/90" : "opacity-50 pointer-events-none"
+            )}
+            aria-disabled={!tracking.canTrack}
           >
-            Reportar Problema
-          </button>
-
-          <button
-            type="button"
-            className="rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 hover:bg-orange-500/90 transition-colors"
-            onClick={() => alert("Seguir mi envío (placeholder)")}
-          >
-            Seguir mi envío
-          </button>
+            {t("orderDetail.trackShipment")}
+          </a>
         </div>
       </div>
     </main>

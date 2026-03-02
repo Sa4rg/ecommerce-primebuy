@@ -1,15 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { LanguageProvider } from "../../../shared/i18n/LanguageContext.jsx";
 import { OrderDetailPage } from "./OrderDetailPage.jsx";
 
 function renderWithRouter(orderId = "order-123") {
   return render(
-    <MemoryRouter initialEntries={[`/orders/${orderId}`]}>
-      <Routes>
-        <Route path="/orders/:orderId" element={<OrderDetailPage />} />
-      </Routes>
-    </MemoryRouter>
+    <LanguageProvider>
+      <MemoryRouter initialEntries={[`/orders/${orderId}`]}>
+        <Routes>
+          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+        </Routes>
+      </MemoryRouter>
+    </LanguageProvider>
   );
 }
 

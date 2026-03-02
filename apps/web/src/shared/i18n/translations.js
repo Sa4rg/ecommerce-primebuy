@@ -64,10 +64,17 @@ export const translations = {
         tbd: "PEND",
         emptyCart: "Tu carrito está vacío.",
         perItemLineTotal: "Total del ítem",
+        equivalentVES: "Equivalente en Bs.",
+        rateInfo: "Tasa: 1 USD = {rate} VES",
       },
       actions: {
         processing: "Procesando...",
         continueToPayment: "Continuar con el pago",
+      },
+      delivery: {
+        whatsappNotice: "El precio de envío para delivery local se coordina por WhatsApp antes del pago.",
+        whatsappMessage: "Hola! Quiero coordinar un delivery para mi pedido de {total} ({items} productos).",
+        contactWhatsApp: "Coordinar por WhatsApp",
       },
       errors: {
         checkoutIdMissing: "Falta checkoutId en la URL.",
@@ -259,6 +266,23 @@ export const translations = {
         active: "Activo",
         stable: "Estable",
       },
+    },
+
+    adminFx: {
+      title: "Tasa de Cambio",
+      subtitle: "Establecer la tasa USD → VES del día para pagos en bolívares",
+      currentRate: "Tasa actual",
+      noRateSet: "Sin tasa establecida",
+      lastUpdated: "Última actualización",
+      updateRate: "Actualizar tasa",
+      newRateLabel: "Nueva tasa (VES por 1 USD)",
+      saveButton: "Guardar tasa",
+      saving: "Guardando...",
+      success: "¡Tasa actualizada correctamente!",
+      errorLoading: "Error al cargar la tasa actual",
+      errorSaving: "Error al guardar la tasa",
+      invalidRate: "Ingresa una tasa válida mayor a 0",
+      info: "Esta tasa se usa para calcular el monto en bolívares cuando un cliente selecciona Pago Móvil o Transferencia Bancaria.",
     },
 
     adminPaymentsDetail: {
@@ -638,6 +662,8 @@ export const translations = {
         shippingInfoTitle: "Opciones de envío disponibles",
         shippingInfoBody: "Las opciones se calculan en el checkout.",
         proceedToCheckout: "Ir al checkout",
+        equivalentVES: "Equivalente en Bs.",
+        rateInfo: "Tasa: 1 USD = {rate} VES",
       },
       error: {
         title: "Algo salió mal.",
@@ -726,6 +752,92 @@ export const translations = {
         ctaPlaceholder: "Soporte: próximamente (placeholder)",
         whatsappMessage: "Hola, necesito ayuda con un pago en ElectroVar.",
       },
+    },
+
+    orderDetail: {
+      loading: "Cargando pedido…",
+      errors: {
+        loadFailed: "No se pudo cargar el pedido.",
+      },
+
+      breadcrumb: {
+        account: "Mi Cuenta",
+        order: "Pedido #{id}",
+      },
+
+      backToAccount: "Volver a Mi Cuenta",
+      backToOrders: "Volver a mis pedidos",
+
+      title: "Detalle del Pedido #{id}",
+      placedOn: "Realizado el {date}",
+
+      invoiceBtn: "Factura PDF",
+      invoiceTitle: "Factura · Pedido #{id}",
+      invoiceDate: "Fecha",
+      orderIdLabel: "Order ID",
+      printOrSavePdf: "Imprimir / Guardar como PDF",
+      close: "Cerrar",
+
+      status: {
+        paid: "Pagado",
+        processing: "En preparación",
+        completed: "Completado",
+        cancelled: "Cancelado",
+        created: "Creado",
+      },
+
+      customerTitle: "Datos del Cliente",
+      customerName: "Nombre",
+      customerEmail: "Email",
+      customerPhone: "Teléfono",
+
+      shippingTitle: "Envío / Entrega",
+      shippingMethod: "Método",
+      shippingAddress: "Dirección",
+      shippingCompany: "Empresa",
+      shippingTracking: "Tracking",
+      shipping: {
+        pickup: "Retiro en tienda",
+      },
+
+      currentStatusTitle: "Estado Actual",
+      timeline: {
+        created: "Pedido creado",
+        current: "Estado: {status}",
+        currentLabel: "Actual",
+        dispatched: "Despachado",
+        delivered: "Entregado",
+        pickupReady: "Listo para retiro",
+        pickupDone: "Retirado en tienda",
+        pending: "Pendiente",
+        completed: "Completado",
+        ready: "Listo",
+      },
+
+      itemsTitle: "Productos en este pedido",
+      itemsCount: "{count} ítems",
+      table: {
+        product: "Producto",
+        productId: "ID",
+        qty: "Cantidad",
+        unitPrice: "Precio Unit.",
+        subtotal: "Subtotal",
+      },
+
+      total: "Total",
+      totalOrder: "Total del Pedido",
+      pricesIn: "Precios expresados en {currency}",
+
+      needHelp: "¿Necesitas ayuda con este pedido?",
+      contactSupport: "Contactar Soporte",
+      reportProblem: "reportar un problema",
+      or: "o",
+
+      trackShipment: "Seguir mi envío",
+    },
+    support: {
+      whatsappMessageOrder: "Hola, necesito ayuda con mi pedido #{orderId} en ElectroVar.",
+      whatsappMessageProblemOrder: "Hola, quiero reportar un problema con mi pedido #{orderId} en ElectroVar.",
     },
 
     auth: {
@@ -897,10 +1009,17 @@ export const translations = {
         tbd: "TBD",
         emptyCart: "Your cart is empty.",
         perItemLineTotal: "Item total",
+        equivalentVES: "Equivalent in Bs.",
+        rateInfo: "Rate: 1 USD = {rate} VES",
       },
       actions: {
         processing: "Processing...",
         continueToPayment: "Continue to payment",
+      },
+      delivery: {
+        whatsappNotice: "Local delivery price is coordinated via WhatsApp before payment.",
+        whatsappMessage: "Hi! I want to coordinate a delivery for my order of {total} ({items} products).",
+        contactWhatsApp: "Coordinate via WhatsApp",
       },
       errors: {
         checkoutIdMissing: "checkoutId missing in URL.",
@@ -1092,6 +1211,23 @@ export const translations = {
         active: "Active",
         stable: "Stable",
       },
+    },
+
+    adminFx: {
+      title: "Exchange Rate",
+      subtitle: "Set today's USD → VES rate for payments in bolivars",
+      currentRate: "Current rate",
+      noRateSet: "No rate set",
+      lastUpdated: "Last updated",
+      updateRate: "Update rate",
+      newRateLabel: "New rate (VES per 1 USD)",
+      saveButton: "Save rate",
+      saving: "Saving...",
+      success: "Rate updated successfully!",
+      errorLoading: "Error loading current rate",
+      errorSaving: "Error saving rate",
+      invalidRate: "Enter a valid rate greater than 0",
+      info: "This rate is used to calculate the amount in bolivars when a customer selects Pago Móvil or Bank Transfer.",
     },
 
     adminPaymentsDetail: {
@@ -1465,6 +1601,8 @@ export const translations = {
         shippingInfoTitle: "Shipping options available",
         shippingInfoBody: "Options are calculated at checkout.",
         proceedToCheckout: "Proceed to checkout",
+        equivalentVES: "Equivalent in Bs.",
+        rateInfo: "Rate: 1 USD = {rate} VES",
       },
       error: {
         title: "Something went wrong.",
@@ -1553,6 +1691,92 @@ export const translations = {
         ctaPlaceholder: "Support: coming soon (placeholder)",
         whatsappMessage: "Hi, I need help with a payment on ElectroVar.",
       },
+    },
+
+    orderDetail: {
+      loading: "Loading order…",
+      errors: {
+        loadFailed: "Failed to load order.",
+      },
+
+      breadcrumb: {
+        account: "My Account",
+        order: "Order #{id}",
+      },
+
+      backToAccount: "Back to My Account",
+      backToOrders: "Back to my orders",
+
+      title: "Order Detail #{id}",
+      placedOn: "Placed on {date}",
+
+      invoiceBtn: "Invoice PDF",
+      invoiceTitle: "Invoice · Order #{id}",
+      invoiceDate: "Date",
+      orderIdLabel: "Order ID",
+      printOrSavePdf: "Print / Save as PDF",
+      close: "Close",
+
+      status: {
+        paid: "Paid",
+        processing: "Preparing",
+        completed: "Completed",
+        cancelled: "Cancelled",
+        created: "Created",
+      },
+
+      customerTitle: "Customer Details",
+      customerName: "Name",
+      customerEmail: "Email",
+      customerPhone: "Phone",
+
+      shippingTitle: "Shipping / Delivery",
+      shippingMethod: "Method",
+      shippingAddress: "Address",
+      shippingCompany: "Carrier",
+      shippingTracking: "Tracking",
+      shipping: {
+        pickup: "Store pickup",
+      },
+
+      currentStatusTitle: "Current Status",
+      timeline: {
+        created: "Order created",
+        current: "Status: {status}",
+        currentLabel: "Current",
+        dispatched: "Dispatched",
+        delivered: "Delivered",
+        pickupReady: "Ready for pickup",
+        pickupDone: "Picked up in store",
+        pending: "Pending",
+        completed: "Completed",
+        ready: "Ready",
+      },
+
+      itemsTitle: "Items in this order",
+      itemsCount: "{count} items",
+      table: {
+        product: "Product",
+        productId: "ID",
+        qty: "Qty",
+        unitPrice: "Unit price",
+        subtotal: "Subtotal",
+      },
+
+      total: "Total",
+      totalOrder: "Order total",
+      pricesIn: "Prices shown in {currency}",
+
+      needHelp: "Need help with this order?",
+      contactSupport: "Contact Support",
+      reportProblem: "report a problem",
+      or: "or",
+
+      trackShipment: "Track shipment",
+    },
+    support: {
+      whatsappMessageOrder: "Hi, I need help with my order #{orderId} at ElectroVar.",
+      whatsappMessageProblemOrder: "Hi, I want to report a problem with my order #{orderId} at ElectroVar.",
     },
 
     auth: {

@@ -466,53 +466,76 @@ export function PaymentStatusPage() {
                 <p className="text-sm text-white/50">{t("payment.summary.loading")}</p>
               ) : (
                 <>
-                  <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-                    {(checkout.items || []).map((it) => {
-                      const unit = Number(it.unitPriceUSD ?? 0);
-                      const qty = Number(it.quantity ?? 0);
-                      const lineTotal = unit * qty;
+                  {/* Show in VES if payment currency is VES */}
+                  {(() => {
+                    const isVES = payment?.currency === "VES";
+                    const rate = isVES && payment?.amount && checkout?.totals?.subtotalUSD
+                      ? payment.amount / checkout.totals.subtotalUSD
+                      : null;
 
-                      return (
-                        <div key={it.productId} className="flex gap-3">
-                          <div className="h-12 w-12 rounded-lg bg-white/5 flex-shrink-0 overflow-hidden border border-white/10 flex items-center justify-center">
-                            {it.imageUrl ? (
-                              <img
-                                src={it.imageUrl}
-                                alt={it.name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = "none";
-                                  e.currentTarget.parentElement.textContent = "📦";
-                                }}
-                              />
-                            ) : (
-                              "📦"
-                            )}
+                    return (
+                      <>
+                        <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                          {(checkout.items || []).map((it) => {
+                            const unit = Number(it.unitPriceUSD ?? 0);
+                            const qty = Number(it.quantity ?? 0);
+                            const lineTotal = unit * qty;
+                            const lineTotalDisplay = isVES && rate
+                              ? `Bs. ${(lineTotal * rate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                              : `$${lineTotal.toFixed(2)}`;
+
+                            return (
+                              <div key={it.productId} className="flex gap-3">
+                                <div className="h-12 w-12 rounded-lg bg-white/5 flex-shrink-0 overflow-hidden border border-white/10 flex items-center justify-center">
+                                  {it.imageUrl ? (
+                                    <img
+                                      src={it.imageUrl}
+                                      alt={it.name}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = "none";
+                                        e.currentTarget.parentElement.textContent = "📦";
+                                      }}
+                                    />
+                                  ) : (
+                                    "📦"
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">{it.name}</p>
+                                  <p className="text-xs text-white/40">{t("payment.summary.qty")}: {qty}</p>
+                                  <p className="text-sm font-bold mt-1">{lineTotalDisplay}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div className="mt-6 pt-6 border-t border-white/10 space-y-3">
+                          <div className="flex justify-between text-sm text-white/60">
+                            <span>{t("payment.summary.subtotal")}</span>
+                            <span>
+                              {isVES && rate
+                                ? `Bs. ${(Number(checkout.totals?.subtotalUSD || 0) * rate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                : `$${Number(checkout.totals?.subtotalUSD || 0).toFixed(2)}`}
+                            </span>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{it.name}</p>
-                            <p className="text-xs text-white/40">{t("payment.summary.qty")}: {qty}</p>
-                            <p className="text-sm font-bold mt-1">${lineTotal.toFixed(2)}</p>
+                          <div className="flex justify-between text-sm text-white/60">
+                            <span>{t("payment.summary.shipping")}</span>
+                            <span className="text-green-400 font-medium">{t("payment.summary.free")}</span>
+                          </div>
+                          <div className="flex justify-between text-xl font-bold pt-2 text-white">
+                            <span>{t("payment.summary.total")}</span>
+                            <span className="text-orange-400">
+                              {isVES
+                                ? `Bs. ${Number(payment.amount).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                : `$${Number(checkout.totals?.subtotalUSD || 0).toFixed(2)}`}
+                            </span>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="mt-6 pt-6 border-t border-white/10 space-y-3">
-                    <div className="flex justify-between text-sm text-white/60">
-                      <span>{t("payment.summary.subtotal")}</span>
-                      <span>${Number(checkout.totals?.subtotalUSD || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-white/60">
-                      <span>{t("payment.summary.shipping")}</span>
-                      <span className="text-green-400 font-medium">{t("payment.summary.free")}</span>
-                    </div>
-                    <div className="flex justify-between text-xl font-bold pt-2 text-white">
-                      <span>{t("payment.summary.total")}</span>
-                      <span className="text-orange-400">${Number(checkout.totals?.subtotalUSD || 0).toFixed(2)}</span>
-                    </div>
-                  </div>
+                      </>
+                    );
+                  })()}
                 </>
               )}
 

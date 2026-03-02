@@ -10,5 +10,7 @@ router.use('/orders', require('./orders.routes'));
 router.use('/auth', require('./auth.routes'));
 router.use('/uploads', require('./uploads.routes'));
 router.use('/me', require('./user.routes'));
+router.use('/fx', require('./fx.routes'));
+router.use('/admin', require('./admin.routes'));
 
 module.exports = router;

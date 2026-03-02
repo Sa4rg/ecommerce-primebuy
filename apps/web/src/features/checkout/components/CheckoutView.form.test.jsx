@@ -99,9 +99,9 @@ describe("CheckoutView form", () => {
       await user.type(screen.getByPlaceholderText(/you@email.com/i), "sara@gmail.com");
       await user.type(screen.getByPlaceholderText(/\+58 414/i), "04141234567");
 
-      // Select Delivery (shipping method) to enable address fields
-      const deliveryButton = screen.getByRole("button", { name: /delivery/i });
-      await user.click(deliveryButton);
+      // Select National Shipping (shipping method) to enable address fields
+      const shippingButton = screen.getByRole("button", { name: /envío nacional/i });
+      await user.click(shippingButton);
 
       const city = screen.getByPlaceholderText(/caracas/i);
       const street = screen.getByPlaceholderText(/av principal/i);
@@ -132,7 +132,7 @@ describe("CheckoutView form", () => {
         });
 
         expect(updateCheckoutShipping).toHaveBeenCalledWith("checkout-1", {
-          method: "local_delivery",
+          method: "national_shipping",
           address: {
             recipientName: "Sara Tester",
             phone: "04141234567",
