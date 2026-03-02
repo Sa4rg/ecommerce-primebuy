@@ -89,18 +89,34 @@ function createPaymentsService(deps = {}) {
       throw new AppError("Checkout incomplete", 400);
     }
 
+    // Calculate shipping cost based on method
+    const shippingMethod = checkout.shipping?.method;
+    const SHIPPING_COST_USD = {
+      pickup: 0,
+      local_delivery: 0, // Coordinated via WhatsApp, no charge here
+      national_shipping: 5,
+    };
+    const shippingCostUSD = SHIPPING_COST_USD[shippingMethod] ?? 0;
+    
+    // Calculate totals including shipping
+    const totalUSD = checkout.totals.subtotalUSD + shippingCostUSD;
+    let totalVES = null;
+    if (checkout.totals.subtotalVES !== null && checkout.exchangeRate?.usdToVes) {
+      totalVES = Math.round((checkout.totals.subtotalUSD + shippingCostUSD) * checkout.exchangeRate.usdToVes * 100) / 100;
+    }
+
     let currency;
     let amount;
 
     if (USD_METHODS.includes(method)) {
       currency = "USD";
-      amount = checkout.totals.subtotalUSD;
+      amount = totalUSD;
     } else if (VES_METHODS.includes(method)) {
-      if (checkout.totals.subtotalVES === null) {
+      if (totalVES === null) {
         throw new AppError("Exchange rate required", 400);
       }
       currency = "VES";
-      amount = checkout.totals.subtotalVES;
+      amount = totalVES;
     }
 
     const now = new Date().toISOString();
