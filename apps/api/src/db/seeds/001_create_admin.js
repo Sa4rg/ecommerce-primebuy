@@ -41,6 +41,7 @@ exports.seed = async function(knex) {
     email: ADMIN_EMAIL,
     password_hash: passwordHash,
     role: 'admin',
+    email_verified: true, // Admin is pre-verified
     created_at: now,
     updated_at: now,
   });

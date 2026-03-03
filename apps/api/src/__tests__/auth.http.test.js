@@ -5,11 +5,26 @@ import app from '../app';
 
 const baseUrl = '/api/auth';
 
-// Helper to register a user
-async function registerUser(email = 'user@example.com', password = 'password123') {
-  return request(app)
+// Lazy load using require (root.js is CommonJS)
+function getUsersRepository() {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { repositories } = require('../composition/root');
+  return repositories.usersRepository;
+}
+
+// Helper to register a user and mark email as verified (for login to work)
+async function registerUser(email = 'user@example.com', password = 'Password123!') {
+  const res = await request(app)
     .post(`${baseUrl}/register`)
     .send({ email, password });
+  
+  // Mark email as verified so login works in tests
+  if (res.status === 201 && res.body.data?.userId) {
+    const repo = getUsersRepository();
+    await repo.markEmailVerified(res.body.data.userId);
+  }
+  
+  return res;
 }
 
 describe('Auth HTTP API', () => {
@@ -18,7 +33,7 @@ describe('Auth HTTP API', () => {
   });
 
   it('POST /api/auth/register -> 201 and returns userId/email/role, no passwordHash', async () => {
-    const res = await registerUser('test1@example.com', 'password123');
+    const res = await registerUser('test1@example.com', 'Password123!');
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({
       success: true,
@@ -33,8 +48,8 @@ describe('Auth HTTP API', () => {
   });
 
   it('POST /api/auth/register duplicate -> 409 "Email already exists"', async () => {
-    await registerUser('dupe@example.com', 'password123');
-    const res = await registerUser('dupe@example.com', 'password123');
+    await registerUser('dupe@example.com', 'Password123!');
+    const res = await registerUser('dupe@example.com', 'Password123!');
     expect(res.status).toBe(409);
     expect(res.body).toMatchObject({
       success: false,
@@ -43,10 +58,10 @@ describe('Auth HTTP API', () => {
   });
 
   it('POST /api/auth/login -> 200 and returns accessToken string', async () => {
-    await registerUser('login@example.com', 'password123');
+    await registerUser('login@example.com', 'Password123!');
     const res = await request(app)
       .post(`${baseUrl}/login`)
-      .send({ email: 'login@example.com', password: 'password123' });
+      .send({ email: 'login@example.com', password: 'Password123!' });
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
       success: true,
@@ -59,7 +74,7 @@ describe('Auth HTTP API', () => {
   });
 
   it('POST /api/auth/login wrong password -> 401 "Invalid credentials"', async () => {
-    await registerUser('wrongpw@example.com', 'password123');
+    await registerUser('wrongpw@example.com', 'Password123!');
     const res = await request(app)
       .post(`${baseUrl}/login`)
       .send({ email: 'wrongpw@example.com', password: 'badpassword' });
@@ -71,10 +86,10 @@ describe('Auth HTTP API', () => {
   });
 
   it('POST /api/auth/login -> sets refreshToken cookie (HttpOnly) and does NOT expose in JSON', async () => {
-    await registerUser('tokens@example.com', 'password123');
+    await registerUser('tokens@example.com', 'Password123!');
     const res = await request(app)
       .post(`${baseUrl}/login`)
-      .send({ email: 'tokens@example.com', password: 'password123' });
+      .send({ email: 'tokens@example.com', password: 'Password123!' });
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveProperty('accessToken');
     expect(res.body.data.refreshToken).toBeUndefined();
@@ -87,10 +102,10 @@ describe('Auth HTTP API', () => {
   });
 
   it('POST /api/auth/refresh -> 200 with new accessToken for valid cookie', async () => {
-    await registerUser('refresh@example.com', 'password123');
+    await registerUser('refresh@example.com', 'Password123!');
     const loginRes = await request(app)
       .post(`${baseUrl}/login`)
-      .send({ email: 'refresh@example.com', password: 'password123' });
+      .send({ email: 'refresh@example.com', password: 'Password123!' });
 
     const cookies = loginRes.headers['set-cookie'];
     const cookieA = Array.isArray(cookies) ? cookies[0] : cookies;
@@ -127,10 +142,10 @@ describe('Auth HTTP API', () => {
   });
 
   it('POST /api/auth/refresh -> 401 when reusing old refresh cookie (token rotation)', async () => {
-    await registerUser('rotation@example.com', 'password123');
+    await registerUser('rotation@example.com', 'Password123!');
     const loginRes = await request(app)
       .post(`${baseUrl}/login`)
-      .send({ email: 'rotation@example.com', password: 'password123' });
+      .send({ email: 'rotation@example.com', password: 'Password123!' });
 
     const cookies = loginRes.headers['set-cookie'];
     const cookieA = Array.isArray(cookies) ? cookies[0] : cookies;
@@ -159,10 +174,10 @@ describe('Auth HTTP API', () => {
   });
 
   it('POST /api/auth/logout -> 200 and clears refreshToken cookie', async () => {
-    await registerUser('logout@example.com', 'password123');
+    await registerUser('logout@example.com', 'Password123!');
     const loginRes = await request(app)
       .post(`${baseUrl}/login`)
-      .send({ email: 'logout@example.com', password: 'password123' });
+      .send({ email: 'logout@example.com', password: 'Password123!' });
 
     const cookies = loginRes.headers['set-cookie'];
     const cookieA = Array.isArray(cookies) ? cookies[0] : cookies;
@@ -187,10 +202,10 @@ describe('Auth HTTP API', () => {
   });
 
   it('POST /api/auth/refresh -> 401 after logout (token revoked)', async () => {
-    await registerUser('revoked@example.com', 'password123');
+    await registerUser('revoked@example.com', 'Password123!');
     const loginRes = await request(app)
       .post(`${baseUrl}/login`)
-      .send({ email: 'revoked@example.com', password: 'password123' });
+      .send({ email: 'revoked@example.com', password: 'Password123!' });
 
     const cookies = loginRes.headers['set-cookie'];
     const cookieA = Array.isArray(cookies) ? cookies[0] : cookies;
@@ -212,10 +227,10 @@ describe('Auth HTTP API', () => {
 
   it('POST /api/auth/logout-all -> 200 and revokes all sessions', async () => {
     // Register and login to get accessToken and refresh cookie
-    await registerUser('logoutall@example.com', 'password123');
+    await registerUser('logoutall@example.com', 'Password123!');
     const loginRes = await request(app)
       .post(`${baseUrl}/login`)
-      .send({ email: 'logoutall@example.com', password: 'password123' });
+      .send({ email: 'logoutall@example.com', password: 'Password123!' });
 
     const { accessToken } = loginRes.body.data;
     const cookies = loginRes.headers['set-cookie'];

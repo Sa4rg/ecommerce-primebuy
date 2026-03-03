@@ -17,6 +17,8 @@ const { createUsersRepository } = require("./factories/users/users.factory");
 const { createRefreshTokensRepository } = require("./factories/refreshTokens.repository.factory");
 const { createPasswordResetRequestsRepository } = require("./factories/passwordResetRequests.repository.factory");
 const { createFxRatesRepository } = require("./factories/fxRates.repository.factory");
+const { createEmailVerificationsRepository } = require("./factories/emailVerifications.repository.factory");
+const { createNotificationLogsRepository } = require("./factories/notificationLogs.repository.factory");
 
 
 // ============================================================================
@@ -30,6 +32,8 @@ const { createOrdersService } = require("../services/orders.service");
 const { createAuthService } = require("../services/auth.service");
 const { createPasswordResetService } = require("../services/passwordReset.service");
 const { createFxService } = require("../services/fx.service");
+const { createEmailVerificationService } = require("../services/emailVerification.service");
+const { createNotificationService } = require("../services/notification.service");
 const emailService = require("../services/email.service");
 
 // ============================================================================
@@ -46,6 +50,8 @@ const usersRepository = createUsersRepository();
 const refreshTokensRepository = createRefreshTokensRepository();
 const passwordResetRequestsRepository = createPasswordResetRequestsRepository();
 const fxRatesRepository = createFxRatesRepository();
+const emailVerificationsRepository = createEmailVerificationsRepository();
+const notificationLogsRepository = createNotificationLogsRepository();
 
 
 // Services
@@ -95,6 +101,21 @@ const passwordResetService = createPasswordResetService({
   emailService,
 });
 
+const emailVerificationService = createEmailVerificationService({
+  emailVerificationsRepository,
+  usersRepository,
+  emailService,
+});
+
+const notificationService = createNotificationService({
+  notificationLogsRepository,
+  emailService,
+});
+
+// Lazy injection of notificationService
+paymentsService.setNotificationService(notificationService);
+ordersService.setNotificationService(notificationService);
+
 // ============================================================================
 // EXPORTS
 // ============================================================================
@@ -108,5 +129,11 @@ module.exports = {
     authService,
     passwordResetService,
     fxService,
+    emailVerificationService,
+    notificationService,
+  },
+  // Exposed for testing purposes only
+  repositories: {
+    usersRepository,
   },
 };

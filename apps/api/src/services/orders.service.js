@@ -64,6 +64,9 @@ function createOrdersService(deps = {}) {
   const productsService = deps.productsService || null;
   const idGenerator = deps.idGenerator || (() => crypto.randomUUID());
 
+  // Lazy injection to avoid circular dependency
+  let notificationService = deps.notificationService || null;
+
   let ordersRepository;
   if (deps.ordersRepository) {
     ordersRepository = deps.ordersRepository;
@@ -275,6 +278,16 @@ function createOrdersService(deps = {}) {
     order.status = "processing";
     order.updatedAt = nextUpdatedAt(order.updatedAt);
     await ordersRepository.save(order);
+
+    // Send notification (non-blocking)
+    if (notificationService && order.customer?.email) {
+      notificationService.notifyOrderProcessing({
+        userId: order.userId,
+        email: order.customer.email,
+        orderId: order.orderId,
+      }).catch(err => console.error('[NOTIFICATION] Failed to send order processing:', err.message));
+    }
+
     return order;
   }
 
@@ -288,6 +301,16 @@ function createOrdersService(deps = {}) {
     order.status = OrderStatus.COMPLETED;
     order.updatedAt = nextUpdatedAt(order.updatedAt);
     await ordersRepository.save(order);
+
+    // Send notification (non-blocking)
+    if (notificationService && order.customer?.email) {
+      notificationService.notifyOrderCompleted({
+        userId: order.userId,
+        email: order.customer.email,
+        orderId: order.orderId,
+      }).catch(err => console.error('[NOTIFICATION] Failed to send order completed:', err.message));
+    }
+
     return order;
   }
 
@@ -307,6 +330,17 @@ function createOrdersService(deps = {}) {
     order.cancellation = { reason: reason.trim() };
     order.updatedAt = nextUpdatedAt(order.updatedAt);
     await ordersRepository.save(order);
+
+    // Send notification (non-blocking)
+    if (notificationService && order.customer?.email) {
+      notificationService.notifyOrderCancelled({
+        userId: order.userId,
+        email: order.customer.email,
+        orderId: order.orderId,
+        reason: reason.trim(),
+      }).catch(err => console.error('[NOTIFICATION] Failed to send order cancelled:', err.message));
+    }
+
     return order;
   }
 
@@ -351,6 +385,17 @@ function createOrdersService(deps = {}) {
 
     order.updatedAt = nextUpdatedAt(order.updatedAt);
     await ordersRepository.save(order);
+
+    // Send notification (non-blocking)
+    if (notificationService && order.customer?.email) {
+      notificationService.notifyOrderShipped({
+        userId: order.userId,
+        email: order.customer.email,
+        orderId: order.orderId,
+        carrier: order.shipping.carrier || null,
+      }).catch(err => console.error('[NOTIFICATION] Failed to send order shipped:', err.message));
+    }
+
     return order;
   }
 
@@ -368,6 +413,16 @@ function createOrdersService(deps = {}) {
     order.updatedAt = nextUpdatedAt(order.updatedAt);
 
     await ordersRepository.save(order);
+
+    // Send notification (non-blocking)
+    if (notificationService && order.customer?.email) {
+      notificationService.notifyOrderCompleted({
+        userId: order.userId,
+        email: order.customer.email,
+        orderId: order.orderId,
+      }).catch(err => console.error('[NOTIFICATION] Failed to send order delivered:', err.message));
+    }
+
     return order;
   }
 
@@ -377,6 +432,10 @@ function createOrdersService(deps = {}) {
 
   async function getOrdersByUserId(userId) {
     return await ordersRepository.findByUserId(userId);
+  }
+
+  function setNotificationService(service) {
+    notificationService = service;
   }
 
   return {
@@ -391,6 +450,7 @@ function createOrdersService(deps = {}) {
     markDispatched,
     markDelivered,
     getLastShippingAddressByUserId,
+    setNotificationService,
   };
 }
 

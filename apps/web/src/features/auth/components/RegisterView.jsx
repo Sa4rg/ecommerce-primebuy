@@ -1,13 +1,12 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register as apiRegister } from "../authCommand";
-import { useAuth } from "../../../context/AuthContext.jsx";
 import { useCart } from "../../../context/CartContext.jsx";
 import { useTranslation } from "../../../shared/i18n/useTranslation";
+import { validatePassword } from "../../../shared/utils/passwordPolicy";
 
 export function RegisterView() {
   const nav = useNavigate();
-  const { login } = useAuth();
   const { syncUserCart } = useCart();
   const { t } = useTranslation();
 
@@ -23,6 +22,9 @@ export function RegisterView() {
   const [err, setErr] = useState("");
 
   const pwdMismatch = confirm.length > 0 && password !== confirm;
+  
+  // Password policy validation
+  const pwdValidation = useMemo(() => validatePassword(password), [password]);
 
   const canSubmit = useMemo(() => {
     if (loading) return false;
@@ -31,8 +33,9 @@ export function RegisterView() {
     if (!password.trim()) return false;
     if (!confirm.trim()) return false;
     if (password !== confirm) return false;
+    if (!pwdValidation.valid) return false;
     return true;
-  }, [name, email, password, confirm, loading]);
+  }, [name, email, password, confirm, loading, pwdValidation.valid]);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -45,25 +48,15 @@ export function RegisterView() {
       const cleanEmail = email.trim();
       const cleanName = name.trim();
 
-      // 1) register
+      // Register (no auto-login, must verify email first)
       await apiRegister({
         name: cleanName,
         email: cleanEmail,
         password,
       });
 
-      // 2) auto-login (actualiza AuthContext)
-      await login({ email: cleanEmail, password });
-
-      // 3) sync cart with user's cart
-      try {
-        await syncUserCart();
-      } catch {
-        // Cart sync failure should not block registration
-      }
-
-      // 4) go to catalog
-      nav("/", { replace: true });
+      // Navigate to verify email page with email in state
+      nav("/verify-email", { state: { email: cleanEmail }, replace: true });
     } catch (e2) {
       setErr(e2?.message || "Register failed");
     } finally {
@@ -155,6 +148,24 @@ export function RegisterView() {
                   {showPwd ? "🙈" : "👁️"}
                 </button>
               </div>
+              
+              {/* Password requirements */}
+              {password.length > 0 && (
+                <div className="mt-2 space-y-1 text-xs">
+                  <p className="text-slate-400 font-medium">{t("auth.password.policyHeader")}</p>
+                  <ul className="space-y-0.5 ml-1">
+                    <li className={password.length >= 8 ? "text-green-400" : "text-slate-500"}>
+                      {password.length >= 8 ? "✓" : "○"} {t("auth.password.minLength")}
+                    </li>
+                    <li className={/[A-Z]/.test(password) ? "text-green-400" : "text-slate-500"}>
+                      {/[A-Z]/.test(password) ? "✓" : "○"} {t("auth.password.requiresUppercase")}
+                    </li>
+                    <li className={/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password) ? "text-green-400" : "text-slate-500"}>
+                      {/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password) ? "✓" : "○"} {t("auth.password.requiresSpecial")}
+                    </li>
+                  </ul>
+                </div>
+              )}
             </div>
 
             {/* Confirm */}

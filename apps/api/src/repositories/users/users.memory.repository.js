@@ -94,6 +94,13 @@ class InMemoryUsersRepository {
     user.passwordHash = passwordHash;
     user.updatedAt = new Date().toISOString();
   }
+
+  async markEmailVerified(userId, nowDate = new Date()) {
+    const user = this.usersById.get(userId);
+    if (!user) return;
+    user.emailVerified = true;
+    user.updatedAt = nowDate.toISOString();
+  }
 }
 
 InMemoryUsersRepository.DuplicateEmailError = DuplicateEmailError;

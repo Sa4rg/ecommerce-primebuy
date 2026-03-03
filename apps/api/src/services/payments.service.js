@@ -45,6 +45,7 @@ function createPaymentsService(deps = {}) {
 
   // Lazy injection to avoid circular dependency
   let ordersService = deps.ordersService || null;
+  let notificationService = deps.notificationService || null;
 
   // Support both new repository pattern and legacy paymentsStore
   let paymentsRepository;
@@ -166,6 +167,21 @@ function createPaymentsService(deps = {}) {
     const checkout = await checkoutService.findById(payment.checkoutId);
     await cartService.lockCart(checkout.cartId);
 
+    // Send notification to customer (non-blocking)
+    if (notificationService) {
+      const customerEmail = checkout?.customer?.email;
+      if (customerEmail) {
+        notificationService.notifyPaymentSubmitted({
+          userId: payment.userId,
+          email: customerEmail,
+          checkoutId: payment.checkoutId,
+          amount: payment.amount,
+          currency: payment.currency,
+          paymentMethod: payment.method,
+        }).catch(err => console.error('[NOTIFICATION] Failed to send payment submitted:', err.message));
+      }
+    }
+
     return payment;
   }
 
@@ -201,6 +217,33 @@ function createPaymentsService(deps = {}) {
     // 3) Try to create order
     try {
       const order = await ordersService.createOrderFromPayment(paymentId, payment.userId);
+
+      // Send notification to customer about order confirmation (non-blocking)
+      console.log('[NOTIFICATION DEBUG] notificationService exists:', !!notificationService);
+      if (notificationService) {
+        const checkout = await checkoutService.findById(payment.checkoutId);
+        const customerEmail = checkout?.customer?.email;
+        console.log('[NOTIFICATION DEBUG] customerEmail:', customerEmail);
+        console.log('[NOTIFICATION DEBUG] order exists:', !!order);
+        if (customerEmail && order) {
+          const items = checkout.items?.map(item => ({
+            name: item.name || item.productName,
+            quantity: item.quantity,
+            subtotal: (item.unitPriceUSD * item.quantity).toFixed(2),
+          })) || [];
+
+          console.log('[NOTIFICATION DEBUG] Sending notifyOrderConfirmed to:', customerEmail);
+          notificationService.notifyOrderConfirmed({
+            userId: order.userId,
+            email: customerEmail,
+            orderId: order.orderId,
+            total: payment.amount,
+            currency: payment.currency,
+            items,
+          }).catch(err => console.error('[NOTIFICATION] Failed to send order confirmed:', err.message));
+        }
+      }
+
       return { payment, order };
     } catch (err) {
       // 4) Compensation: revert payment to SUBMITTED
@@ -294,6 +337,14 @@ function createPaymentsService(deps = {}) {
   }
 
   /**
+   * Setter for lazy injection of notificationService (avoids circular dependency)
+   * @param {Object} service
+   */
+  function setNotificationService(service) {
+    notificationService = service;
+  }
+
+  /**
    * Get all payments for a specific user
    * @param {string} userId
    * @returns {Promise<Object[]>}
@@ -302,7 +353,7 @@ function createPaymentsService(deps = {}) {
     return paymentsRepository.findByUserId(userId);
   }
 
-  return { createPayment, submitPayment, confirmPayment, rejectPayment, getPaymentById, getPaymentsByCheckoutId, getPaymentsByUserId, hasSubmittedPayments, listPayments, setOrdersService };
+  return { createPayment, submitPayment, confirmPayment, rejectPayment, getPaymentById, getPaymentsByCheckoutId, getPaymentsByUserId, hasSubmittedPayments, listPayments, setOrdersService, setNotificationService };
 }
 
 const paymentsService = createPaymentsService();

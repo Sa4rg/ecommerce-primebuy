@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { resetPassword } from "../authCommand";
 import { useTranslation } from "../../../shared/i18n/useTranslation";
+import { validatePassword } from "../../../shared/utils/passwordPolicy";
 
 export function ResetPasswordView() {
   const { t } = useTranslation();
@@ -17,6 +18,9 @@ export function ResetPasswordView() {
   const [err, setErr] = useState("");
 
   const mismatch = confirm.length > 0 && newPassword !== confirm;
+  
+  // Password policy validation
+  const pwdValidation = useMemo(() => validatePassword(newPassword), [newPassword]);
 
   const canSubmit = useMemo(() => {
     if (loading) return false;
@@ -25,8 +29,9 @@ export function ResetPasswordView() {
     if (!newPassword.trim()) return false;
     if (!confirm.trim()) return false;
     if (newPassword !== confirm) return false;
+    if (!pwdValidation.valid) return false;
     return true;
-  }, [email, code, newPassword, confirm, loading]);
+  }, [email, code, newPassword, confirm, loading, pwdValidation.valid]);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -110,6 +115,24 @@ export function ResetPasswordView() {
                   {showPwd ? "🙈" : "👁️"}
                 </button>
               </div>
+              
+              {/* Password requirements */}
+              {newPassword.length > 0 && (
+                <div className="mt-2 space-y-1 text-xs">
+                  <p className="text-slate-400 font-medium">{t("auth.password.policyHeader")}</p>
+                  <ul className="space-y-0.5 ml-1">
+                    <li className={newPassword.length >= 8 ? "text-green-400" : "text-slate-500"}>
+                      {newPassword.length >= 8 ? "✓" : "○"} {t("auth.password.minLength")}
+                    </li>
+                    <li className={/[A-Z]/.test(newPassword) ? "text-green-400" : "text-slate-500"}>
+                      {/[A-Z]/.test(newPassword) ? "✓" : "○"} {t("auth.password.requiresUppercase")}
+                    </li>
+                    <li className={/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(newPassword) ? "text-green-400" : "text-slate-500"}>
+                      {/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(newPassword) ? "✓" : "○"} {t("auth.password.requiresSpecial")}
+                    </li>
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">

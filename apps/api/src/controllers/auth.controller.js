@@ -1,6 +1,7 @@
 const { success } = require('../utils/response');
 const { services } = require('../composition/root');
 const authService = services.authService;
+const emailVerificationService = services.emailVerificationService;
 
 const { OAuth2Client } = require('google-auth-library');
 const {
@@ -41,8 +42,47 @@ async function register(req, res, next) {
   try {
     const { email, password, name } = req.body;
     const user = await authService.register(email, password, name);
+    
+    // Send verification code after registration
+    await emailVerificationService.sendVerificationCode(user.userId, user.email);
+    
     res.status(201);
-    success(res, user, 'User registered successfully');
+    success(res, user, 'User registered. Please verify your email.');
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function verifyEmail(req, res, next) {
+  try {
+    const { email, code } = req.body;
+    
+    // Verify code and get verified user
+    const user = await emailVerificationService.verifyEmail(email, code);
+    
+    // Issue tokens (auto-login after verification)
+    const { accessToken, refreshToken } = await authService.issueTokensForUser(user);
+    
+    res.cookie('refreshToken', refreshToken, cookieOptions);
+    success(res, { 
+      accessToken,
+      user: {
+        userId: user.userId,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+      }
+    }, 'Email verified successfully');
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function resendVerification(req, res, next) {
+  try {
+    const { email } = req.body;
+    await emailVerificationService.resendVerificationCode(email);
+    success(res, { sent: true }, 'Verification code sent');
   } catch (err) {
     next(err);
   }
@@ -256,4 +296,6 @@ module.exports = {
   passwordResetConfirm,
   googleStart,
   googleCallback,
+  verifyEmail,
+  resendVerification,
 };

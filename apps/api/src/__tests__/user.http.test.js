@@ -4,6 +4,13 @@ import jwt from 'jsonwebtoken';
 import app from '../app.js';
 import { completeCheckout } from '../test_helpers/checkoutHelper.js';
 
+// Lazy load using require (root.js is CommonJS)
+function getUsersRepository() {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { repositories } = require('../composition/root');
+  return repositories.usersRepository;
+}
+
 function adminToken() {
   return jwt.sign(
     { sub: 'admin-test', role: 'admin' },
@@ -28,6 +35,10 @@ describe('User routes (/api/me)', () => {
       .send({ email, password });
 
     testUserId = registerRes.body.data.userId;
+
+    // Mark email as verified for testing
+    const repo = getUsersRepository();
+    await repo.markEmailVerified(testUserId);
 
     // Login to get token
     const loginRes = await request(app)
@@ -117,9 +128,13 @@ describe('User routes (/api/me)', () => {
       const email = `nopayments-${Date.now()}@example.com`;
       const password = 'Test123!';
 
-      await request(app)
+      const registerRes = await request(app)
         .post('/api/auth/register')
         .send({ email, password });
+
+      // Mark email as verified for testing
+      const repo = getUsersRepository();
+      await repo.markEmailVerified(registerRes.body.data.userId);
 
       const loginRes = await request(app)
         .post('/api/auth/login')
@@ -163,9 +178,13 @@ describe('User routes (/api/me)', () => {
       const email = `noorders-${Date.now()}@example.com`;
       const password = 'Test123!';
 
-      await request(app)
+      const registerRes = await request(app)
         .post('/api/auth/register')
         .send({ email, password });
+
+      // Mark email as verified for testing
+      const repo = getUsersRepository();
+      await repo.markEmailVerified(registerRes.body.data.userId);
 
       const loginRes = await request(app)
         .post('/api/auth/login')

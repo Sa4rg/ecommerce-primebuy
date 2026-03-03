@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const argon2 = require('argon2');
 const { AppError } = require('../utils/errors');
+const { validatePassword } = require('../utils/passwordPolicy');
 const {
   RESET_CODE_PEPPER,
   RESET_CODE_EXPIRES_MINUTES,
@@ -62,8 +63,10 @@ function createPasswordResetService({
       throw new AppError('Invalid request', 400);
     }
 
-    if (newPassword.length < 8) {
-      throw new AppError('Password must be at least 8 characters', 400);
+    // Password policy validation
+    const pwValidation = validatePassword(newPassword);
+    if (!pwValidation.valid) {
+      throw new AppError(`Password policy: ${pwValidation.errors.join(', ')}`, 400);
     }
 
     const normalizedEmail = email.trim().toLowerCase();

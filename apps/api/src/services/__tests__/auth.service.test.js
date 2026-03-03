@@ -49,12 +49,14 @@ describe('auth.service', () => {
 
   // 1) should register a user and return safe user data (no passwordHash)
   it('should register a user and return safe user data', async () => {
-    const result = await authService.register('Test@Email.com', 'password123');
+    const result = await authService.register('Test@Email.com', 'Password123!');
     expect(result).toEqual({
       userId: FIXED_ID,
       email: 'test@email.com',
       role: 'customer',
       name: null,
+      emailVerified: false,
+      pendingVerification: true,
       createdAt: FIXED_DATE_ISO,
       updatedAt: FIXED_DATE_ISO,
     });
@@ -64,31 +66,38 @@ describe('auth.service', () => {
 
   // 2) should throw 409 when email already exists
   it('should throw 409 when email already exists', async () => {
-    await authService.register('duplicate@email.com', 'password123');
-    await expect(authService.register('duplicate@email.com', 'password123'))
+    await authService.register('duplicate@email.com', 'Password123!');
+    await expect(authService.register('duplicate@email.com', 'Password123!'))
       .rejects.toMatchObject({ message: 'Email already exists', statusCode: 409 });
   });
 
   // 3) should throw 400 for invalid email
   it('should throw 400 for invalid email', async () => {
-    await expect(authService.register('', 'password123'))
+    await expect(authService.register('', 'Password123!'))
       .rejects.toMatchObject({ message: 'Email is required', statusCode: 400 });
-    await expect(authService.register(null, 'password123'))
+    await expect(authService.register(null, 'Password123!'))
       .rejects.toMatchObject({ message: 'Email is required', statusCode: 400 });
-    await expect(authService.register(123, 'password123'))
+    await expect(authService.register(123, 'Password123!'))
       .rejects.toMatchObject({ message: 'Email is required', statusCode: 400 });
   });
 
-  // 4) should throw 400 for short password (< 8)
-  it('should throw 400 for short password', async () => {
+  // 4) should throw 400 for password that doesn't meet policy
+  it('should throw 400 for password policy violation', async () => {
     await expect(authService.register('short@pw.com', '123'))
-      .rejects.toMatchObject({ message: 'Password must be at least 8 characters', statusCode: 400 });
+      .rejects.toMatchObject({ statusCode: 400 });
   });
+
+  // Helper to register and verify a user (for tests that need to login)
+  async function registerAndVerify(email, password) {
+    const user = await authService.register(email, password);
+    await usersRepository.markEmailVerified(user.userId);
+    return user;
+  }
 
   // 5) should return accessToken and refreshToken for valid credentials
   it('should return accessToken for valid credentials', async () => {
-    await authService.register('login@email.com', 'password123');
-    const result = await authService.login('login@email.com', 'password123');
+    await registerAndVerify('login@email.com', 'Password123!');
+    const result = await authService.login('login@email.com', 'Password123!');
     expect(result).toHaveProperty('accessToken');
     expect(result).toHaveProperty('refreshToken');
     // Verify JWT
@@ -98,21 +107,22 @@ describe('auth.service', () => {
 
   // 6) should throw 401 for invalid credentials (wrong password)
   it('should throw 401 for invalid credentials (wrong password)', async () => {
-    await authService.register('wrongpw@email.com', 'password123');
+    await registerAndVerify('wrongpw@email.com', 'Password123!');
     await expect(authService.login('wrongpw@email.com', 'wrongpassword'))
       .rejects.toMatchObject({ message: 'Invalid credentials', statusCode: 401 });
   });
 
   // 7) should throw 401 for invalid credentials (email not found)
   it('should throw 401 for invalid credentials (email not found)', async () => {
-    await expect(authService.login('notfound@email.com', 'password123'))
+    await expect(authService.login('notfound@email.com', 'Password123!'))
       .rejects.toMatchObject({ message: 'Invalid credentials', statusCode: 401 });
   });
 
   // 8) refresh should return new accessToken and new refreshToken for valid refreshToken
   it('should return new accessToken and refreshToken for valid refreshToken', async () => {
-    await authService.register('refresh@email.com', 'password123');
-    const loginResult = await authService.login('refresh@email.com', 'password123');
+    const user = await authService.register('refresh@email.com', 'Password123!');
+    await usersRepository.markEmailVerified(user.userId);
+    const loginResult = await authService.login('refresh@email.com', 'Password123!');
     const { refreshToken: oldRefreshToken } = loginResult;
 
     const result = await authService.refresh(oldRefreshToken);
@@ -141,8 +151,9 @@ describe('auth.service', () => {
       emailSender,
     });
 
-    await rotationAuthService.register('rotation@email.com', 'password123');
-    const loginResult = await rotationAuthService.login('rotation@email.com', 'password123');
+    const user1 = await rotationAuthService.register('rotation@email.com', 'Password123!');
+    await usersRepository.markEmailVerified(user1.userId);
+    const loginResult = await rotationAuthService.login('rotation@email.com', 'Password123!');
     const { refreshToken: refreshTokenA } = loginResult;
 
     const refreshResult = await rotationAuthService.refresh(refreshTokenA);
@@ -180,8 +191,9 @@ describe('auth.service', () => {
       emailSender,
     });
 
-    await serviceWithPepperA.register('pepper-test@email.com', 'password123');
-    const loginResult = await serviceWithPepperA.login('pepper-test@email.com', 'password123');
+    const user2 = await serviceWithPepperA.register('pepper-test@email.com', 'Password123!');
+    await usersRepository.markEmailVerified(user2.userId);
+    const loginResult = await serviceWithPepperA.login('pepper-test@email.com', 'Password123!');
     const { refreshToken } = loginResult;
 
     await expect(serviceWithPepperB.refresh(refreshToken))
@@ -204,8 +216,9 @@ describe('auth.service', () => {
 
   // 11) logout should return success true
   it('should return success true on logout', async () => {
-    await authService.register('logout@email.com', 'password123');
-    const loginResult = await authService.login('logout@email.com', 'password123');
+    const user = await authService.register('logout@email.com', 'Password123!');
+    await usersRepository.markEmailVerified(user.userId);
+    const loginResult = await authService.login('logout@email.com', 'Password123!');
     const { refreshToken } = loginResult;
 
     const result = await authService.logout(refreshToken);
@@ -221,8 +234,9 @@ describe('auth.service', () => {
 
   // 13) refresh should fail after logout (token revoked)
   it('should throw 401 on refresh after logout', async () => {
-    await authService.register('revoke@email.com', 'password123');
-    const loginResult = await authService.login('revoke@email.com', 'password123');
+    const user = await authService.register('revoke@email.com', 'Password123!');
+    await usersRepository.markEmailVerified(user.userId);
+    const loginResult = await authService.login('revoke@email.com', 'Password123!');
     const { refreshToken } = loginResult;
 
     await authService.logout(refreshToken);
@@ -246,10 +260,11 @@ describe('auth.service', () => {
     });
 
     // Register and login to get refreshTokenA
-    const registerResult = await logoutAllAuthService.register('logoutall@email.com', 'password123');
+    const registerResult = await logoutAllAuthService.register('logoutall@email.com', 'Password123!');
     const userId = registerResult.userId;
+    await usersRepository.markEmailVerified(userId);
 
-    const loginResult = await logoutAllAuthService.login('logoutall@email.com', 'password123');
+    const loginResult = await logoutAllAuthService.login('logoutall@email.com', 'Password123!');
     const { refreshToken: refreshTokenA } = loginResult;
 
     // Rotate to get refreshTokenB

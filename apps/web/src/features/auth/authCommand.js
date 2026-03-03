@@ -30,3 +30,13 @@ export async function resetPassword({ email, code, newPassword }) {
   if (!email || !code || !newPassword) throw new Error("email, code and newPassword are required");
   return apiClient.post("/api/auth/password-reset/confirm", { email, code, newPassword });
 }
+
+export async function verifyEmail({ email, code }) {
+  if (!email || !code) throw new Error("email and code are required");
+  return apiClient.post("/api/auth/verify-email", { email, code });
+}
+
+export async function resendVerification({ email }) {
+  if (!email) throw new Error("email is required");
+  return apiClient.post("/api/auth/resend-verification", { email });
+}

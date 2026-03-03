@@ -4,6 +4,7 @@
 const crypto = require('crypto');
 const argon2 = require('argon2');
 const { AppError } = require('../utils/errors');
+const { validatePassword } = require('../utils/passwordPolicy');
 const { JWT_SECRET, JWT_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN_DAYS, REFRESH_TOKEN_PEPPER } = require('../config/env');
 const { RESET_CODE_PEPPER, RESET_CODE_EXPIRES_MINUTES } = require('../config/env');
 const jwt = require('jsonwebtoken');
@@ -58,9 +59,13 @@ function createAuthService({
     if (!email || typeof email !== 'string') {
       throw new AppError('Email is required', 400);
     }
-    if (!password || typeof password !== 'string' || password.length < 8) {
-      throw new AppError('Password must be at least 8 characters', 400);
+    
+    // Password policy validation
+    const pwValidation = validatePassword(password);
+    if (!pwValidation.valid) {
+      throw new AppError(`Password policy: ${pwValidation.errors.join(', ')}`, 400);
     }
+    
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedName = name && typeof name === 'string' ? name.trim() : null;
     const passwordHash = await argon2.hash(password);
@@ -72,6 +77,7 @@ function createAuthService({
       passwordHash,
       role: 'customer',
       name: normalizedName,
+      emailVerified: false,
       createdAt: nowISO,
       updatedAt: nowISO,
     };
@@ -84,12 +90,14 @@ function createAuthService({
       }
       throw err;
     }
-    // Return safe user object
+    // Return safe user object (pendingVerification flag for frontend)
     return {
       userId: user.userId,
       email: user.email,
       role: user.role,
       name: user.name,
+      emailVerified: false,
+      pendingVerification: true,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -134,6 +142,11 @@ function createAuthService({
     const valid = await argon2.verify(user.passwordHash, password);
     if (!valid) {
       throw new AppError('Invalid credentials', 401);
+    }
+
+    // Check email verification (skip for Google users who are auto-verified)
+    if (!user.emailVerified && user.authProvider !== 'google') {
+      throw new AppError('Email not verified', 403);
     }
 
     // Generate access token
@@ -384,6 +397,7 @@ function createAuthService({
     resetPasswordWithCode,
     loginWithGoogle,
     getUserById,
+    issueTokensForUser,
   };
 }
 

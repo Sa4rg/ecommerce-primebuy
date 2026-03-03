@@ -42,7 +42,7 @@ describe("LoginView", () => {
     const user = userEvent.setup();
 
     await user.type(screen.getByPlaceholderText(/name@company\.com/i), "test@example.com");
-    await user.type(screen.getByPlaceholderText(/••••/), "password123");
+    await user.type(screen.getByPlaceholderText(/••••/), "Password123!");
     await user.click(screen.getByRole("button", { name: /iniciar sesión/i }));
 
     await waitFor(() => {

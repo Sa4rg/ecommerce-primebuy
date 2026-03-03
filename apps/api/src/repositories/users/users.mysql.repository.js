@@ -98,6 +98,16 @@ class MySQLUsersRepository {
       });
   }
 
+  async markEmailVerified(userId, nowDate = new Date()) {
+    const now = isoToMySQLDatetime(nowDate.toISOString());
+    await knex('users')
+      .where({ user_id: userId })
+      .update({
+        email_verified: true,
+        updated_at: now,
+      });
+  }
+
   _mapRowToUser(row) {
     return {
       userId: row.user_id,
@@ -107,6 +117,7 @@ class MySQLUsersRepository {
       name: row.name || null,
       authProvider: row.auth_provider || 'local',
       googleSub: row.google_sub || null,
+      emailVerified: Boolean(row.email_verified),
       createdAt: mysqlDatetimeToISO(row.created_at),
       updatedAt: mysqlDatetimeToISO(row.updated_at),
     };

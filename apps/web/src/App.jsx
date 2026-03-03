@@ -20,6 +20,7 @@ import { AdminPaymentDetailPage } from "./features/admin/components/AdminPayment
 import { ForgotPasswordView } from "./features/auth/components/ForgotPasswordView.jsx";
 import { ResetPasswordView } from "./features/auth/components/ResetPasswordView.jsx";
 import { AuthCallbackView } from "./features/auth/components/AuthCallbackView.jsx";
+import { VerifyEmailView } from "./features/auth/components/VerifyEmailView.jsx";
 
 
 function App() {
@@ -66,6 +67,7 @@ function App() {
         {/* Auth */}
         <Route path="/login" element={<LoginView />} />
         <Route path="/register" element={<RegisterView />} />
+        <Route path="/verify-email" element={<VerifyEmailView />} />
         <Route path="/forgot-password" element={<ForgotPasswordView />} />
         <Route path="/reset-password" element={<ResetPasswordView />} />
         <Route path="/auth/callback" element={<AuthCallbackView />} />
