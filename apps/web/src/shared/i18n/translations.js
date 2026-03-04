@@ -3,16 +3,46 @@
 export const translations = {
   es: {
     navbar: {
-      electronics: "Electrónica",
-      newArrivals: "Novedades",
-      offers: "Ofertas",
       searchPlaceholder: "Buscar productos...",
       cart: "Carrito",
       account: "Cuenta",
       admin: "Admin",
+      contact: "Contáctanos",
       products: "Productos",
       login: "Ingresar",
+      register: "Registrarse",
       logout: "Salir",
+    },
+
+    footer: {
+      brandDescription:
+        "Tu tienda de confianza para repuestos eléctricos y soluciones industriales de alta calidad.",
+      navigation: {
+        title: "Navegación",
+        store: "Tienda Online",
+        services: "Servicios Técnicos",
+        brands: "Nuestras Marcas",
+        locations: "Ubicaciones",
+      },
+      support: {
+        title: "Soporte",
+        faq: "Preguntas Frecuentes",
+        shipping: "Métodos de Envío",
+        returns: "Políticas de Devolución",
+        warranty: "Garantías",
+      },
+      contact: {
+        title: "Contacto",
+        emailValue: "info@primebuy.com",
+        phoneValue: "+58 (212) 555-0123",
+        phoneHref: "+582125550123",
+        locationValue: "Caracas, Venezuela",
+      },
+      rights: "Todos los derechos reservados.",
+      legal: {
+        terms: "Términos y Condiciones",
+        privacy: "Privacidad",
+      },
     },
 
     checkout: {
@@ -967,20 +997,212 @@ export const translations = {
         backToCatalog: "Volver al catálogo",
       },
     },
+
+    legal: {
+      common: {
+        updatedAt: "Última actualización: {date}",
+        contactTitle: "Contacto",
+        contactEmail: "Email: {email}",
+        location: "Ubicación: {location}",
+        scope: "Operamos y vendemos únicamente dentro de Venezuela.",
+        disclaimer:
+          "Este documento es un texto informativo para el funcionamiento del sitio. Para asesoría legal, consulta con un profesional.",
+      },
+      terms: {
+        title: "Términos y Condiciones",
+        intro:
+          "Al acceder y utilizar Prime Buy, aceptas estos términos. Si no estás de acuerdo, por favor no uses el sitio.",
+        sections: {
+          serviceTitle: "1. Servicio",
+          serviceText:
+            "Prime Buy ofrece un catálogo de productos y permite realizar pedidos y pagos a través de la plataforma.",
+          accountsTitle: "2. Cuentas y acceso",
+          accountsText:
+            "Eres responsable de mantener la confidencialidad de tu cuenta y de la veracidad de los datos suministrados.",
+          pricesTitle: "3. Precios y disponibilidad",
+          pricesText:
+            "Los precios y disponibilidad pueden cambiar sin previo aviso. Los montos pueden mostrarse en USD y/o VES según la tasa configurada. El monto final se confirma durante el checkout.",
+          paymentsTitle: "4. Pagos y verificación",
+          paymentsText:
+            "Algunos pagos pueden requerir comprobante y verificación manual. Prime Buy puede rechazar pagos inconsistentes o incompletos.",
+          shippingTitle: "5. Envíos y entregas",
+          shippingText:
+            "Los tiempos de entrega son estimados. El seguimiento depende del proveedor logístico (por ejemplo, MRW, ZOOM) cuando aplique.",
+          returnsTitle: "6. Devoluciones y garantías",
+          returnsText:
+            "Las devoluciones y garantías aplican según el tipo de producto y condiciones informadas por soporte. Algunos productos pueden no ser elegibles.",
+          responsibilityTitle: "7. Limitación de responsabilidad",
+          responsibilityText:
+            "Prime Buy no será responsable por daños indirectos, pérdida de datos o interrupciones del servicio fuera de nuestro control.",
+          changesTitle: "8. Cambios",
+          changesText:
+            "Podemos actualizar estos términos. La fecha de actualización se mostrará al inicio del documento.",
+        },
+      },
+      privacy: {
+        title: "Política de Privacidad",
+        intro:
+          "Esta política describe cómo recopilamos, usamos y protegemos tu información al usar Prime Buy.",
+        sections: {
+          dataTitle: "1. Datos que recopilamos",
+          dataText:
+            "Podemos recopilar datos como nombre, email, teléfono, dirección de envío, historial de pedidos y datos de pago (por ejemplo, referencia de comprobante).",
+          useTitle: "2. Uso de la información",
+          useText:
+            "Usamos tus datos para procesar pedidos, confirmar pagos, brindar soporte, enviar notificaciones del estado del pedido y mejorar la experiencia del sitio.",
+          sharingTitle: "3. Compartir información",
+          sharingText:
+            "Compartimos información únicamente cuando es necesario para completar el servicio (por ejemplo, proveedores de envío) o por requerimientos legales.",
+          securityTitle: "4. Seguridad",
+          securityText:
+            "Aplicamos medidas razonables para proteger tus datos. Ningún sistema es 100% seguro, pero trabajamos para minimizar riesgos.",
+          cookiesTitle: "5. Cookies y almacenamiento local",
+          cookiesText:
+            "Podemos usar cookies y/o localStorage para mantener sesión, preferencias (como idioma) y mejorar la navegación.",
+          rightsTitle: "6. Tus derechos",
+          rightsText:
+            "Puedes solicitar actualización o eliminación de tus datos escribiendo al email de contacto, sujeto a obligaciones legales y operativas.",
+          changesTitle: "7. Cambios a esta política",
+          changesText:
+            "Podemos actualizar esta política. La fecha de actualización se mostrará al inicio del documento.",
+        },
+      },
+    },
+
+    support: {
+      common: {
+        updatedAt: "Última actualización: {{date}}",
+        contactTitle: "Contacto",
+        contactEmail: "Email: {{email}}",
+        location: "Ubicación: {{location}}",
+        disclaimer: "Este documento es informativo. Para asesoría legal, consulta con un profesional.",
+        contactWhatsapp: "Contactar soporte por WhatsApp",
+        whatsappMessage: "Hola, necesito ayuda con Prime Buy.",
+        whatsappMessageShipping: "Hola, necesito ayuda con métodos de envío en Prime Buy.",
+        whatsappMessageReturns: "Hola, necesito ayuda con devoluciones en Prime Buy.",
+        whatsappMessageWarranty: "Hola, necesito ayuda con garantías en Prime Buy.",
+      },
+
+      faq: {
+        title: "Preguntas Frecuentes",
+        intro: "Aquí respondemos dudas comunes sobre compras, pagos, comprobantes y envíos.",
+        sections: {
+          paymentsTitle: "1. Pagos disponibles",
+          paymentsText:
+            "Ofrecemos métodos de pago en USD y VES según disponibilidad. Algunos métodos pueden requerir comprobante para verificación.",
+          proofTitle: "2. Comprobantes y verificación",
+          proofText:
+            "Ciertos pagos requieren comprobante y revisión manual. Te notificaremos si necesitamos información adicional.",
+          shippingTitle: "3. Envíos y entregas",
+          shippingText:
+            "Operamos únicamente dentro de Venezuela. Los tiempos de entrega son estimados y dependen del método de envío.",
+          stockTitle: "4. Disponibilidad y stock",
+          stockText:
+            "La disponibilidad puede variar. Si un producto se agota, te contactaremos para ofrecer alternativas o reembolso según aplique.",
+          supportTitle: "5. Soporte",
+          supportText:
+            "Puedes contactarnos por WhatsApp o correo para asistencia con pedidos, pagos o envíos.",
+        },
+      },
+
+      shipping: {
+        title: "Métodos de Envío",
+        intro: "Información sobre nuestras opciones de envío y entregas dentro de Venezuela.",
+        scope: "El seguimiento depende del proveedor logístico (por ejemplo, MRW, ZOOM) cuando aplique.",
+        sections: {
+          methodsTitle: "1. Opciones de envío",
+          methodsText:
+            "Podemos ofrecer entrega local (delivery) o envío nacional mediante agencias de encomiendas, según la zona.",
+          timesTitle: "2. Tiempos estimados",
+          timesText:
+            "Los tiempos son estimados y pueden variar por disponibilidad, ubicación y logística del carrier.",
+          trackingTitle: "3. Tracking / seguimiento",
+          trackingText:
+            "Si el envío cuenta con número de guía, lo compartiremos y podrás rastrearlo en el proveedor correspondiente.",
+          addressTitle: "4. Dirección y datos del destinatario",
+          addressText:
+            "Asegúrate de colocar dirección completa, referencia y teléfono. Datos incompletos pueden retrasar la entrega.",
+        },
+      },
+
+      returns: {
+        title: "Políticas de Devolución",
+        intro: "Condiciones generales para solicitudes de devolución o cambios.",
+        scope: "Las devoluciones se evalúan caso por caso según el producto y el estado en que se encuentre.",
+        sections: {
+          eligibilityTitle: "1. Elegibilidad",
+          eligibilityText:
+            "Para solicitar devolución, el producto debe estar sin uso, con su empaque y accesorios, y dentro del período indicado por soporte.",
+          exclusionsTitle: "2. Exclusiones",
+          exclusionsText:
+            "Algunos productos pueden no ser elegibles (por ejemplo: consumibles, productos instalados o con señales de uso).",
+          processTitle: "3. Proceso",
+          processText:
+            "Contáctanos por WhatsApp indicando tu número de pedido, motivo y evidencia (si aplica). Te guiaremos con los próximos pasos.",
+        },
+      },
+
+      warranty: {
+        title: "Garantías",
+        intro: "Información general sobre garantías y soporte postventa.",
+        scope: "La garantía puede variar según el producto y/o fabricante. Validación sujeta a revisión.",
+        sections: {
+          coverageTitle: "1. Cobertura",
+          coverageText:
+            "La garantía cubre fallas de fabricación dentro del período aplicable. Se requiere evidencia y evaluación.",
+          exclusionsTitle: "2. No cubre",
+          exclusionsText:
+            "No cubre daños por mal uso, golpes, humedad, instalación incorrecta, manipulación o desgaste normal.",
+          processTitle: "3. Cómo solicitar",
+          processText:
+            "Escríbenos por WhatsApp con tu número de pedido, descripción del problema y fotos o video. Te indicaremos el procedimiento.",
+        },
+      },
+    }
   },
 
   en: {
     navbar: {
-      electronics: "Electronics",
-      newArrivals: "New Arrivals",
-      offers: "Offers",
       searchPlaceholder: "Search products...",
       cart: "Cart",
       account: "Account",
       admin: "Admin",
       products: "Products",
+      contact: "Contact us",
       login: "Login",
+      register: "Register",
       logout: "Logout",
+    },
+
+    footer: {
+      brandDescription:
+        "Your trusted store for electrical parts and high-quality industrial solutions.",
+      navigation: {
+        title: "Navigation",
+        store: "Online Store",
+        services: "Technical Services",
+        brands: "Our Brands",
+        locations: "Locations",
+      },
+      support: {
+        title: "Support",
+        faq: "Frequently Asked Questions",
+        shipping: "Shipping Methods",
+        returns: "Return Policy",
+        warranty: "Warranty",
+      },
+      contact: {
+        title: "Contact",
+        emailValue: "info@primebuy.com",
+        phoneValue: "+58 (212) 555-0123",
+        phoneHref: "+582125550123",
+        locationValue: "Caracas, Venezuela",
+      },
+      rights: "All rights reserved.",
+      legal: {
+        terms: "Terms & Conditions",
+        privacy: "Privacy",
+      },
     },
 
     checkout: {
@@ -1925,5 +2147,167 @@ export const translations = {
         backToCatalog: "Back to catalog",
       },
     },
+
+    legal: {
+      common: {
+        updatedAt: "Last updated: {date}",
+        contactTitle: "Contact",
+        contactEmail: "Email: {email}",
+        location: "Location: {location}",
+        scope: "We operate and sell only within Venezuela.",
+        disclaimer:
+          "This document is informational for site operation. For legal advice, consult a professional.",
+      },
+      terms: {
+        title: "Terms & Conditions",
+        intro:
+          "By accessing and using Prime Buy, you agree to these terms. If you do not agree, please do not use the site.",
+        sections: {
+          serviceTitle: "1. Service",
+          serviceText:
+            "Prime Buy provides a product catalog and allows placing orders and submitting payments through the platform.",
+          accountsTitle: "2. Accounts and access",
+          accountsText:
+            "You are responsible for keeping your account confidential and for providing accurate information.",
+          pricesTitle: "3. Prices and availability",
+          pricesText:
+            "Prices and availability may change without notice. Amounts may be shown in USD and/or VES based on the configured rate. Final amount is confirmed during checkout.",
+          paymentsTitle: "4. Payments and verification",
+          paymentsText:
+            "Some payments may require proof and manual verification. Prime Buy may reject inconsistent or incomplete payments.",
+          shippingTitle: "5. Shipping and delivery",
+          shippingText:
+            "Delivery times are estimates. Tracking depends on the shipping provider (e.g., MRW, ZOOM) when applicable.",
+          returnsTitle: "6. Returns and warranties",
+          returnsText:
+            "Returns and warranties depend on product type and conditions provided by support. Some products may not be eligible.",
+          responsibilityTitle: "7. Limitation of liability",
+          responsibilityText:
+            "Prime Buy is not liable for indirect damages, data loss, or service interruptions beyond our control.",
+          changesTitle: "8. Changes",
+          changesText:
+            "We may update these terms. The updated date will be shown at the top of the document.",
+        },
+      },
+      privacy: {
+        title: "Privacy Policy",
+        intro:
+          "This policy explains how we collect, use, and protect your information when using Prime Buy.",
+        sections: {
+          dataTitle: "1. Data we collect",
+          dataText:
+            "We may collect data such as name, email, phone, shipping address, order history, and payment data (e.g., proof reference).",
+          useTitle: "2. How we use your information",
+          useText:
+            "We use your data to process orders, confirm payments, provide support, send order status updates, and improve the site experience.",
+          sharingTitle: "3. Sharing information",
+          sharingText:
+            "We share information only when necessary to provide the service (e.g., shipping providers) or when legally required.",
+          securityTitle: "4. Security",
+          securityText:
+            "We apply reasonable measures to protect your data. No system is 100% secure, but we work to minimize risks.",
+          cookiesTitle: "5. Cookies and local storage",
+          cookiesText:
+            "We may use cookies and/or localStorage to keep sessions, preferences (such as language), and improve navigation.",
+          rightsTitle: "6. Your rights",
+          rightsText:
+            "You may request updates or deletion of your data by contacting the email below, subject to legal and operational obligations.",
+          changesTitle: "7. Changes to this policy",
+          changesText:
+            "We may update this policy. The updated date will be shown at the top of the document.",
+        },
+      },
+    },
+
+    support: {
+      common: {
+        updatedAt: "Last updated: {{date}}",
+        contactTitle: "Contact",
+        contactEmail: "Email: {{email}}",
+        location: "Location: {{location}}",
+        disclaimer: "This is informational. For legal advice, consult a professional.",
+        contactWhatsapp: "Contact support on WhatsApp",
+        whatsappMessage: "Hi, I need help with Prime Buy.",
+        whatsappMessageShipping: "Hi, I need help with shipping methods at Prime Buy.",
+        whatsappMessageReturns: "Hi, I need help with returns at Prime Buy.",
+        whatsappMessageWarranty: "Hi, I need help with warranties at Prime Buy.",
+      },
+
+      faq: {
+        title: "Frequently Asked Questions",
+        intro: "Here are common questions about shopping, payments, proof of payment, and shipping.",
+        sections: {
+          paymentsTitle: "1. Available payments",
+          paymentsText:
+            "We offer payment methods in USD and VES depending on availability. Some methods may require proof for verification.",
+          proofTitle: "2. Proof & verification",
+          proofText:
+            "Some payments require proof and manual review. We will notify you if we need additional information.",
+          shippingTitle: "3. Shipping & delivery",
+          shippingText:
+            "We operate only within Venezuela. Delivery times are estimates and depend on the shipping method.",
+          stockTitle: "4. Availability & stock",
+          stockText:
+            "Availability may change. If an item runs out, we will contact you with alternatives or a refund if applicable.",
+          supportTitle: "5. Support",
+          supportText:
+            "You can contact us via WhatsApp or email for assistance with orders, payments, or shipping.",
+        },
+      },
+
+      shipping: {
+        title: "Shipping Methods",
+        intro: "Information about our shipping options within Venezuela.",
+        scope: "Tracking depends on the logistics provider (e.g., MRW, ZOOM) when applicable.",
+        sections: {
+          methodsTitle: "1. Shipping options",
+          methodsText:
+            "We may offer local delivery (delivery) or nationwide shipping through courier agencies depending on the area.",
+          timesTitle: "2. Estimated times",
+          timesText:
+            "Times are estimates and may vary due to availability, location, and carrier logistics.",
+          trackingTitle: "3. Tracking",
+          trackingText:
+            "If the shipment includes a tracking number, we will share it so you can track it with the corresponding provider.",
+          addressTitle: "4. Address & recipient details",
+          addressText:
+            "Please provide a complete address, reference, and phone number. Missing details can delay delivery.",
+        },
+      },
+
+      returns: {
+        title: "Return Policy",
+        intro: "General conditions for return or exchange requests.",
+        scope: "Returns are evaluated case by case depending on the product and its condition.",
+        sections: {
+          eligibilityTitle: "1. Eligibility",
+          eligibilityText:
+            "To request a return, the product must be unused, with packaging and accessories, and within the period informed by support.",
+          exclusionsTitle: "2. Exclusions",
+          exclusionsText:
+            "Some products may not be eligible (e.g., consumables, installed items, or items with signs of use).",
+          processTitle: "3. Process",
+          processText:
+            "Contact us on WhatsApp with your order number, reason, and evidence (if applicable). We will guide you through the next steps.",
+        },
+      },
+
+      warranty: {
+        title: "Warranties",
+        intro: "General information about warranties and post-sale support.",
+        scope: "Warranty may vary by product and/or manufacturer. Validation is subject to review.",
+        sections: {
+          coverageTitle: "1. Coverage",
+          coverageText:
+            "Warranty covers manufacturing defects within the applicable period. Evidence and evaluation are required.",
+          exclusionsTitle: "2. Not covered",
+          exclusionsText:
+            "Not covered: misuse, impact damage, humidity, incorrect installation, manipulation, or normal wear.",
+          processTitle: "3. How to request",
+          processText:
+            "Message us on WhatsApp with your order number, issue description, and photos/videos. We will provide the procedure.",
+        },
+      },
+    }
   },
 };

@@ -21,6 +21,12 @@ import { ForgotPasswordView } from "./features/auth/components/ForgotPasswordVie
 import { ResetPasswordView } from "./features/auth/components/ResetPasswordView.jsx";
 import { AuthCallbackView } from "./features/auth/components/AuthCallbackView.jsx";
 import { VerifyEmailView } from "./features/auth/components/VerifyEmailView.jsx";
+import { TermsPage } from "./features/legal/components/TermsPage.jsx";
+import { PrivacyPage } from "./features/legal/components/PrivacyPage.jsx";
+import { FaqPage } from "./features/support/components/FaqPage.jsx";
+import { ShippingPage } from "./features/support/components/ShippingPage.jsx";
+import { ReturnsPage } from "./features/support/components/ReturnsPage.jsx";
+import { WarrantyPage } from "./features/support/components/WarrantyPage.jsx";
 
 
 function App() {
@@ -101,6 +107,13 @@ function App() {
         />
       </Route>
 
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+
+      <Route path="/support/faq" element={<FaqPage />} />
+      <Route path="/support/shipping" element={<ShippingPage />} />
+      <Route path="/support/returns" element={<ReturnsPage />} />
+      <Route path="/support/warranty" element={<WarrantyPage />} />
     </Routes>
   );
 }
