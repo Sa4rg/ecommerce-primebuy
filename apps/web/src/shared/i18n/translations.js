@@ -12,6 +12,8 @@ export const translations = {
       login: "Ingresar",
       register: "Registrarse",
       logout: "Salir",
+      startShopping: "Comenzar a Comprar",
+      catalog: "Catálogo",
     },
 
     footer: {
@@ -1172,6 +1174,8 @@ export const translations = {
       login: "Login",
       register: "Register",
       logout: "Logout",
+      startShopping: "Start Shopping",
+      catalog: "Catalog",
     },
 
     footer: {

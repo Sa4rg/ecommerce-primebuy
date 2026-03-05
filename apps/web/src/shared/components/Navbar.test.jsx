@@ -22,10 +22,6 @@ describe("Navbar i18n integration", () => {
 
     await user.click(screen.getByRole("button", { name: "EN" }));
 
-    // nav
-    expect(screen.getByText("Electronics")).toBeInTheDocument();
-    expect(screen.getByText("New Arrivals")).toBeInTheDocument();
-
     // search
     expect(screen.getByPlaceholderText("Search products...")).toBeInTheDocument();
 

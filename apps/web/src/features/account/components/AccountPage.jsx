@@ -44,26 +44,26 @@ function formatDateTime(iso, language) {
 function StatusBadge({ status, className, t }) {
   const s = String(status || "").toLowerCase();
 
-  // Nota: aquí solo traducimos el label; estilos se mantienen igual
+  // Colores ajustados para tema claro
   const map = {
     // payments
-    pending: { bg: "bg-slate-500/10", text: "text-slate-300", border: "border-slate-500/20", dot: "bg-slate-400", labelKey: "account.badges.pending" },
-    submitted: { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20", dot: "bg-yellow-400", labelKey: "account.badges.pending" },
-    confirmed: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20", dot: "bg-emerald-400", labelKey: "account.badges.confirmed" },
-    rejected: { bg: "bg-rose-500/10", text: "text-rose-400", border: "border-rose-500/20", dot: "bg-rose-400", labelKey: "account.badges.rejected" },
+    pending: { bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200", dot: "bg-slate-500", labelKey: "account.badges.pending" },
+    submitted: { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200", dot: "bg-yellow-500", labelKey: "account.badges.pending" },
+    confirmed: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", dot: "bg-emerald-500", labelKey: "account.badges.confirmed" },
+    rejected: { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200", dot: "bg-rose-500", labelKey: "account.badges.rejected" },
 
     // orders
-    paid: { bg: "bg-blue-500/10", text: "text-blue-300", border: "border-blue-500/20", dot: "bg-blue-400", labelKey: "account.badges.paid" },
-    processing: { bg: "bg-amber-500/10", text: "text-amber-300", border: "border-amber-500/20", dot: "bg-amber-300", labelKey: "account.badges.processing" },
-    completed: { bg: "bg-emerald-500/10", text: "text-emerald-300", border: "border-emerald-500/20", dot: "bg-emerald-300", labelKey: "account.badges.completed" },
-    cancelled: { bg: "bg-rose-500/10", text: "text-rose-300", border: "border-rose-500/20", dot: "bg-rose-300", labelKey: "account.badges.cancelled" },
+    paid: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", dot: "bg-blue-500", labelKey: "account.badges.paid" },
+    processing: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", dot: "bg-amber-500", labelKey: "account.badges.processing" },
+    completed: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", dot: "bg-emerald-500", labelKey: "account.badges.completed" },
+    cancelled: { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200", dot: "bg-rose-500", labelKey: "account.badges.cancelled" },
   };
 
   const cfg = map[s] || {
-    bg: "bg-white/5",
-    text: "text-slate-300",
-    border: "border-white/10",
-    dot: "bg-slate-400",
+    bg: "bg-slate-100",
+    text: "text-slate-600",
+    border: "border-slate-200",
+    dot: "bg-slate-500",
     labelKey: null,
     labelRaw: (status || "").toUpperCase(),
   };
@@ -90,8 +90,8 @@ function GlassCard({ children, className }) {
   return (
     <div
       className={cx(
-        "rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm",
-        "hover:border-orange-500/30 transition-all",
+        "rounded-2xl border border-pb-border bg-white",
+        "hover:border-pb-primary/30 transition-all pb-shadow",
         className
       )}
     >
@@ -109,7 +109,7 @@ function OrderIcon({ status }) {
   if (s === "paid") icon = "inventory_2";
 
   return (
-    <div className="w-16 h-16 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400">
+    <div className="w-16 h-16 rounded-xl bg-pb-primary/10 flex items-center justify-center text-pb-primary">
       <span className="material-symbols-outlined text-3xl">{icon}</span>
     </div>
   );
@@ -122,7 +122,7 @@ function PaymentIcon({ method }) {
   if (m.includes("pago")) icon = "credit_card";
   if (m.includes("transfer")) icon = "payments";
 
-  return <span className="material-symbols-outlined text-orange-400 text-sm">{icon}</span>;
+  return <span className="material-symbols-outlined text-pb-primary text-sm">{icon}</span>;
 }
 
 export function AccountPage() {
@@ -181,27 +181,27 @@ export function AccountPage() {
   return (
     <div className="w-full">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-sm text-slate-400 mb-8">
-        <Link className="hover:text-orange-400 transition-colors" to="/">
+      <nav className="flex items-center gap-2 text-sm text-pb-muted mb-8">
+        <Link className="hover:text-pb-primary transition-colors" to="/">
           {t("account.breadcrumb.home")}
         </Link>
         <span className="material-symbols-outlined text-xs">chevron_right</span>
-        <span className="text-slate-100 font-medium">{t("account.breadcrumb.account")}</span>
+        <span className="text-pb-text font-medium">{t("account.breadcrumb.account")}</span>
       </nav>
 
       {/* Header */}
       <div className="mb-10">
-        <h2 className="text-4xl font-bold text-slate-100 mb-2">
+        <h2 className="text-4xl font-bold text-pb-text mb-2">
           {firstName ? t("account.header.greeting", { name: firstName }) : t("account.header.title")}
         </h2>
 
-        <p className="text-slate-400">{t("account.header.subtitle")}</p>
+        <p className="text-pb-muted">{t("account.header.subtitle")}</p>
 
         {/* Actions */}
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10"
+            className="inline-flex items-center gap-2 rounded-xl border border-pb-border bg-white px-4 py-2 text-sm font-semibold text-pb-text hover:bg-pb-bg-subtle"
           >
             ← {t("account.actions.backToCatalog")}
           </Link>
@@ -210,7 +210,7 @@ export function AccountPage() {
             <button
               type="button"
               onClick={() => navigate("/cart")}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10"
+              className="inline-flex items-center gap-2 rounded-xl border border-pb-border bg-white px-4 py-2 text-sm font-semibold text-pb-text hover:bg-pb-bg-subtle"
             >
               {t("account.actions.goToCart")}
             </button>
@@ -218,7 +218,7 @@ export function AccountPage() {
             <button
               type="button"
               onClick={onStartNewCart}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10"
+              className="inline-flex items-center gap-2 rounded-xl border border-pb-border bg-white px-4 py-2 text-sm font-semibold text-pb-text hover:bg-pb-bg-subtle"
             >
               {t("account.actions.startNewCart")}
             </button>
@@ -227,7 +227,7 @@ export function AccountPage() {
           <button
             type="button"
             onClick={load}
-            className="ml-auto inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10"
+            className="ml-auto inline-flex items-center gap-2 rounded-xl border border-pb-border bg-white px-4 py-2 text-sm font-semibold text-pb-text hover:bg-pb-bg-subtle"
           >
             <span className="material-symbols-outlined text-base">refresh</span>
             {t("account.actions.refresh")}
@@ -236,20 +236,20 @@ export function AccountPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-white/10 mb-8">
+      <div className="flex border-b border-pb-border mb-8">
         <button
           type="button"
           onClick={() => setTab("orders")}
           className={cx(
             "px-6 py-4 text-sm flex items-center gap-2 transition-all",
             tab === "orders"
-              ? "font-bold border-b-2 border-orange-500 text-orange-400"
-              : "font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent"
+              ? "font-bold border-b-2 border-pb-primary text-pb-primary"
+              : "font-medium text-pb-muted hover:text-pb-text border-b-2 border-transparent"
           )}
         >
           <span className="material-symbols-outlined text-sm">package_2</span>
           {t("account.tabs.orders")}
-          <span className="text-xs font-black px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-300">
+          <span className="text-xs font-black px-2 py-0.5 rounded-full bg-pb-bg-subtle border border-pb-border text-pb-text">
             {orders.length}
           </span>
         </button>
@@ -260,22 +260,22 @@ export function AccountPage() {
           className={cx(
             "px-6 py-4 text-sm flex items-center gap-2 transition-all",
             tab === "payments"
-              ? "font-bold border-b-2 border-orange-500 text-orange-400"
-              : "font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent"
+              ? "font-bold border-b-2 border-pb-primary text-pb-primary"
+              : "font-medium text-pb-muted hover:text-pb-text border-b-2 border-transparent"
           )}
         >
           <span className="material-symbols-outlined text-sm">payments</span>
           {t("account.tabs.payments")}
-          <span className="text-xs font-black px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-300">
+          <span className="text-xs font-black px-2 py-0.5 rounded-full bg-pb-bg-subtle border border-pb-border text-pb-text">
             {payments.length}
           </span>
         </button>
       </div>
 
       {/* States */}
-      {loading && <p className="text-slate-400">{t("account.states.loading")}</p>}
+      {loading && <p className="text-pb-muted">{t("account.states.loading")}</p>}
       {err && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
+        <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700">
           {err}
         </div>
       )}
@@ -286,9 +286,9 @@ export function AccountPage() {
           {sortedOrders.length === 0 ? (
             <GlassCard className="p-8">
               <div className="flex flex-col items-center text-center">
-                <span className="material-symbols-outlined text-5xl text-orange-500/50 mb-4">inventory_2</span>
-                <h4 className="text-lg font-bold text-slate-200 mb-2">{t("account.orders.empty.title")}</h4>
-                <p className="text-slate-400 max-w-md">{t("account.orders.empty.body")}</p>
+                <span className="material-symbols-outlined text-5xl text-pb-primary/50 mb-4">inventory_2</span>
+                <h4 className="text-lg font-bold text-pb-text mb-2">{t("account.orders.empty.title")}</h4>
+                <p className="text-pb-muted max-w-md">{t("account.orders.empty.body")}</p>
               </div>
             </GlassCard>
           ) : (
@@ -302,28 +302,28 @@ export function AccountPage() {
                   <div className="flex items-start gap-4">
                     <OrderIcon status={o.status} />
                     <div>
-                      <h3 className="text-lg font-bold text-slate-100">
+                      <h3 className="text-lg font-bold text-pb-text">
                         {t("account.orders.card.title")}{" "}
-                        <span className="text-slate-400">#{String(o.orderId).slice(0, 8)}</span>
+                        <span className="text-pb-muted">#{String(o.orderId).slice(0, 8)}</span>
                       </h3>
-                      <p className="text-sm text-slate-400 flex items-center gap-1 mt-1">
+                      <p className="text-sm text-pb-muted flex items-center gap-1 mt-1">
                         <span className="material-symbols-outlined text-xs">calendar_today</span>
                         {formatDateShort(o.createdAt, language)}
                       </p>
                       <div className="mt-2">
                         <StatusBadge status={o.status} t={t} />
                       </div>
-                      <p className="text-xs text-slate-500 mt-2">
+                      <p className="text-xs text-pb-muted mt-2">
                         {t("account.orders.card.itemsLabel")}{" "}
-                        <span className="text-slate-300 font-semibold">{o.items?.length ?? 0}</span>
+                        <span className="text-pb-text font-semibold">{o.items?.length ?? 0}</span>
                       </p>
                     </div>
                   </div>
 
                   <div className="flex flex-col md:items-end gap-2">
-                    <p className="text-xl font-bold text-slate-100">{total}</p>
+                    <p className="text-xl font-bold text-pb-text">{total}</p>
                     <Link
-                      className="text-orange-400 text-sm font-bold flex items-center gap-1 hover:underline underline-offset-4"
+                      className="text-pb-primary text-sm font-bold flex items-center gap-1 hover:underline underline-offset-4"
                       to={`/orders/${o.orderId}`}
                     >
                       {t("account.orders.card.viewDetails")}
@@ -338,12 +338,12 @@ export function AccountPage() {
           )}
 
           {/* Optional info block */}
-          <div className="mt-12 pt-8 border-t border-white/5">
-            <GlassCard className="p-8 border-dashed border-orange-500/20 bg-orange-500/5">
+          <div className="mt-12 pt-8 border-t border-pb-border-light">
+            <GlassCard className="p-8 border-dashed border-pb-primary/30 bg-pb-primary/5">
               <div className="flex flex-col items-center text-center">
-                <span className="material-symbols-outlined text-5xl text-orange-500/50 mb-4">local_shipping</span>
-                <h4 className="text-lg font-bold text-slate-200 mb-2">{t("account.orders.info.title")}</h4>
-                <p className="text-slate-400 max-w-md">{t("account.orders.info.body")}</p>
+                <span className="material-symbols-outlined text-5xl text-pb-primary/50 mb-4">local_shipping</span>
+                <h4 className="text-lg font-bold text-pb-text mb-2">{t("account.orders.info.title")}</h4>
+                <p className="text-pb-muted max-w-md">{t("account.orders.info.body")}</p>
               </div>
             </GlassCard>
           </div>
@@ -356,9 +356,9 @@ export function AccountPage() {
           {sortedPayments.length === 0 ? (
             <GlassCard className="p-8">
               <div className="flex flex-col items-center text-center">
-                <span className="material-symbols-outlined text-5xl text-orange-500/50 mb-4">receipts</span>
-                <h4 className="text-lg font-bold text-slate-200 mb-2">{t("account.payments.empty.title")}</h4>
-                <p className="text-slate-400 max-w-md">{t("account.payments.empty.body")}</p>
+                <span className="material-symbols-outlined text-5xl text-pb-primary/50 mb-4">receipts</span>
+                <h4 className="text-lg font-bold text-pb-text mb-2">{t("account.payments.empty.title")}</h4>
+                <p className="text-pb-muted max-w-md">{t("account.payments.empty.body")}</p>
               </div>
             </GlassCard>
           ) : (
@@ -381,22 +381,22 @@ export function AccountPage() {
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-mono text-slate-500">
+                        <span className="text-xs font-mono text-pb-muted">
                           {t("account.payments.card.id")} {idShort}-xxxx
                         </span>
-                        <span className="w-1 h-1 rounded-full bg-slate-600" />
-                        <span className="text-xs text-slate-500">{formatDateTime(date, language)}</span>
+                        <span className="w-1 h-1 rounded-full bg-pb-border" />
+                        <span className="text-xs text-pb-muted">{formatDateTime(date, language)}</span>
                       </div>
 
                       <div className="flex items-baseline gap-3">
-                        <h3 className="text-2xl font-bold text-slate-100">{amountText}</h3>
-                        <div className="flex items-center gap-1 text-slate-400 text-sm">
+                        <h3 className="text-2xl font-bold text-pb-text">{amountText}</h3>
+                        <div className="flex items-center gap-1 text-pb-muted text-sm">
                           <PaymentIcon method={p.method} />
                           <span>{p.method || "-"}</span>
                         </div>
                       </div>
 
-                      <p className="text-sm text-slate-400 mt-1">
+                      <p className="text-sm text-pb-muted mt-1">
                         {t("account.payments.card.ref")} <span className="font-mono">{ref}</span>
                       </p>
                     </div>
@@ -405,7 +405,7 @@ export function AccountPage() {
                       <StatusBadge status={p.status} t={t} />
                       <div className="flex items-center gap-3">
                         <Link
-                          className="flex items-center gap-1 text-orange-400 text-sm font-bold hover:underline"
+                          className="flex items-center gap-1 text-pb-primary text-sm font-bold hover:underline"
                           to={`/payments/${p.paymentId}`}
                         >
                           {t("account.payments.card.viewStatus")}
@@ -413,7 +413,7 @@ export function AccountPage() {
                         </Link>
                         {p.orderId && (
                           <Link
-                            className="flex items-center gap-1 text-slate-300 text-sm font-semibold hover:text-orange-400 transition-colors"
+                            className="flex items-center gap-1 text-pb-text text-sm font-semibold hover:text-pb-primary transition-colors"
                             to={`/orders/${p.orderId}`}
                           >
                             {t("account.payments.card.viewOrder")}
@@ -442,10 +442,10 @@ export function AccountPage() {
           )}
 
           {/* Help section */}
-          <div className="mt-12 p-8 border border-white/10 rounded-2xl bg-gradient-to-br from-orange-500/5 to-transparent flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="mt-12 p-8 border border-pb-border rounded-2xl bg-gradient-to-br from-pb-primary/5 to-transparent flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
-              <h4 className="text-xl font-bold mb-2">{t("account.help.title")}</h4>
-              <p className="text-slate-400 text-sm">{t("account.help.body")}</p>
+              <h4 className="text-xl font-bold text-pb-text mb-2">{t("account.help.title")}</h4>
+              <p className="text-pb-muted text-sm">{t("account.help.body")}</p>
             </div>
             <a
               href={`https://wa.me/${WHATSAPP_SUPPORT}?text=${encodeURIComponent(t("account.help.whatsappMessage"))}`}

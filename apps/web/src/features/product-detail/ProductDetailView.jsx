@@ -59,7 +59,7 @@ function SpecRow({ label, value }) {
   return (
     <div className="group border-b border-orange-500/10 py-4 flex justify-between gap-6">
       <span className="text-slate-400 font-medium">{label}</span>
-      <span className="text-right text-slate-100">{value}</span>
+      <span className="text-right text-pb-text">{value}</span>
     </div>
   );
 }
@@ -159,7 +159,7 @@ export function ProductDetailView() {
     return (
       <div className="w-full">
         <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-6">
-          <p className="text-white font-semibold">{t("productDetail.states.errorTitle")}</p>
+          <p className="text-pb-text font-semibold">{t("productDetail.states.errorTitle")}</p>
           <p className="mt-2 text-sm text-red-200" role="alert">
             {error}
           </p>
@@ -185,7 +185,7 @@ export function ProductDetailView() {
         <span className="opacity-60">›</span>
         <span className="opacity-80">{t("productDetail.breadcrumbs.products")}</span>
         <span className="opacity-60">›</span>
-        <span className="text-white font-medium truncate">{displayName}</span>
+        <span className="text-pb-text font-medium truncate">{displayName}</span>
       </nav>
 
       {/* HERO */}
@@ -203,7 +203,7 @@ export function ProductDetailView() {
                   onClick={() => setActiveImg(src)}
                   className={[
                     "w-20 h-20 rounded-lg overflow-hidden shrink-0 border-2 transition-colors",
-                    isActive ? "border-orange-500" : "border-white/10 hover:border-orange-500/50",
+                    isActive ? "border-orange-500" : "border-pb-border hover:border-pb-primary",
                   ].join(" ")}
                   aria-label="thumbnail"
                 >
@@ -231,7 +231,7 @@ export function ProductDetailView() {
               <button
                 type="button"
                 onClick={() => setFavorited((v) => !v)}
-                className="absolute top-4 right-4 p-2 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-orange-500 transition-colors"
+                className="absolute top-4 right-4 p-2 bg-white shadow-md rounded-full text-pb-text hover:bg-orange-500 hover:text-white transition-colors"
                 aria-label="favorite"
                 title="Favorite"
               >
@@ -249,13 +249,13 @@ export function ProductDetailView() {
                 {t("productDetail.stock.available")}
               </span>
             ) : (
-              <span className="inline-flex items-center rounded-full bg-white/10 border border-white/10 px-3 py-1 text-xs font-bold text-white/60">
+              <span className="inline-flex items-center rounded-full bg-slate-100 border border-pb-border px-3 py-1 text-xs font-bold text-pb-text-secondary">
                 {t("productDetail.stock.out")}
               </span>
             )}
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">{displayName}</h1>
+          <h1 className="text-3xl md:text-5xl font-bold text-pb-text mb-4 leading-tight">{displayName}</h1>
 
           <div className="mb-6">
             <span className="text-4xl font-bold text-orange-400">{price}</span>
@@ -277,7 +277,7 @@ export function ProductDetailView() {
                 "flex-1 font-bold py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2",
                 inStock && !adding
                   ? "bg-orange-500 hover:bg-orange-500/90 text-white shadow-orange-500/20"
-                  : "bg-white/10 text-white/50 cursor-not-allowed",
+                  : "bg-slate-100 text-pb-text-secondary cursor-not-allowed",
               ].join(" ")}
             >
               {adding
@@ -308,7 +308,7 @@ export function ProductDetailView() {
       {/* TECH SPECS */}
       <section className="py-12 border-t border-orange-500/10">
         <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl md:text-3xl font-bold text-white">{t("productDetail.specs.title")}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-pb-text">{t("productDetail.specs.title")}</h2>
 
           <button type="button" className="text-orange-400 font-medium hover:underline flex items-center gap-2">
             {t("productDetail.specs.downloadPdf")} <span className="opacity-80">⬇</span>

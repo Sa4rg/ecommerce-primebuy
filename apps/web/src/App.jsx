@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { AppLayout } from "./shared/layout/AppLayout.jsx";
+import { HomePage } from "./features/home/HomePage.jsx";
 import { ProductCatalogView } from "./features/product-catalog/ProductCatalogView.jsx";
 import { CartView } from "./features/shopping-cart/components/CartView.jsx";
 import { CheckoutStart } from "./features/checkout/components/CheckoutStart.jsx";
@@ -35,7 +36,8 @@ function App() {
       {/* Layout */}
       <Route element={<AppLayout />}>
         {/* Public */}
-        <Route path="/" element={<ProductCatalogView />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/products" element={<ProductCatalogView />} />
         <Route path="/cart" element={<CartView />} />
 
         {/* Product detail ✅ (ADENTRO del layout) */}

@@ -8,7 +8,7 @@ export function CartIndicator() {
   return (
     <Link
       to="/cart"
-      className="relative inline-flex items-center justify-center rounded-full p-2 hover:bg-white/5 border border-white/10 transition-colors"
+      className="relative inline-flex items-center justify-center rounded-full p-2 hover:bg-slate-100 border border-pb-border transition-colors"
       aria-label="Go to cart"
       title="Cart"
     >

@@ -34,35 +34,35 @@ export function CartSummary({ summary, disabled, onCheckout }) {
   const totalVES = fxRate ? total * fxRate : null;
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-6 lg:p-8">
-      <h2 className="text-xl font-bold text-white mb-6">{t("cart.summary.title")}</h2>
+    <div className="rounded-xl border border-pb-border bg-white shadow-sm p-6 lg:p-8">
+      <h2 className="text-xl font-bold text-pb-text mb-6">{t("cart.summary.title")}</h2>
 
       <div className="space-y-4 mb-6">
-        <div className="flex justify-between text-sm text-slate-300">
+        <div className="flex justify-between text-sm text-pb-text-secondary">
           <span>{t("cart.summary.subtotal")}</span>
-          <span className="text-white font-semibold">${formatMoneyUSD(subtotal)}</span>
+          <span className="text-pb-text font-semibold">${formatMoneyUSD(subtotal)}</span>
         </div>
 
-        <div className="flex justify-between text-sm text-slate-300 pb-4 border-b border-white/10">
+        <div className="flex justify-between text-sm text-pb-text-secondary pb-4 border-b border-pb-border">
           <span>{t("cart.summary.taxes")}</span>
-          <span className="text-white font-semibold">${formatMoneyUSD(taxes)}</span>
+          <span className="text-pb-text font-semibold">${formatMoneyUSD(taxes)}</span>
         </div>
 
         <div className="flex justify-between items-center pt-2">
-          <span className="text-lg font-bold text-white">{t("cart.summary.total")}</span>
+          <span className="text-lg font-bold text-pb-text">{t("cart.summary.total")}</span>
           <span className="text-2xl font-bold text-orange-400">${formatMoneyUSD(total)}</span>
         </div>
 
         {/* Equivalencia en VES */}
         {totalVES && (
-          <div className="flex justify-between items-center text-sm text-slate-400">
+          <div className="flex justify-between items-center text-sm text-pb-text-secondary">
             <span>{t("cart.summary.equivalentVES")}</span>
-            <span className="text-slate-300">Bs. {formatMoneyVES(totalVES)}</span>
+            <span className="text-pb-text-secondary">Bs. {formatMoneyVES(totalVES)}</span>
           </div>
         )}
 
         {fxRate && (
-          <p className="text-xs text-slate-500 text-right">
+          <p className="text-xs text-pb-text-secondary text-right">
             {t("cart.summary.rateInfo", { rate: fxRate.toLocaleString("es-VE") })}
           </p>
         )}
@@ -78,7 +78,7 @@ export function CartSummary({ summary, disabled, onCheckout }) {
       </button>
 
       <div className="mt-8">
-        <p className="text-[10px] uppercase tracking-widest text-center text-slate-400 mb-2">
+        <p className="text-[10px] uppercase tracking-widest text-center text-pb-text-secondary mb-2">
           {t("cart.summary.securePayments")}
         </p>
         <div className="flex justify-center items-center gap-4 opacity-70">

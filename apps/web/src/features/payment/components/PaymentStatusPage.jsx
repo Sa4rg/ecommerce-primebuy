@@ -195,22 +195,22 @@ export function PaymentStatusPage() {
     setTimeout(() => setCopied(false), 1200);
   }
 
-  if (!payment) return <p className="p-8 text-white/60">{err || t("payment.loading")}</p>;
+  if (!payment) return <p className="p-8 text-pb-text-secondary">{err || t("payment.loading")}</p>;
 
   const orderIdText = payment.orderId ? `#${payment.orderId}` : `#${payment.checkoutId || "—"}`;
 
   return (
-    <section className="min-h-screen text-white">
+    <section className="min-h-screen text-pb-text">
       <div className="mx-auto max-w-7xl px-4 lg:px-10 py-8 lg:py-10">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Main */}
           <div className="flex-1 space-y-8">
             {/* Breadcrumb / Back */}
-            <div className="flex items-center gap-2 text-sm text-white/60">
+            <div className="flex items-center gap-2 text-sm text-pb-text-secondary">
               <Link className="hover:text-orange-400 transition-colors" to="/cart">
                 {t("payment.breadcrumb.cart")}
               </Link>
-              <span className="text-white/30">›</span>
+              <span className="text-slate-400">›</span>
               {payment?.checkoutId && status === "pending" ? (
                 <Link
                   className="flex items-center gap-1 hover:text-orange-400 transition-colors"
@@ -219,32 +219,32 @@ export function PaymentStatusPage() {
                   ← {t("payment.breadcrumb.backToCheckout")}
                 </Link>
               ) : (
-                <span className="text-white/30">{t("payment.breadcrumb.checkoutLocked")}</span>
+                <span className="text-slate-400">{t("payment.breadcrumb.checkoutLocked")}</span>
               )}
             </div>
 
             <div className="space-y-2">
               <h1 className="text-4xl font-bold tracking-tight">{t("payment.title")}</h1>
-              <p className="text-white/60">{t("payment.subtitle")}</p>
+              <p className="text-pb-text-secondary">{t("payment.subtitle")}</p>
             </div>
 
             {/* Status card */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white/5 border border-white/10 rounded-xl p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white border border-pb-border shadow-sm rounded-xl p-6">
               <div className="space-y-1">
-                <p className="text-xs uppercase tracking-wider text-white/40 font-bold">{t("payment.status.orderId")}</p>
+                <p className="text-xs uppercase tracking-wider text-pb-text-secondary font-bold">{t("payment.status.orderId")}</p>
                 <p className="text-lg font-medium">{orderIdText}</p>
               </div>
 
-              <div className="space-y-1 md:border-l md:pl-6 border-white/10">
-                <p className="text-xs uppercase tracking-wider text-white/40 font-bold">{t("payment.status.method")}</p>
+              <div className="space-y-1 md:border-l md:pl-6 border-pb-border">
+                <p className="text-xs uppercase tracking-wider text-pb-text-secondary font-bold">{t("payment.status.method")}</p>
                 <div className="flex items-center gap-2">
                   <span className="text-orange-400">💳</span>
                   <p className="text-lg font-medium">{methodLabel(payment.method)}</p>
                 </div>
               </div>
 
-              <div className="space-y-1 md:border-l md:pl-6 border-white/10">
-                <p className="text-xs uppercase tracking-wider text-white/40 font-bold">{t("payment.status.totalToPay")}</p>
+              <div className="space-y-1 md:border-l md:pl-6 border-pb-border">
+                <p className="text-xs uppercase tracking-wider text-pb-text-secondary font-bold">{t("payment.status.totalToPay")}</p>
                 <p className="text-2xl font-bold text-orange-400">
                   {payment.amount} {payment.currency}
                 </p>
@@ -260,20 +260,20 @@ export function PaymentStatusPage() {
                   </div>
                   <div>
                     <h3 className="font-bold text-lg">{instructions.title}</h3>
-                    <p className="text-sm text-white/70">{instructions.subtitle}</p>
+                    <p className="text-sm text-pb-text-secondary">{instructions.subtitle}</p>
                   </div>
                 </div>
 
-                <div className="bg-black/20 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="bg-pb-surface rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <p className="text-xs text-white/40 font-bold uppercase">{instructions.receiverLabel}</p>
+                    <p className="text-xs text-pb-text-secondary font-bold uppercase">{instructions.receiverLabel}</p>
                     <p className="text-lg font-mono">{instructions.receiverValue}</p>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => copyToClipboard(instructions.receiverValue)}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold transition-all border border-white/5 active:scale-95"
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-100 rounded-lg text-sm font-bold transition-all border border-pb-border active:scale-95"
                   >
                     {copied ? t("payment.instructions.copied") : t("payment.instructions.copy")}
                   </button>
@@ -286,7 +286,7 @@ export function PaymentStatusPage() {
             )}
 
             {/* Proof Section */}
-            <div className="space-y-6 bg-white/5 border border-white/10 rounded-xl p-6 lg:p-8">
+            <div className="space-y-6 bg-white border border-pb-border shadow-sm rounded-xl p-6 lg:p-8">
               <h3 className="text-xl font-bold flex items-center gap-2">🧾 {t("payment.proof.title")}</h3>
 
               {err && (
@@ -299,11 +299,11 @@ export function PaymentStatusPage() {
                 <div className="space-y-6">
                   {/* Reference input - REQUIRED */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-white/70">
+                    <label className="block text-sm font-medium text-pb-text-secondary">
                       {t("payment.proof.referenceLabel")} <span className="text-red-400">*</span>
                     </label>
                     <input
-                      className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500/50 focus:border-transparent outline-none transition-all placeholder:text-white/20"
+                      className="w-full bg-white border border-pb-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500/50 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
                       placeholder={t("payment.proof.referencePlaceholder")}
                       value={reference}
                       onChange={(e) => setReference(e.target.value)}
@@ -313,7 +313,7 @@ export function PaymentStatusPage() {
 
                   {/* File upload - REQUIRED */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-white/70">
+                    <label className="block text-sm font-medium text-pb-text-secondary">
                       {t("payment.proof.fileLabel")} <span className="text-red-400">*</span>
                     </label>
 
@@ -341,7 +341,7 @@ export function PaymentStatusPage() {
                       className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer group ${
                         proofFile
                           ? "border-green-500/50 bg-green-500/5"
-                          : "border-white/10 bg-black/20 hover:border-orange-500/50"
+                          : "border-pb-border bg-pb-surface hover:border-pb-primary"
                       }`}
                     >
                       {uploading ? (
@@ -349,8 +349,8 @@ export function PaymentStatusPage() {
                       ) : proofFile ? (
                         <div className="flex flex-col items-center gap-2">
                           <span className="text-4xl text-green-400">✅</span>
-                          <p className="text-sm text-white/80 font-medium">{proofFile.name}</p>
-                          <p className="text-xs text-white/40">
+                          <p className="text-sm text-pb-text font-medium">{proofFile.name}</p>
+                          <p className="text-xs text-pb-text-secondary">
                             {(proofFile.size / 1024).toFixed(1)} KB
                           </p>
                           <button
@@ -366,9 +366,9 @@ export function PaymentStatusPage() {
                         </div>
                       ) : (
                         <>
-                          <div className="text-4xl text-white/20 group-hover:text-orange-400 transition-colors">☁️</div>
-                          <p className="mt-2 text-sm text-white/60">{t("payment.proof.dropOrClick")}</p>
-                          <p className="text-xs text-white/30 mt-1">{t("payment.proof.fileHint")}</p>
+                          <div className="text-4xl text-slate-400 group-hover:text-orange-400 transition-colors">☁️</div>
+                          <p className="mt-2 text-sm text-pb-text-secondary">{t("payment.proof.dropOrClick")}</p>
+                          <p className="text-xs text-slate-400 mt-1">{t("payment.proof.fileHint")}</p>
                         </>
                       )}
                     </div>
@@ -402,11 +402,11 @@ export function PaymentStatusPage() {
 
               {status === "submitted" && (
                 <div className="space-y-3">
-                  <p className="text-white/70">{t("payment.submitted.message")}</p>
+                  <p className="text-pb-text-secondary">{t("payment.submitted.message")}</p>
                   <button
                     type="button"
                     onClick={continueShopping}
-                    className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
+                    className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-100"
                   >
                     {t("payment.actions.continueShopping")}
                   </button>
@@ -415,7 +415,7 @@ export function PaymentStatusPage() {
 
               {status === "confirmed" && (
                 <div className="space-y-3">
-                  <p className="text-green-300 font-semibold">{t("payment.confirmed.message")}</p>
+                  <p className="text-green-600 font-semibold">{t("payment.confirmed.message")}</p>
                   {payment.orderId && (
                     <Link className="text-orange-400 hover:underline" to={`/orders/${payment.orderId}`}>
                       {t("payment.confirmed.viewOrder")}
@@ -424,7 +424,7 @@ export function PaymentStatusPage() {
                   <button
                     type="button"
                     onClick={continueShopping}
-                    className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
+                    className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-100"
                   >
                     {t("payment.actions.continueShopping")}
                   </button>
@@ -433,14 +433,14 @@ export function PaymentStatusPage() {
 
               {status === "rejected" && (
                 <div className="space-y-3">
-                  <p className="text-red-300">
+                  <p className="text-red-600">
                     {t("payment.rejected.message")}: {payment.review?.reason || t("payment.rejected.noReason")}
                   </p>
 
                   <button
                     type="button"
                     onClick={() => nav(`/checkout/${payment.checkoutId}`)}
-                    className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
+                    className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-100"
                   >
                     {t("payment.actions.backToCheckout")}
                   </button>
@@ -448,7 +448,7 @@ export function PaymentStatusPage() {
                   <button
                     type="button"
                     onClick={continueShopping}
-                    className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
+                    className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-100"
                   >
                     {t("payment.actions.continueShopping")}
                   </button>
@@ -459,11 +459,11 @@ export function PaymentStatusPage() {
 
           {/* Sidebar */}
           <aside className="w-full lg:w-80 space-y-6">
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6 sticky top-28">
-              <h4 className="text-lg font-bold mb-4 border-b border-white/10 pb-4">{t("payment.summary.title")}</h4>
+            <div className="bg-white border border-pb-border shadow-sm rounded-xl p-6 sticky top-28">
+              <h4 className="text-lg font-bold mb-4 border-b border-pb-border pb-4">{t("payment.summary.title")}</h4>
 
               {!checkout ? (
-                <p className="text-sm text-white/50">{t("payment.summary.loading")}</p>
+                <p className="text-sm text-pb-text-secondary">{t("payment.summary.loading")}</p>
               ) : (
                 <>
                   {/* Show in VES if payment currency is VES */}
@@ -486,7 +486,7 @@ export function PaymentStatusPage() {
 
                             return (
                               <div key={it.productId} className="flex gap-3">
-                                <div className="h-12 w-12 rounded-lg bg-white/5 flex-shrink-0 overflow-hidden border border-white/10 flex items-center justify-center">
+                                <div className="h-12 w-12 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden border border-pb-border flex items-center justify-center">
                                   {it.imageUrl ? (
                                     <img
                                       src={it.imageUrl}
@@ -503,7 +503,7 @@ export function PaymentStatusPage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-medium truncate">{it.name}</p>
-                                  <p className="text-xs text-white/40">{t("payment.summary.qty")}: {qty}</p>
+                                  <p className="text-xs text-pb-text-secondary">{t("payment.summary.qty")}: {qty}</p>
                                   <p className="text-sm font-bold mt-1">{lineTotalDisplay}</p>
                                 </div>
                               </div>
@@ -511,8 +511,8 @@ export function PaymentStatusPage() {
                           })}
                         </div>
 
-                        <div className="mt-6 pt-6 border-t border-white/10 space-y-3">
-                          <div className="flex justify-between text-sm text-white/60">
+                        <div className="mt-6 pt-6 border-t border-pb-border space-y-3">
+                          <div className="flex justify-between text-sm text-pb-text-secondary">
                             <span>{t("payment.summary.subtotal")}</span>
                             <span>
                               {isVES && rate
@@ -520,11 +520,11 @@ export function PaymentStatusPage() {
                                 : `$${Number(checkout.totals?.subtotalUSD || 0).toFixed(2)}`}
                             </span>
                           </div>
-                          <div className="flex justify-between text-sm text-white/60">
+                          <div className="flex justify-between text-sm text-pb-text-secondary">
                             <span>{t("payment.summary.shipping")}</span>
-                            <span className="text-green-400 font-medium">{t("payment.summary.free")}</span>
+                            <span className="text-green-600 font-medium">{t("payment.summary.free")}</span>
                           </div>
-                          <div className="flex justify-between text-xl font-bold pt-2 text-white">
+                          <div className="flex justify-between text-xl font-bold pt-2 text-pb-text">
                             <span>{t("payment.summary.total")}</span>
                             <span className="text-orange-400">
                               {isVES
@@ -539,9 +539,9 @@ export function PaymentStatusPage() {
                 </>
               )}
 
-              <div className="mt-8 bg-white/5 rounded-lg p-3 flex items-center gap-3">
+              <div className="mt-8 bg-slate-100 rounded-lg p-3 flex items-center gap-3">
                 <span className="text-orange-400/80">🛡️</span>
-                <p className="text-[10px] text-white/40 leading-tight uppercase font-bold tracking-widest">
+                <p className="text-[10px] text-pb-text-secondary leading-tight uppercase font-bold tracking-widest">
                   {t("payment.trust")}
                 </p>
               </div>

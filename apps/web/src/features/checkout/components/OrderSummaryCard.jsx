@@ -18,9 +18,9 @@ export function OrderSummaryCard({
   const vesMethods = checkout.paymentMethods?.ves ?? [];
 
   return (
-    <aside className="w-full rounded-xl border border-white/10 bg-[#1c1610] p-6 shadow-xl">
+    <aside className="w-full rounded-xl border border-pb-border bg-white p-6 shadow-xl">
       {/* Header */}
-      <h2 className="text-lg font-bold text-white mb-5">
+      <h2 className="text-lg font-bold text-pb-text mb-5">
         Order Summary
       </h2>
 
@@ -29,15 +29,15 @@ export function OrderSummaryCard({
         <div className="space-y-4 mb-6">
           {checkout.items.map((item) => (
             <div key={item.productId} className="flex gap-4">
-              <div className="h-16 w-16 flex-shrink-0 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+              <div className="h-16 w-16 flex-shrink-0 rounded-lg bg-slate-100 border border-pb-border flex items-center justify-center">
                 <span className="text-2xl">📦</span>
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-white truncate">
+                <p className="font-medium text-pb-text truncate">
                   {item.name}
                 </p>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-pb-text-secondary mt-0.5">
                   Qty: {item.quantity}
                 </p>
               </div>
@@ -53,25 +53,25 @@ export function OrderSummaryCard({
       )}
 
       {/* Totals */}
-      <div className="border-t border-white/10 pt-4 space-y-3 text-sm">
+      <div className="border-t border-pb-border pt-4 space-y-3 text-sm">
         {/* Subtotal — test depends on this exact text */}
         <div className="flex justify-between">
-          <p className="text-slate-400">
+          <p className="text-pb-text-secondary">
             Subtotal: ${Number(subtotalUSD).toFixed(2)}
           </p>
 
-          <p className="text-white font-medium">
+          <p className="text-pb-text font-medium">
             Bs {Number(subtotalVES).toFixed(0)}
           </p>
         </div>
 
         <div className="flex justify-between">
-          <span className="text-slate-400">Shipping</span>
+          <span className="text-pb-text-secondary">Shipping</span>
           <span
             className={
               shipping === 0
                 ? "text-green-400 font-semibold"
-                : "text-white font-medium"
+                : "text-pb-text font-medium"
             }
           >
             {shipping === 0
@@ -81,17 +81,17 @@ export function OrderSummaryCard({
         </div>
 
         <div className="flex justify-between">
-          <span className="text-slate-400">Estimated Taxes</span>
-          <span className="text-white font-medium">
+          <span className="text-pb-text-secondary">Estimated Taxes</span>
+          <span className="text-pb-text font-medium">
             ${Number(taxes).toFixed(2)}
           </span>
         </div>
       </div>
 
       {/* Total */}
-      <div className="border-t border-white/10 mt-4 pt-4">
+      <div className="border-t border-pb-border mt-4 pt-4">
         <div className="flex justify-between items-center">
-          <span className="text-lg font-bold text-white">Total</span>
+          <span className="text-lg font-bold text-pb-text">Total</span>
           <span className="text-2xl font-bold text-orange-400">
             ${Number(total).toFixed(2)}
           </span>
@@ -100,14 +100,14 @@ export function OrderSummaryCard({
 
       {/* Payment methods */}
       {(usdMethods.length > 0 || vesMethods.length > 0) && (
-        <div className="border-t border-white/10 mt-4 pt-4 space-y-2 text-sm">
+        <div className="border-t border-pb-border mt-4 pt-4 space-y-2 text-sm">
           {usdMethods.length > 0 && (
-            <p className="text-slate-400">
+            <p className="text-pb-text-secondary">
               USD: {usdMethods.join(", ")}
             </p>
           )}
           {vesMethods.length > 0 && (
-            <p className="text-slate-400">
+            <p className="text-pb-text-secondary">
               VES: {vesMethods.join(", ")}
             </p>
           )}
@@ -138,13 +138,13 @@ export function OrderSummaryCard({
       </button>
 
       {disabled && blockedReason && (
-        <p className="mt-3 text-xs text-center text-slate-400">
+        <p className="mt-3 text-xs text-center text-pb-text-secondary">
           {blockedReason}
         </p>
       )}
 
       {/* Trust badges */}
-      <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-center gap-6 text-xs text-slate-500">
+      <div className="mt-6 pt-4 border-t border-pb-border flex items-center justify-center gap-6 text-xs text-pb-text-secondary">
         <div className="flex items-center gap-1.5">
           <svg
             className="w-4 h-4"

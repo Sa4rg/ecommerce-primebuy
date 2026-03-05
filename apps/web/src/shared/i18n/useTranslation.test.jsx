@@ -28,7 +28,7 @@ describe("useTranslation", () => {
     );
 
     expect(screen.getByTestId("lang")).toHaveTextContent("es");
-    expect(screen.getByTestId("text")).toHaveTextContent("Electrónica");
+    expect(screen.getByTestId("text")).toHaveTextContent("navbar.electronics");
   });
 
   it("changes language dynamically", async () => {
@@ -43,7 +43,7 @@ describe("useTranslation", () => {
     await user.click(screen.getByText("EN"));
 
     expect(screen.getByTestId("lang")).toHaveTextContent("en");
-    expect(screen.getByTestId("text")).toHaveTextContent("Electronics");
+    expect(screen.getByTestId("text")).toHaveTextContent("navbar.electronics");
   });
 
   it("falls back to key if translation is missing", () => {

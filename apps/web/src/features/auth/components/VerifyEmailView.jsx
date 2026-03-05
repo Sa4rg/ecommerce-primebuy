@@ -91,23 +91,23 @@ export function VerifyEmailView() {
       {/* Glow */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-orange-500/10 blur-[130px]" />
 
-      <div className="w-full max-w-[440px] rounded-xl border border-white/5 bg-[#1c1610] shadow-2xl">
+      <div className="w-full max-w-[440px] rounded-xl border border-pb-border bg-white shadow-2xl">
         <div className="p-8 md:p-10">
           <div className="text-center mb-8">
-            <div className="mx-auto w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center mb-4">
+            <div className="mx-auto w-16 h-16 bg-pb-primary/10 rounded-full flex items-center justify-center mb-4">
               <span className="text-3xl">✉️</span>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">
+            <h1 className="text-2xl font-bold text-pb-text mb-2">
               {t("auth.verify.title")}
             </h1>
-            <p className="text-sm text-neutral-400">
-              {t("auth.verify.subtitle")} <strong className="text-white">{email}</strong>
+            <p className="text-sm text-pb-text-secondary">
+              {t("auth.verify.subtitle")} <strong className="text-pb-text">{email}</strong>
             </p>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-6">
             <div className="flex flex-col gap-2">
-              <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-pb-text-secondary">
                 {t("auth.verify.codeLabel")}
               </label>
               <input
@@ -116,9 +116,9 @@ export function VerifyEmailView() {
                 maxLength={6}
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                className="w-full rounded-lg bg-neutral-800 border border-neutral-700 
-                           px-4 py-4 text-white text-center text-3xl tracking-[0.5em] font-mono
-                           focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full rounded-lg bg-pb-surface border border-pb-border 
+                           px-4 py-4 text-pb-text text-center text-3xl tracking-[0.5em] font-mono
+                           focus:outline-none focus:ring-2 focus:ring-pb-primary focus:border-pb-primary"
                 placeholder="• • • • • •"
                 autoFocus
                 autoComplete="one-time-code"
@@ -126,13 +126,13 @@ export function VerifyEmailView() {
             </div>
 
             {err && (
-              <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {err}
               </div>
             )}
 
             {resendSuccess && (
-              <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-200">
+              <div className="rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-700">
                 {t("auth.verify.resendSuccess")}
               </div>
             )}
@@ -150,13 +150,13 @@ export function VerifyEmailView() {
           </form>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-neutral-400 mb-2">
+            <p className="text-sm text-pb-text-secondary mb-2">
               {t("auth.verify.resendPrompt")}
             </p>
             <button
               onClick={handleResend}
               disabled={resending || resendCooldown > 0}
-              className="text-orange-400 hover:text-orange-300 hover:underline disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+              className="text-pb-primary hover:text-pb-primary/80 hover:underline disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
             >
               {resending 
                 ? t("auth.verify.resending")
@@ -167,8 +167,8 @@ export function VerifyEmailView() {
             </button>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-white/5 text-center">
-            <Link to="/login" className="text-sm text-slate-400 hover:text-orange-400">
+          <div className="mt-6 pt-6 border-t border-pb-border text-center">
+            <Link to="/login" className="text-sm text-pb-text-secondary hover:text-pb-primary">
               {t("auth.common.backToLogin")}
             </Link>
           </div>

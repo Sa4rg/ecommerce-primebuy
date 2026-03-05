@@ -47,11 +47,11 @@ function capitalizeWords(value) {
 
 function statusBadgeClass(status) {
   const s = String(status || "").toLowerCase();
-  if (s === "paid") return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-  if (s === "processing") return "bg-amber-500/10 text-amber-400 border-amber-500/20";
-  if (s === "completed") return "bg-slate-500/10 text-slate-200 border-slate-500/20";
-  if (s === "cancelled") return "bg-rose-500/10 text-rose-400 border-rose-500/20";
-  return "bg-white/5 text-slate-300 border-white/10";
+  if (s === "paid") return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (s === "processing") return "bg-yellow-50 text-yellow-700 border-yellow-200";
+  if (s === "completed") return "bg-slate-100 text-slate-600 border-slate-200";
+  if (s === "cancelled") return "bg-red-50 text-red-700 border-red-200";
+  return "bg-pb-surface text-pb-text-secondary border-pb-border";
 }
 
 // Normaliza "carrier" y tracking aunque backend mande string u objeto
@@ -417,7 +417,7 @@ export function OrderDetailPage() {
   if (status === "loading") {
     return (
       <div className="mx-auto max-w-5xl px-4 py-10">
-        <p className="text-slate-400">{t("orderDetail.loading")}</p>
+        <p className="text-pb-text-secondary">{t("orderDetail.loading")}</p>
       </div>
     );
   }
@@ -443,12 +443,12 @@ export function OrderDetailPage() {
     <main className="mx-auto max-w-5xl px-4 py-8">
       {/* Breadcrumbs & Back */}
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2 text-sm text-slate-400">
+        <div className="flex items-center gap-2 text-sm text-pb-text-secondary">
           <Link to="/account" className="hover:text-orange-400 transition-colors">
             {t("orderDetail.breadcrumb.account")}
           </Link>
-          <span className="text-slate-600">/</span>
-          <span className="font-medium text-slate-100">
+          <span className="text-pb-text-secondary">/</span>
+          <span className="font-medium text-pb-text">
             {t("orderDetail.breadcrumb.order", { id: shortId(order.orderId) })}
           </span>
         </div>
@@ -460,13 +460,13 @@ export function OrderDetailPage() {
       </div>
 
       {/* Header card */}
-      <div className="mb-8 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+      <div className="mb-8 rounded-2xl border border-pb-border bg-pb-surface p-6 backdrop-blur-sm">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-100">
+            <h1 className="text-3xl font-bold tracking-tight text-pb-text">
               {t("orderDetail.title", { id: shortId(order.orderId) })}
             </h1>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-pb-text-secondary">
               {derived.createdAtHuman ? t("orderDetail.placedOn", { date: derived.createdAtHuman }) : "—"}
             </p>
           </div>
@@ -497,28 +497,28 @@ export function OrderDetailPage() {
       {/* Info grid */}
       <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
         {/* Customer */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <div className="rounded-2xl border border-pb-border bg-pb-surface p-6">
           <div className="mb-4 flex items-center gap-3 text-orange-300">
             <span aria-hidden>👤</span>
             <h3 className="text-xs font-bold uppercase tracking-wider">{t("orderDetail.customerTitle")}</h3>
           </div>
 
           <div className="space-y-2">
-            <p className="text-xl font-semibold text-slate-100">{derived.customerName}</p>
-            <p className="text-sm text-slate-300">{derived.customerEmail}</p>
-            <p className="text-sm text-slate-300">{derived.customerPhone}</p>
+            <p className="text-xl font-semibold text-pb-text">{derived.customerName}</p>
+            <p className="text-sm text-pb-text-secondary">{derived.customerEmail}</p>
+            <p className="text-sm text-pb-text-secondary">{derived.customerPhone}</p>
           </div>
         </div>
 
         {/* Shipping */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <div className="rounded-2xl border border-pb-border bg-pb-surface p-6">
           <div className="mb-4 flex items-center gap-3 text-orange-300">
             <span aria-hidden>🚚</span>
             <h3 className="text-xs font-bold uppercase tracking-wider">{t("orderDetail.shippingTitle")}</h3>
           </div>
 
           <div className="space-y-2">
-            <p className="text-lg font-semibold text-slate-100">
+            <p className="text-lg font-semibold text-pb-text">
               {String(derived.shippingMethodRaw).toLowerCase() === "pickup"
                 ? t("orderDetail.shipping.pickup")
                 : derived.shippingMethod}
@@ -526,21 +526,21 @@ export function OrderDetailPage() {
 
             {derived.shippingAddress ? (
               <>
-                <p className="text-sm text-slate-300">{derived.addressLine}</p>
-                <p className="text-sm text-slate-300">
+                <p className="text-sm text-pb-text-secondary">{derived.addressLine}</p>
+                <p className="text-sm text-pb-text-secondary">
                   {[derived.addressCity, derived.addressState].filter(Boolean).join(", ")}
                 </p>
-                {derived.addressRef ? <p className="text-sm text-slate-300">{derived.addressRef}</p> : null}
+                {derived.addressRef ? <p className="text-sm text-pb-text-secondary">{derived.addressRef}</p> : null}
               </>
             ) : (
-              <p className="text-sm text-slate-400">—</p>
+              <p className="text-sm text-pb-text-secondary">—</p>
             )}
 
             {(derived.carrier || derived.trackingNumber) && (
-              <div className="mt-3 space-y-2 rounded-xl border border-white/10 bg-white/5 p-3">
+              <div className="mt-3 space-y-2 rounded-xl border border-pb-border bg-slate-100 p-3">
                 {derived.carrier && (
-                  <p className="text-sm text-slate-200">
-                    <span className="text-slate-500 text-xs font-bold uppercase mr-2">
+                  <p className="text-sm text-pb-text">
+                    <span className="text-pb-text-secondary text-xs font-bold uppercase mr-2">
                       {t("orderDetail.shippingCompany")}
                     </span>
                     {derived.carrier}
@@ -548,8 +548,8 @@ export function OrderDetailPage() {
                 )}
 
                 {derived.trackingNumber && (
-                  <p className="text-sm text-slate-200">
-                    <span className="text-slate-500 text-xs font-bold uppercase mr-2">
+                  <p className="text-sm text-pb-text">
+                    <span className="text-pb-text-secondary text-xs font-bold uppercase mr-2">
                       {t("orderDetail.shippingTracking")}
                     </span>
                     {derived.trackingUrl ? (
@@ -572,7 +572,7 @@ export function OrderDetailPage() {
         </div>
 
         {/* Timeline */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <div className="rounded-2xl border border-pb-border bg-pb-surface p-6">
           <div className="mb-4 flex items-center gap-3 text-orange-300">
             <span aria-hidden>🧭</span>
             <h3 className="text-xs font-bold uppercase tracking-wider">{t("orderDetail.currentStatusTitle")}</h3>
@@ -594,18 +594,18 @@ export function OrderDetailPage() {
               <div className="relative space-y-4 border-l-2 border-orange-500/20 pl-6">
                 <div className="relative">
                   <div className="absolute -left-[31px] top-1 h-4 w-4 rounded-full bg-orange-500 ring-4 ring-orange-500/20" />
-                  <p className="text-sm font-bold text-slate-100">{t("orderDetail.timeline.created")}</p>
-                  <p className="text-xs text-slate-400">{derived.createdAtHuman || "—"}</p>
+                  <p className="text-sm font-bold text-pb-text">{t("orderDetail.timeline.created")}</p>
+                  <p className="text-xs text-pb-text-secondary">{derived.createdAtHuman || "—"}</p>
                 </div>
 
                 <div className="relative">
                   <div className="absolute -left-[31px] top-1 h-4 w-4 rounded-full bg-orange-500 ring-4 ring-orange-500/20" />
-                  <p className="text-sm font-bold text-slate-100">
+                  <p className="text-sm font-bold text-pb-text">
                     {t("orderDetail.timeline.current", {
                       status: t(`orderDetail.status.${statusKey}`, { fallback: String(order.status || "-") }),
                     })}
                   </p>
-                  <p className="text-xs text-slate-400">{t("orderDetail.timeline.currentLabel")}</p>
+                  <p className="text-xs text-pb-text-secondary">{t("orderDetail.timeline.currentLabel")}</p>
                 </div>
 
                 {isPickup ? (
@@ -616,10 +616,10 @@ export function OrderDetailPage() {
                         pickupDone ? "bg-emerald-500" : "bg-slate-600"
                       )}
                     />
-                    <p className={pickupDone ? "text-sm font-bold text-slate-100" : "text-sm font-bold text-slate-400"}>
+                    <p className={pickupDone ? "text-sm font-bold text-pb-text" : "text-sm font-bold text-pb-text-secondary"}>
                       {pickupDone ? t("orderDetail.timeline.pickupDone") : t("orderDetail.timeline.pickupReady")}
                     </p>
-                    <p className={pickupDone ? "text-xs text-slate-400" : "text-xs text-slate-500"}>
+                    <p className={pickupDone ? "text-xs text-pb-text-secondary" : "text-xs text-pb-text-secondary"}>
                       {pickupDone ? t("orderDetail.timeline.completed") : t("orderDetail.timeline.pending")}
                     </p>
                   </div>
@@ -632,10 +632,10 @@ export function OrderDetailPage() {
                           isDispatched ? "bg-orange-500 ring-4 ring-orange-500/20" : "bg-slate-600"
                         )}
                       />
-                      <p className={isDispatched ? "text-sm font-bold text-slate-100" : "text-sm font-bold text-slate-400"}>
+                      <p className={isDispatched ? "text-sm font-bold text-pb-text" : "text-sm font-bold text-pb-text-secondary"}>
                         {t("orderDetail.timeline.dispatched")}
                       </p>
-                      <p className={isDispatched ? "text-xs text-slate-400" : "text-xs text-slate-500"}>
+                      <p className={isDispatched ? "text-xs text-pb-text-secondary" : "text-xs text-pb-text-secondary"}>
                         {isDispatched ? (dispatchedAtHuman || t("orderDetail.timeline.ready")) : t("orderDetail.timeline.pending")}
                       </p>
                     </div>
@@ -647,10 +647,10 @@ export function OrderDetailPage() {
                           isDelivered ? "bg-emerald-500 ring-4 ring-emerald-500/20" : "bg-slate-600"
                         )}
                       />
-                      <p className={isDelivered ? "text-sm font-bold text-slate-100" : "text-sm font-bold text-slate-400"}>
+                      <p className={isDelivered ? "text-sm font-bold text-pb-text" : "text-sm font-bold text-pb-text-secondary"}>
                         {t("orderDetail.timeline.delivered")}
                       </p>
-                      <p className={isDelivered ? "text-xs text-slate-400" : "text-xs text-slate-500"}>
+                      <p className={isDelivered ? "text-xs text-pb-text-secondary" : "text-xs text-pb-text-secondary"}>
                         {isDelivered ? (deliveredAtHuman || t("orderDetail.timeline.completed")) : t("orderDetail.timeline.pending")}
                       </p>
                     </div>
@@ -663,9 +663,9 @@ export function OrderDetailPage() {
       </div>
 
       {/* Items table */}
-      <div className="mb-8 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-          <h3 className="text-lg font-bold text-slate-100">{t("orderDetail.itemsTitle")}</h3>
+      <div className="mb-8 overflow-hidden rounded-2xl border border-pb-border bg-pb-surface">
+        <div className="flex items-center justify-between border-b border-pb-border px-6 py-4">
+          <h3 className="text-lg font-bold text-pb-text">{t("orderDetail.itemsTitle")}</h3>
           <span className="rounded-lg bg-orange-500/10 px-2 py-1 text-xs font-bold text-orange-300">
             {t("orderDetail.itemsCount", { count: derived.itemsCount })}
           </span>
@@ -673,7 +673,7 @@ export function OrderDetailPage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-white/[0.03] text-xs uppercase tracking-wider text-slate-400">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wider text-pb-text-secondary">
               <tr>
                 <th className="px-6 py-4 font-bold">{t("orderDetail.table.product")}</th>
                 <th className="px-6 py-4 text-center font-bold">{t("orderDetail.table.qty")}</th>
@@ -682,17 +682,17 @@ export function OrderDetailPage() {
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-100">
               {derived.items.map((it) => {
                 const unit = Number(it.unitPriceUSD ?? 0);
                 const line = Number(it.lineTotalUSD ?? unit * (Number(it.quantity) || 0));
                 const img = getItemImageUrl(it);
 
                 return (
-                  <tr key={it.productId} className="hover:bg-white/[0.03] transition-colors">
+                  <tr key={it.productId} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-xl border border-white/10 bg-black/20 overflow-hidden flex items-center justify-center">
+                        <div className="h-14 w-14 rounded-xl border border-pb-border bg-slate-50 overflow-hidden flex items-center justify-center">
                           {img ? (
                             <img
                               src={img}
@@ -701,23 +701,23 @@ export function OrderDetailPage() {
                               loading="lazy"
                             />
                           ) : (
-                            <span className="text-slate-500 text-lg" aria-hidden>
+                            <span className="text-pb-text-secondary text-lg" aria-hidden>
                               📦
                             </span>
                           )}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-100">{it.name}</p>
-                          <p className="text-xs text-slate-500">
+                          <p className="font-bold text-pb-text">{it.name}</p>
+                          <p className="text-xs text-pb-text-secondary">
                             {t("orderDetail.table.productId")}: {it.productId}
                           </p>
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 text-center font-medium text-slate-200">{it.quantity}</td>
-                    <td className="px-6 py-4 text-right font-medium text-slate-200">{formatMoneyUSD(unit)}</td>
-                    <td className="px-6 py-4 text-right font-bold text-slate-100">{formatMoneyUSD(line)}</td>
+                    <td className="px-6 py-4 text-center font-medium text-pb-text">{it.quantity}</td>
+                    <td className="px-6 py-4 text-right font-medium text-pb-text">{formatMoneyUSD(unit)}</td>
+                    <td className="px-6 py-4 text-right font-bold text-pb-text">{formatMoneyUSD(line)}</td>
                   </tr>
                 );
               })}
@@ -729,17 +729,17 @@ export function OrderDetailPage() {
       {/* Summary */}
       <div className="flex flex-col justify-end gap-8 md:flex-row">
         <div className="w-full md:w-80 space-y-3">
-          <div className="flex justify-between text-slate-400">
+          <div className="flex justify-between text-pb-text-secondary">
             <span>{t("orderDetail.total")}</span>
-            <span className="font-medium text-slate-100">
+            <span className="font-medium text-pb-text">
               {String(order?.totals?.currency || "").toUpperCase() === "USD"
                 ? formatMoneyUSD(derived.totalUSD)
                 : `${order?.totals?.amountPaid ?? 0} ${order?.totals?.currency || ""}`}
             </span>
           </div>
 
-          <div className="flex items-end justify-between border-t border-white/10 pt-3">
-            <span className="text-lg font-bold uppercase tracking-tight text-slate-200">
+          <div className="flex items-end justify-between border-t border-pb-border pt-3">
+            <span className="text-lg font-bold uppercase tracking-tight text-pb-text">
               {t("orderDetail.totalOrder")}
             </span>
             <span className="text-3xl font-bold text-orange-400">
@@ -749,15 +749,15 @@ export function OrderDetailPage() {
             </span>
           </div>
 
-          <p className="text-right text-[10px] italic text-slate-500">
+          <p className="text-right text-[10px] italic text-pb-text-secondary">
             {order?.totals?.currency ? t("orderDetail.pricesIn", { currency: order.totals.currency }) : ""}
           </p>
         </div>
       </div>
 
       {/* Footer actions */}
-      <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 py-6 md:flex-row">
-        <p className="text-sm text-slate-400">
+      <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-pb-border py-6 md:flex-row">
+        <p className="text-sm text-pb-text-secondary">
           {t("orderDetail.needHelp")}{" "}
           <a className="font-bold text-orange-400 hover:underline" href={supportLinks.support} target="_blank" rel="noreferrer">
             {t("orderDetail.contactSupport")}

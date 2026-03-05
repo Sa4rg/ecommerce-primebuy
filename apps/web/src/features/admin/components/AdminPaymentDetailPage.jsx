@@ -247,18 +247,18 @@ export function AdminPaymentDetailPage() {
 
   if (loading) {
     return (
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-slate-100">
-        <p className="text-slate-400">{t("adminPaymentsDetail.states.loading")}</p>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-pb-bg min-h-screen text-pb-text">
+        <p className="text-pb-text-secondary">{t("adminPaymentsDetail.states.loading")}</p>
       </main>
     );
   }
 
   if (!payment) {
     return (
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-slate-100">
-        <p className="text-red-200">{error || t("adminPaymentsDetail.states.notFound")}</p>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-pb-bg min-h-screen text-pb-text">
+        <p className="text-red-600">{error || t("adminPaymentsDetail.states.notFound")}</p>
         <button
-          className="mt-4 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10"
+          className="mt-4 px-4 py-2 rounded-lg bg-pb-surface hover:bg-slate-100 border border-pb-border text-pb-text"
           onClick={() => nav("/admin/payments")}
         >
           {t("adminPaymentsDetail.actions.back")}
@@ -274,23 +274,23 @@ export function AdminPaymentDetailPage() {
       : `${payment.amount} ${payment.currency || ""}`;
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-slate-100">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-pb-bg min-h-screen text-pb-text">
       {/* Breadcrumb + Title */}
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-slate-500 text-sm mb-2">
-            <Link className="hover:text-orange-400 transition-colors" to="/admin/payments">
+          <div className="flex items-center gap-2 text-pb-text-secondary text-sm mb-2">
+            <Link className="hover:text-pb-primary transition-colors" to="/admin/payments">
               {t("adminPaymentsDetail.breadcrumb.payments")}
             </Link>
-            <span className="text-white/30">›</span>
-            <span className="text-slate-300">
+            <span className="text-pb-text-secondary">›</span>
+            <span className="text-pb-text">
               #{String(payment.paymentId || paymentId).slice(0, 8)}
             </span>
           </div>
 
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
             {t("adminPaymentsDetail.title")}{" "}
-            <span className="text-orange-400">
+            <span className="text-pb-primary">
               #{String(payment.paymentId || paymentId).slice(0, 8)}
             </span>
           </h2>
@@ -299,14 +299,14 @@ export function AdminPaymentDetailPage() {
         <button
           type="button"
           onClick={() => nav("/admin/payments")}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-sm font-semibold"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-pb-surface border border-pb-border hover:bg-slate-100 transition-all text-sm font-semibold"
         >
           ← {t("adminPaymentsDetail.actions.backToList")}
         </button>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
       )}
@@ -315,15 +315,15 @@ export function AdminPaymentDetailPage() {
         {/* Left */}
         <div className="lg:col-span-2 space-y-6">
           {/* Workflow */}
-          <div className="rounded-2xl p-6 border border-white/10 bg-white/5">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">
+          <div className="rounded-2xl p-6 border border-pb-border bg-pb-surface shadow-sm">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-pb-text-secondary mb-6">
               {t("adminPaymentsDetail.workflow.title")}
             </h3>
 
             <div className="relative flex justify-between items-start">
-              <div className="absolute top-4 left-0 w-full h-0.5 bg-white/10" />
+              <div className="absolute top-4 left-0 w-full h-0.5 bg-slate-200" />
               <div
-                className="absolute top-4 left-0 h-0.5 bg-orange-500"
+                className="absolute top-4 left-0 h-0.5 bg-pb-primary"
                 style={{ width: `${(idx / (steps.length - 1)) * 100}%` }}
               />
 
@@ -333,8 +333,8 @@ export function AdminPaymentDetailPage() {
                   <div key={s} className="relative z-10 flex flex-col items-center gap-2 w-1/5">
                     <div
                       className={[
-                        "size-8 rounded-full flex items-center justify-center ring-4 ring-[#221910]",
-                        active ? "bg-orange-500 text-white" : "bg-white/10 border-2 border-white/20 text-slate-500",
+                        "size-8 rounded-full flex items-center justify-center ring-4 ring-white",
+                        active ? "bg-pb-primary text-white" : "bg-slate-100 border-2 border-slate-300 text-pb-text-secondary",
                       ].join(" ")}
                     >
                       {active ? "✓" : "•"}
@@ -342,7 +342,7 @@ export function AdminPaymentDetailPage() {
                     <span
                       className={[
                         "text-[10px] md:text-xs font-bold text-center",
-                        active ? "text-orange-400" : "text-slate-500",
+                        active ? "text-pb-primary" : "text-pb-text-secondary",
                       ].join(" ")}
                     >
                       {t(`adminPaymentsDetail.workflow.steps.${s}`)}
@@ -353,11 +353,11 @@ export function AdminPaymentDetailPage() {
             </div>
 
             {/* Actions */}
-            <div className="mt-10 flex flex-wrap gap-4 p-4 border border-orange-500/20 bg-orange-500/5 rounded-xl">
+            <div className="mt-10 flex flex-wrap gap-4 p-4 border border-pb-primary/20 bg-orange-50 rounded-xl">
               <div className="flex-1 min-w-[220px]">
-                <p className="text-sm text-slate-300 mb-2">
+                <p className="text-sm text-pb-text mb-2">
                   {t("adminPaymentsDetail.workflow.currentState")}{" "}
-                  <span className="text-orange-400 font-bold">
+                  <span className="text-pb-primary font-bold">
                     {t(workflowTitleKey(workflow))}
                   </span>
                 </p>
@@ -367,7 +367,7 @@ export function AdminPaymentDetailPage() {
                     <button
                       onClick={onConfirm}
                       disabled={busyAction}
-                      className="px-6 py-2.5 rounded-lg bg-orange-500 text-white font-bold text-sm hover:brightness-110 transition-all"
+                      className="px-6 py-2.5 rounded-lg bg-pb-primary text-white font-bold text-sm hover:bg-pb-primary-hover transition-all"
                     >
                       {busyAction === "confirm"
                         ? t("adminPaymentsDetail.actions.confirming")
@@ -379,7 +379,7 @@ export function AdminPaymentDetailPage() {
                     <button
                       onClick={() => setRejectOpen(true)}
                       disabled={busyAction}
-                      className="px-4 py-2.5 rounded-lg border border-red-500/50 text-red-300 font-bold text-sm hover:bg-red-500/10 transition-all"
+                      className="px-4 py-2.5 rounded-lg border border-red-300 text-red-600 font-bold text-sm hover:bg-red-50 transition-all"
                     >
                       {t("adminPaymentsDetail.actions.reject")}
                     </button>
@@ -389,7 +389,7 @@ export function AdminPaymentDetailPage() {
                     <button
                       onClick={onStartPreparation}
                       disabled={busyAction}
-                      className="px-4 py-2.5 rounded-lg bg-white/10 text-slate-100 font-bold text-sm hover:bg-white/20 border border-white/10 transition-all"
+                      className="px-4 py-2.5 rounded-lg bg-pb-surface text-pb-text font-bold text-sm hover:bg-slate-100 border border-pb-border transition-all"
                     >
                       {busyAction === "prepare"
                         ? t("adminPaymentsDetail.actions.starting")
@@ -401,7 +401,7 @@ export function AdminPaymentDetailPage() {
                     <button
                       onClick={onDispatch}
                       disabled={busyAction}
-                      className="px-4 py-2.5 rounded-lg bg-white/10 text-slate-100 font-bold text-sm hover:bg-white/20 border border-white/10 transition-all"
+                      className="px-4 py-2.5 rounded-lg bg-pb-surface text-pb-text font-bold text-sm hover:bg-slate-100 border border-pb-border transition-all"
                     >
                       {busyAction === "dispatch"
                         ? t("adminPaymentsDetail.actions.dispatching")
@@ -426,13 +426,13 @@ export function AdminPaymentDetailPage() {
                 {canDispatch && needsCarrier && (
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                      <label className="text-xs text-pb-text-secondary font-bold uppercase tracking-wider">
                         {t("adminPaymentsDetail.dispatch.carrier")}
                       </label>
                       <select
                         value={carrierName}
                         onChange={(e) => setCarrierName(e.target.value)}
-                        className="mt-1 w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-sm"
+                        className="mt-1 w-full rounded-lg bg-white border border-pb-border px-3 py-2 text-sm text-pb-text"
                       >
                         <option value="MRW">MRW</option>
                         <option value="ZOOM">ZOOM</option>
@@ -441,13 +441,13 @@ export function AdminPaymentDetailPage() {
                     </div>
 
                     <div>
-                      <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                      <label className="text-xs text-pb-text-secondary font-bold uppercase tracking-wider">
                         {t("adminPaymentsDetail.dispatch.trackingNumber")}
                       </label>
                       <input
                         value={trackingNumber}
                         onChange={(e) => setTrackingNumber(e.target.value)}
-                        className="mt-1 w-full rounded-lg bg-black/30 border border-white/10 px-3 py-2 text-sm"
+                        className="mt-1 w-full rounded-lg bg-white border border-pb-border px-3 py-2 text-sm text-pb-text"
                         placeholder={t("adminPaymentsDetail.dispatch.trackingPlaceholder")}
                       />
                     </div>
@@ -458,55 +458,55 @@ export function AdminPaymentDetailPage() {
           </div>
 
           {/* Payment Summary */}
-          <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5">
-            <div className="p-6 border-b border-white/10 flex justify-between items-center">
-              <h3 className="text-lg font-bold flex items-center gap-2">
+          <div className="rounded-2xl overflow-hidden border border-pb-border bg-pb-surface shadow-sm">
+            <div className="p-6 border-b border-pb-border flex justify-between items-center">
+              <h3 className="text-lg font-bold flex items-center gap-2 text-pb-text">
                 🧾 <span>{t("adminPaymentsDetail.paymentSummary.title")}</span>
               </h3>
-              <span className="text-orange-400 text-xs font-bold px-2 py-1 rounded bg-orange-500/10 border border-orange-500/20">
+              <span className="text-pb-primary text-xs font-bold px-2 py-1 rounded bg-orange-50 border border-orange-200">
                 {String(prettyMethod(payment.method, t)).toUpperCase()}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/5">
+            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-pb-border">
               <div className="p-6">
-                <p className="text-xs text-slate-500 font-medium mb-1">
+                <p className="text-xs text-pb-text-secondary font-medium mb-1">
                   {t("adminPaymentsDetail.paymentSummary.paymentId")}
                 </p>
-                <p className="text-sm font-bold">#{String(payment.paymentId || paymentId).slice(0, 8)}</p>
+                <p className="text-sm font-bold text-pb-text">#{String(payment.paymentId || paymentId).slice(0, 8)}</p>
               </div>
               <div className="p-6">
-                <p className="text-xs text-slate-500 font-medium mb-1">
+                <p className="text-xs text-pb-text-secondary font-medium mb-1">
                   {t("adminPaymentsDetail.paymentSummary.amount")}
                 </p>
-                <p className="text-xl font-bold text-orange-400">{amountText}</p>
+                <p className="text-xl font-bold text-pb-primary">{amountText}</p>
               </div>
               <div className="p-6">
-                <p className="text-xs text-slate-500 font-medium mb-1">
+                <p className="text-xs text-pb-text-secondary font-medium mb-1">
                   {t("adminPaymentsDetail.paymentSummary.date")}
                 </p>
-                <p className="text-sm font-bold">{formatCompactDate(payment.updatedAt || payment.createdAt, locale)}</p>
+                <p className="text-sm font-bold text-pb-text">{formatCompactDate(payment.updatedAt || payment.createdAt, locale)}</p>
               </div>
               <div className="p-6">
-                <p className="text-xs text-slate-500 font-medium mb-1">
+                <p className="text-xs text-pb-text-secondary font-medium mb-1">
                   {t("adminPaymentsDetail.paymentSummary.reference")}
                 </p>
-                <p className="text-sm font-bold">{payment?.proof?.reference || "-"}</p>
+                <p className="text-sm font-bold text-pb-text">{payment?.proof?.reference || "-"}</p>
               </div>
             </div>
           </div>
 
           {/* Order Items */}
-          <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5">
-            <div className="p-6 border-b border-white/10">
-              <h3 className="text-lg font-bold flex items-center gap-2">
+          <div className="rounded-2xl overflow-hidden border border-pb-border bg-pb-surface shadow-sm">
+            <div className="p-6 border-b border-pb-border">
+              <h3 className="text-lg font-bold flex items-center gap-2 text-pb-text">
                 🛒 {t("adminPaymentsDetail.orderItems.title")}
               </h3>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-white/5 text-[10px] uppercase tracking-widest text-slate-400">
+                <thead className="bg-slate-50 text-[10px] uppercase tracking-widest text-pb-text-secondary">
                   <tr>
                     <th className="px-6 py-4 font-bold">{t("adminPaymentsDetail.orderItems.columns.product")}</th>
                     <th className="px-6 py-4 font-bold text-center">{t("adminPaymentsDetail.orderItems.columns.qty")}</th>
@@ -515,10 +515,10 @@ export function AdminPaymentDetailPage() {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-pb-border">
                   {(order?.items || []).length === 0 ? (
                     <tr>
-                      <td className="px-6 py-4 text-slate-400" colSpan={4}>
+                      <td className="px-6 py-4 text-pb-text-secondary" colSpan={4}>
                         {order
                           ? t("adminPaymentsDetail.orderItems.emptyWithOrder")
                           : t("adminPaymentsDetail.orderItems.emptyNoOrder")}
@@ -526,19 +526,18 @@ export function AdminPaymentDetailPage() {
                     </tr>
                   ) : (
                     (order.items || []).map((it) => (
-                      <tr key={it.productId} className="hover:bg-white/5 transition-colors">
+                      <tr key={it.productId} className="hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            {/* Imagen se arregla después: por ahora dejamos el placeholder 📦 */}
-                            <div className="size-10 rounded bg-white/10 flex items-center justify-center">📦</div>
-                            <span className="text-sm font-medium">{it.name}</span>
+                            <div className="size-10 rounded bg-slate-100 flex items-center justify-center">📦</div>
+                            <span className="text-sm font-medium text-pb-text">{it.name}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-center font-bold">{it.quantity}</td>
-                        <td className="px-6 py-4 text-right text-sm text-slate-400">
+                        <td className="px-6 py-4 text-center font-bold text-pb-text">{it.quantity}</td>
+                        <td className="px-6 py-4 text-right text-sm text-pb-text-secondary">
                           {formatUSD(it.unitPriceUSD ?? 0)}
                         </td>
-                        <td className="px-6 py-4 text-right font-bold">
+                        <td className="px-6 py-4 text-right font-bold text-pb-text">
                           {formatUSD(it.lineTotalUSD ?? (it.unitPriceUSD ?? 0) * (it.quantity ?? 0))}
                         </td>
                       </tr>
@@ -547,11 +546,11 @@ export function AdminPaymentDetailPage() {
                 </tbody>
 
                 <tfoot>
-                  <tr className="bg-white/5">
-                    <td className="px-6 py-4 text-right font-bold text-slate-400" colSpan={3}>
+                  <tr className="bg-slate-50">
+                    <td className="px-6 py-4 text-right font-bold text-pb-text-secondary" colSpan={3}>
                       {t("adminPaymentsDetail.orderItems.subtotal")}
                     </td>
-                    <td className="px-6 py-4 text-right font-bold text-slate-100">
+                    <td className="px-6 py-4 text-right font-bold text-pb-text">
                       {order ? formatUSD(order.totals?.subtotalUSD ?? 0) : "—"}
                     </td>
                   </tr>
@@ -564,7 +563,7 @@ export function AdminPaymentDetailPage() {
         {/* Right */}
         <div className="space-y-6">
           {/* Delivery badge */}
-          <div className="bg-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-500/20 relative overflow-hidden">
+          <div className="bg-pb-primary rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
             <div className="absolute -right-4 -bottom-4 text-7xl opacity-10">🚚</div>
             <p className="text-xs font-bold uppercase tracking-widest opacity-80 mb-1">
               {t("adminPaymentsDetail.delivery.badgeTitle")}
@@ -581,54 +580,54 @@ export function AdminPaymentDetailPage() {
           </div>
 
           {/* Customer */}
-          <div className="rounded-2xl p-6 border border-white/10 bg-white/5">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
+          <div className="rounded-2xl p-6 border border-pb-border bg-pb-surface shadow-sm">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-pb-text-secondary mb-4">
               {t("adminPaymentsDetail.customer.title")}
             </h3>
 
             <div className="flex items-center gap-4 mb-6">
-              <div className="size-14 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400">
+              <div className="size-14 rounded-full bg-orange-50 border border-orange-200 flex items-center justify-center text-pb-primary">
                 <span className="text-2xl">👤</span>
               </div>
               <div>
-                <p className="text-lg font-bold">{customer?.name || "—"}</p>
-                <p className="text-sm text-slate-400">{t("adminPaymentsDetail.customer.subtitle")}</p>
+                <p className="text-lg font-bold text-pb-text">{customer?.name || "—"}</p>
+                <p className="text-sm text-pb-text-secondary">{t("adminPaymentsDetail.customer.subtitle")}</p>
               </div>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-                <span className="text-slate-400">✉️</span>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-pb-border">
+                <span className="text-pb-text-secondary">✉️</span>
                 <div className="text-sm">
-                  <p className="text-slate-500 text-[10px] uppercase font-bold">
+                  <p className="text-pb-text-secondary text-[10px] uppercase font-bold">
                     {t("adminPaymentsDetail.customer.email")}
                   </p>
-                  <p className="text-slate-200 font-medium">{customer?.email || "—"}</p>
+                  <p className="text-pb-text font-medium">{customer?.email || "—"}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-                <span className="text-slate-400">📞</span>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-pb-border">
+                <span className="text-pb-text-secondary">📞</span>
                 <div className="text-sm">
-                  <p className="text-slate-500 text-[10px] uppercase font-bold">
+                  <p className="text-pb-text-secondary text-[10px] uppercase font-bold">
                     {t("adminPaymentsDetail.customer.phone")}
                   </p>
-                  <p className="text-slate-200 font-medium">{customer?.phone || "—"}</p>
+                  <p className="text-pb-text font-medium">{customer?.phone || "—"}</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Shipping address */}
-          <div className="rounded-2xl p-6 border border-white/10 bg-white/5">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
+          <div className="rounded-2xl p-6 border border-pb-border bg-pb-surface shadow-sm">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-pb-text-secondary mb-4">
               {t("adminPaymentsDetail.shipping.title")}
             </h3>
 
             {!order ? (
-              <p className="text-sm text-slate-400">{t("adminPaymentsDetail.shipping.noOrder")}</p>
+              <p className="text-sm text-pb-text-secondary">{t("adminPaymentsDetail.shipping.noOrder")}</p>
             ) : order.shipping?.address ? (
-              <div className="text-sm text-slate-200 space-y-1">
+              <div className="text-sm text-pb-text space-y-1">
                 <p>
                   <b>{t("adminPaymentsDetail.shipping.recipient")}</b> {order.shipping.address.recipientName}
                 </p>
@@ -657,7 +656,7 @@ export function AdminPaymentDetailPage() {
                 )}
               </div>
             ) : (
-              <p className="text-sm text-slate-400">{t("adminPaymentsDetail.shipping.noAddress")}</p>
+              <p className="text-sm text-pb-text-secondary">{t("adminPaymentsDetail.shipping.noAddress")}</p>
             )}
           </div>
         </div>
@@ -665,16 +664,16 @@ export function AdminPaymentDetailPage() {
 
       {/* Reject Modal */}
       {rejectOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#221910] p-6 shadow-2xl">
-            <h3 className="text-xl font-bold text-white">{t("adminPaymentsDetail.rejectModal.title")}</h3>
-            <p className="mt-2 text-sm text-slate-400">{t("adminPaymentsDetail.rejectModal.reason")}</p>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-pb-border bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-pb-text">{t("adminPaymentsDetail.rejectModal.title")}</h3>
+            <p className="mt-2 text-sm text-pb-text-secondary">{t("adminPaymentsDetail.rejectModal.reason")}</p>
 
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder={t("adminPaymentsDetail.rejectModal.placeholder")}
-              className="mt-4 w-full min-h-[96px] rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-orange-500"
+              className="mt-4 w-full min-h-[96px] rounded-xl border border-pb-border bg-white px-4 py-3 text-pb-text placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-pb-primary"
             />
 
             <div className="mt-5 flex items-center justify-end gap-3">
@@ -682,7 +681,7 @@ export function AdminPaymentDetailPage() {
                 type="button"
                 onClick={() => setRejectOpen(false)}
                 disabled={busyAction}
-                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 disabled:opacity-60"
+                className="rounded-xl border border-pb-border bg-pb-surface px-4 py-2 text-sm font-semibold text-pb-text hover:bg-slate-100 disabled:opacity-60"
               >
                 {t("adminPaymentsDetail.actions.cancel")}
               </button>
@@ -691,7 +690,7 @@ export function AdminPaymentDetailPage() {
                 type="button"
                 onClick={onReject}
                 disabled={busyAction}
-                className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-bold text-white hover:bg-rose-500/90 disabled:opacity-60"
+                className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-bold text-white hover:bg-rose-600 disabled:opacity-60"
               >
                 {busyAction === "reject"
                   ? t("adminPaymentsDetail.actions.rejecting")

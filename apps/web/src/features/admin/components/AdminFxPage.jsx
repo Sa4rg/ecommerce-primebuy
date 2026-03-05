@@ -68,41 +68,41 @@ export function AdminFxPage() {
 
   if (loading) {
     return (
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <p className="text-slate-300">Cargando...</p>
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 bg-pb-bg">
+        <p className="text-pb-text-secondary">Cargando...</p>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-10">
+    <section className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-10 bg-pb-bg">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-slate-400 mb-8">
-        <span className="text-white font-medium">{t("adminFx.title")}</span>
+      <nav className="flex items-center gap-2 text-sm text-pb-text-secondary mb-8">
+        <span className="text-pb-text font-medium">{t("adminFx.title")}</span>
       </nav>
 
       {/* Title */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">{t("adminFx.title")}</h1>
-        <p className="text-slate-400 mt-1">{t("adminFx.subtitle")}</p>
+        <h1 className="text-3xl font-bold text-pb-text">{t("adminFx.title")}</h1>
+        <p className="text-pb-text-secondary mt-1">{t("adminFx.subtitle")}</p>
       </div>
 
       {/* Current Rate Card */}
-      <div className="bg-black/20 border border-white/10 rounded-xl p-6 mb-6">
+      <div className="bg-pb-surface border border-pb-border rounded-xl p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-sm mb-1">{t("adminFx.currentRate")}</p>
+            <p className="text-pb-text-secondary text-sm mb-1">{t("adminFx.currentRate")}</p>
             {currentRate ? (
               <>
-                <p className="text-2xl font-bold text-white">
-                  1 USD = <span className="text-orange-400">{currentRate.toLocaleString("es-VE")}</span> VES
+                <p className="text-2xl font-bold text-pb-text">
+                  1 USD = <span className="text-pb-primary">{currentRate.toLocaleString("es-VE")}</span> VES
                 </p>
-                <p className="text-slate-500 text-sm mt-1">
+                <p className="text-pb-text-secondary text-sm mt-1">
                   {t("adminFx.lastUpdated")}: {rateDate}
                 </p>
               </>
             ) : (
-              <p className="text-lg text-slate-500">{t("adminFx.noRateSet")}</p>
+              <p className="text-lg text-pb-text-secondary">{t("adminFx.noRateSet")}</p>
             )}
           </div>
           <div className="text-4xl">💱</div>
@@ -110,17 +110,17 @@ export function AdminFxPage() {
       </div>
 
       {/* Update Form */}
-      <form onSubmit={handleSubmit} className="bg-black/20 border border-white/10 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">
+      <form onSubmit={handleSubmit} className="bg-pb-surface border border-pb-border rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-pb-text mb-4">
           {t("adminFx.updateRate")}
         </h2>
 
         <div className="mb-4">
-          <label htmlFor="rate" className="block text-sm font-medium text-slate-300 mb-2">
+          <label htmlFor="rate" className="block text-sm font-medium text-pb-text-secondary mb-2">
             {t("adminFx.newRateLabel")}
           </label>
           <div className="flex items-center gap-3">
-            <span className="text-slate-400">1 USD =</span>
+            <span className="text-pb-text-secondary">1 USD =</span>
             <input
               type="number"
               id="rate"
@@ -128,21 +128,21 @@ export function AdminFxPage() {
               min="0.01"
               value={newRate}
               onChange={(e) => setNewRate(e.target.value)}
-              className="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="flex-1 bg-white border border-pb-border rounded-lg px-4 py-3 text-pb-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-pb-primary focus:border-pb-primary"
               placeholder="36.50"
             />
-            <span className="text-slate-400">VES</span>
+            <span className="text-pb-text-secondary">VES</span>
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm">
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-green-400 text-sm">
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
             {t("adminFx.success")}
           </div>
         )}
@@ -150,15 +150,15 @@ export function AdminFxPage() {
         <button
           type="submit"
           disabled={saving}
-          className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-800 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+          className="w-full bg-pb-primary hover:bg-pb-primary-hover disabled:bg-pb-primary/50 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
         >
           {saving ? t("adminFx.saving") : t("adminFx.saveButton")}
         </button>
       </form>
 
       {/* Info */}
-      <div className="mt-6 p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl">
-        <p className="text-orange-300 text-sm">
+      <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-xl">
+        <p className="text-orange-700 text-sm">
           💡 {t("adminFx.info")}
         </p>
       </div>

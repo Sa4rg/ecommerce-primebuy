@@ -23,7 +23,7 @@ export function CartView() {
   if (!cart) {
     return (
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <p className="text-slate-300">{t("cart.loading")}</p>
+        <p className="text-pb-text-secondary">{t("cart.loading")}</p>
       </section>
     );
   }
@@ -36,26 +36,26 @@ export function CartView() {
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-slate-400 mb-8">
+      <nav className="flex items-center gap-2 text-sm text-pb-text-secondary mb-8">
         <Link className="hover:text-orange-400 transition-colors" to="/">
           {t("cart.breadcrumb.home")}
         </Link>
         <span className="opacity-50">/</span>
-        <span className="text-white font-medium">{t("cart.breadcrumb.cart")}</span>
+        <span className="text-pb-text font-medium">{t("cart.breadcrumb.cart")}</span>
       </nav>
 
       {/* Title */}
       <div className="flex items-end justify-between gap-4 mb-10">
         <div>
-          <h1 className="text-3xl font-bold text-white">{t("cart.title")}</h1>
-          <p className="text-slate-400 mt-1">
+          <h1 className="text-3xl font-bold text-pb-text">{t("cart.title")}</h1>
+          <p className="text-pb-text-secondary mt-1">
             {t("cart.itemsCount", { count: String(itemsCount), plural })}
           </p>
         </div>
 
         <Link
           to="/"
-          className="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-orange-400 transition-colors"
+          className="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-pb-text-secondary hover:text-orange-400 transition-colors"
         >
           ← {t("cart.continueShopping")}
         </Link>
@@ -72,12 +72,12 @@ export function CartView() {
       {!isActive && (
         <div
           role="alert"
-          className="mb-6 rounded-xl border border-orange-500/25 bg-orange-500/10 p-4 text-slate-200"
+          className="mb-6 rounded-xl border border-orange-500/25 bg-orange-500/10 p-4 text-pb-text"
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <p className="font-semibold">{t("cart.inactive.title")}</p>
-              <p className="text-sm text-slate-300">{t("cart.inactive.description")}</p>
+              <p className="text-sm text-pb-text-secondary">{t("cart.inactive.description")}</p>
             </div>
 
             <button
@@ -98,8 +98,8 @@ export function CartView() {
         {/* Items list */}
         <div className="flex-grow lg:w-2/3 space-y-6">
           {cart.items.length === 0 ? (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-              <p className="text-slate-300">{t("cart.empty.title")}</p>
+            <div className="rounded-xl border border-pb-border bg-white shadow-sm p-6">
+              <p className="text-pb-text-secondary">{t("cart.empty.title")}</p>
               <Link
                 to="/"
                 className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-orange-400 hover:text-orange-300 transition-colors"
@@ -114,7 +114,7 @@ export function CartView() {
           <div className="pt-2">
             <Link
               to="/"
-              className="inline-flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-orange-400 transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-medium text-pb-text-secondary hover:text-orange-400 transition-colors"
             >
               ← {t("cart.continueShopping")}
             </Link>
@@ -134,8 +134,8 @@ export function CartView() {
             <div className="mt-6 rounded-xl border border-orange-500/20 bg-orange-500/10 p-4 flex gap-4">
               <div className="h-fit rounded-lg bg-orange-500 text-white px-2 py-1 font-bold">✓</div>
               <div>
-                <h4 className="text-sm font-bold text-white">{t("cart.summary.shippingInfoTitle")}</h4>
-                <p className="text-xs text-slate-300 mt-1">{t("cart.summary.shippingInfoBody")}</p>
+                <h4 className="text-sm font-bold text-pb-text">{t("cart.summary.shippingInfoTitle")}</h4>
+                <p className="text-xs text-pb-text-secondary mt-1">{t("cart.summary.shippingInfoBody")}</p>
               </div>
             </div>
 

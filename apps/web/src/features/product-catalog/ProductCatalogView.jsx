@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+﻿import { useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { fetchProducts } from "../../api/products";
 import { ProductCard } from "../../shared/components/ProductCard.jsx";
@@ -15,7 +15,7 @@ const FAVORITES_STORAGE_KEY = "electrovar:favorites";
 
 function sortProducts(list, sortKey) {
   const arr = [...list];
-  if (sortKey === "newest") return arr; // no createdAt in API (for now)
+  if (sortKey === "newest") return arr;
   if (sortKey === "price_asc") return arr.sort((a, b) => Number(a.priceUSD) - Number(b.priceUSD));
   if (sortKey === "price_desc") return arr.sort((a, b) => Number(b.priceUSD) - Number(a.priceUSD));
   if (sortKey === "stock_desc") return arr.sort((a, b) => Number(b.stock || 0) - Number(a.stock || 0));
@@ -32,21 +32,15 @@ export function ProductCatalogView() {
   const [searchParams] = useSearchParams();
 
   const [products, setProducts] = useState([]);
-  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+  const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
 
-  // Query state from navbar (?q=)
   const [q, setQ] = useState(searchParams.get("q") || "");
-
-  // UI State
   const [sort, setSort] = useState("newest");
   const [category, setCategory] = useState("all");
-
-  // Price range state (controlled inputs)
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
-  // Favorites (persisted)
   const [favoriteIds, setFavoriteIds] = useState(() => {
     try {
       const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
@@ -57,37 +51,27 @@ export function ProductCatalogView() {
     }
   });
   const [favoritesOnly, setFavoritesOnly] = useState(false);
-
-  // Pagination
   const [page, setPage] = useState(1);
 
-  // Keep q in sync with URL
   useEffect(() => {
     setQ(searchParams.get("q") || "");
     setPage(1);
   }, [searchParams]);
 
-  // Persist favorites
   useEffect(() => {
     try {
       localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(Array.from(favoriteIds)));
-    } catch {
-      // ignore storage errors
-    }
+    } catch {}
   }, [favoriteIds]);
 
-  // Load products
   useEffect(() => {
     let cancelled = false;
-
     async function load() {
       try {
         setStatus("loading");
         setError("");
-
         const data = await fetchProducts();
         if (cancelled) return;
-
         setProducts(Array.isArray(data) ? data : []);
         setStatus("success");
       } catch (err) {
@@ -96,11 +80,8 @@ export function ProductCatalogView() {
         setError(err?.message || "Unknown error");
       }
     }
-
     load();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   const onToggleFavorite = useCallback((productId) => {
@@ -115,15 +96,10 @@ export function ProductCatalogView() {
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
-
     let list = products;
-
-    // Category filter
     if (category !== "all") {
       list = list.filter((p) => String(p.category || "").toLowerCase().includes(category.toLowerCase()));
     }
-
-    // Search filter from navbar (?q=)
     if (query) {
       list = list.filter((p) => {
         const name = String(p.name || "").toLowerCase();
@@ -131,37 +107,25 @@ export function ProductCatalogView() {
         return name.includes(query) || cat.includes(query);
       });
     }
-
-    // Price filter (priceUSD)
     const min = minPrice === "" ? null : clampNumber(minPrice, null);
     const max = maxPrice === "" ? null : clampNumber(maxPrice, null);
-
     if (min !== null) list = list.filter((p) => Number(p.priceUSD) >= min);
     if (max !== null) list = list.filter((p) => Number(p.priceUSD) <= max);
-
-    // Favorites filter
     if (favoritesOnly) {
       list = list.filter((p) => favoriteIds.has(String(p.id)));
     }
-
     return sortProducts(list, sort);
   }, [products, q, sort, category, minPrice, maxPrice, favoritesOnly, favoriteIds]);
 
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [category, sort, minPrice, maxPrice, favoritesOnly, q]);
+  useEffect(() => { setPage(1); }, [category, sort, minPrice, maxPrice, favoritesOnly, q]);
 
   const totalCount = products.length;
   const showingCount = filtered.length;
-
   const favoritesCount = favoriteIds.size;
-
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIndex = (safePage - 1) * PAGE_SIZE;
   const pageItems = filtered.slice(startIndex, startIndex + PAGE_SIZE);
-
   const canPrev = safePage > 1;
   const canNext = safePage < totalPages;
 
@@ -181,10 +145,10 @@ export function ProductCatalogView() {
   return (
     <section className="mx-auto max-w-[1440px]">
       {/* Breadcrumbs */}
-      <nav className="mb-8 flex items-center gap-2 text-sm text-slate-400">
-        <span className="hover:text-orange-400 cursor-pointer">{t("productCatalog.breadcrumbs.home")}</span>
+      <nav className="mb-8 flex items-center gap-2 text-sm text-pb-muted">
+        <span className="hover:text-pb-primary cursor-pointer">{t("productCatalog.breadcrumbs.home")}</span>
         <span className="opacity-50">›</span>
-        <span className="opacity-80">{t("productCatalog.breadcrumbs.electronics")}</span>
+        <span className="text-pb-text">{t("productCatalog.breadcrumbs.electronics")}</span>
       </nav>
 
       <div className="flex flex-col lg:flex-row gap-12">
@@ -192,8 +156,8 @@ export function ProductCatalogView() {
         <aside className="w-full lg:w-72 flex-shrink-0 space-y-10">
           {/* Categories */}
           <div>
-            <h3 className="mb-6 flex items-center gap-2 text-lg font-bold text-white">
-              <span className="text-orange-400">▦</span> {t("productCatalog.sidebar.categories")}
+            <h3 className="mb-6 flex items-center gap-2 text-lg font-bold text-pb-text">
+              <span className="text-pb-primary">▦</span> {t("productCatalog.sidebar.categories")}
             </h3>
 
             <ul className="space-y-3">
@@ -203,19 +167,19 @@ export function ProductCatalogView() {
                     type="button"
                     onClick={() => setCategory(c.key)}
                     className={[
-                      "w-full flex items-center justify-between rounded-lg px-3 py-2 text-left transition-colors border",
+                      "w-full flex items-center justify-between rounded-xl px-4 py-3 text-left transition-colors border",
                       category === c.key
-                        ? "bg-orange-500/10 text-orange-300 border-orange-500/20"
-                        : "bg-transparent text-slate-300 border-white/10 hover:bg-white/5 hover:text-white",
+                        ? "bg-pb-primary/10 text-pb-primary border-pb-primary/30"
+                        : "bg-pb-bg-subtle text-pb-text border-pb-border hover:bg-pb-surface hover:border-pb-primary/20",
                     ].join(" ")}
                   >
                     <span className="text-sm font-semibold">{t(c.tKey)}</span>
                     <span
                       className={[
-                        "text-xs rounded px-2 py-0.5 border",
+                        "text-xs rounded-full px-2.5 py-0.5 font-bold",
                         category === c.key
-                          ? "bg-orange-500/10 text-orange-300 border-orange-500/20"
-                          : "bg-white/5 text-slate-300 border-white/10",
+                          ? "bg-pb-primary/20 text-pb-primary"
+                          : "bg-pb-border/50 text-pb-muted",
                       ].join(" ")}
                     >
                       {c.key === "all"
@@ -230,48 +194,43 @@ export function ProductCatalogView() {
             </ul>
           </div>
 
-          {/* Price range (ACTIVE) */}
+          {/* Price range */}
           <div>
-            <h3 className="mb-6 flex items-center gap-2 text-lg font-bold text-white">
-              <span className="text-orange-400">$</span> {t("productCatalog.sidebar.priceRange")}
+            <h3 className="mb-6 flex items-center gap-2 text-lg font-bold text-pb-text">
+              <span className="text-pb-primary">$</span> {t("productCatalog.sidebar.priceRange")}
             </h3>
 
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-4">
+            <div className="rounded-2xl border border-pb-border bg-pb-surface p-4 space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <label className="text-xs text-slate-300">
+                <label className="text-xs text-pb-muted font-medium">
                   {t("productCatalog.sidebar.minPrice")}
                   <input
                     type="number"
                     inputMode="numeric"
-                    className="mt-1 w-full rounded-lg bg-transparent border border-white/10 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                    className="mt-1 w-full rounded-xl bg-white border border-pb-border px-3 py-2 text-sm text-pb-text placeholder:text-pb-muted focus:outline-none focus:ring-2 focus:ring-pb-primary/30 focus:border-pb-primary"
                     value={minPrice}
                     onChange={(e) => setMinPrice(e.target.value)}
                     placeholder="0"
-                    aria-label="Min price"
                   />
                 </label>
 
-                <label className="text-xs text-slate-300">
+                <label className="text-xs text-pb-muted font-medium">
                   {t("productCatalog.sidebar.maxPrice")}
                   <input
                     type="number"
                     inputMode="numeric"
-                    className="mt-1 w-full rounded-lg bg-transparent border border-white/10 px-3 py-2 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                    className="mt-1 w-full rounded-xl bg-white border border-pb-border px-3 py-2 text-sm text-pb-text placeholder:text-pb-muted focus:outline-none focus:ring-2 focus:ring-pb-primary/30 focus:border-pb-primary"
                     value={maxPrice}
                     onChange={(e) => setMaxPrice(e.target.value)}
                     placeholder="2500"
-                    aria-label="Max price"
                   />
                 </label>
               </div>
 
               <button
                 type="button"
-                onClick={() => {
-                  setMinPrice("");
-                  setMaxPrice("");
-                }}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 transition-colors"
+                onClick={() => { setMinPrice(""); setMaxPrice(""); }}
+                className="w-full rounded-xl border border-pb-border bg-white px-3 py-2 text-sm font-semibold text-pb-text hover:bg-pb-bg-subtle transition-colors"
               >
                 {t("productCatalog.sidebar.resetPrice")}
               </button>
@@ -284,33 +243,31 @@ export function ProductCatalogView() {
           {/* Controls */}
           <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-white">{pageTitle}</h2>
-              <p className="text-sm text-slate-400">
+              <h2 className="text-2xl font-bold tracking-tight text-pb-text">{pageTitle}</h2>
+              <p className="text-sm text-pb-muted">
                 {t("productCatalog.header.showing", { showing: showingCount, total: totalCount })}
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              {/* Favorites filter button */}
               <button
                 type="button"
                 onClick={() => setFavoritesOnly((v) => !v)}
                 className={[
-                  "rounded-lg border px-3 py-2 text-sm font-semibold transition-colors",
+                  "rounded-xl border px-4 py-2 text-sm font-semibold transition-colors",
                   favoritesOnly
-                    ? "bg-orange-500/10 text-orange-300 border-orange-500/20"
-                    : "bg-transparent text-slate-200 border-white/10 hover:bg-white/5",
+                    ? "bg-pb-primary/10 text-pb-primary border-pb-primary/30"
+                    : "bg-white text-pb-text border-pb-border hover:bg-pb-bg-subtle",
                 ].join(" ")}
               >
                 {t("productCatalog.controls.favorites")}
                 {favoritesCount > 0 ? ` (${favoritesCount})` : ""}
               </button>
 
-              {/* Sort */}
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
-                className="rounded-lg bg-transparent border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                className="rounded-xl bg-white border border-pb-border px-4 py-2 text-sm font-semibold text-pb-text focus:outline-none focus:ring-2 focus:ring-pb-primary/30"
               >
                 <option value="newest">{t("productCatalog.controls.sortNewest")}</option>
                 <option value="price_asc">{t("productCatalog.controls.sortPriceAsc")}</option>
@@ -321,19 +278,19 @@ export function ProductCatalogView() {
           </div>
 
           {/* States */}
-          {status === "loading" && <p className="text-slate-300/80">{t("productCatalog.states.loading")}</p>}
+          {status === "loading" && <p className="text-pb-muted">{t("productCatalog.states.loading")}</p>}
 
           {status === "error" && (
-            <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
-              <p className="font-bold text-red-200">{t("productCatalog.states.errorTitle")}</p>
-              <p className="text-red-200/80">{error}</p>
+            <div className="rounded-2xl border border-red-300 bg-red-50 p-4">
+              <p className="font-bold text-red-700">{t("productCatalog.states.errorTitle")}</p>
+              <p className="text-red-600">{error}</p>
             </div>
           )}
 
           {status === "success" && filtered.length === 0 && (
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-              <p className="text-slate-300">{t("productCatalog.states.emptyTitle")}</p>
-              <p className="text-sm text-slate-400 mt-1">{t("productCatalog.states.emptyHint")}</p>
+            <div className="rounded-2xl border border-pb-border bg-pb-surface p-6">
+              <p className="text-pb-text font-medium">{t("productCatalog.states.emptyTitle")}</p>
+              <p className="text-sm text-pb-muted mt-1">{t("productCatalog.states.emptyHint")}</p>
             </div>
           )}
 
@@ -359,10 +316,9 @@ export function ProductCatalogView() {
                 onClick={() => goToPage(safePage - 1)}
                 disabled={!canPrev}
                 className={[
-                  "h-10 w-10 rounded-lg border border-white/10 transition-colors",
-                  canPrev ? "hover:bg-orange-500 hover:text-white" : "opacity-50 cursor-not-allowed",
+                  "h-10 w-10 rounded-xl border border-pb-border transition-colors",
+                  canPrev ? "hover:bg-pb-primary hover:text-white hover:border-pb-primary" : "opacity-50 cursor-not-allowed",
                 ].join(" ")}
-                aria-label={t("productCatalog.pagination.prev")}
               >
                 ‹
               </button>
@@ -373,10 +329,10 @@ export function ProductCatalogView() {
                   type="button"
                   onClick={() => goToPage(n)}
                   className={[
-                    "h-10 w-10 rounded-lg transition-colors font-semibold",
+                    "h-10 w-10 rounded-xl transition-colors font-semibold",
                     String(safePage) === n
-                      ? "bg-orange-500 text-white"
-                      : "hover:bg-white/5 text-slate-200",
+                      ? "bg-pb-primary text-white"
+                      : "hover:bg-pb-bg-subtle text-pb-text",
                   ].join(" ")}
                 >
                   {n}
@@ -388,10 +344,9 @@ export function ProductCatalogView() {
                 onClick={() => goToPage(safePage + 1)}
                 disabled={!canNext}
                 className={[
-                  "h-10 w-10 rounded-lg border border-white/10 transition-colors",
-                  canNext ? "hover:bg-orange-500 hover:text-white" : "opacity-50 cursor-not-allowed",
+                  "h-10 w-10 rounded-xl border border-pb-border transition-colors",
+                  canNext ? "hover:bg-pb-primary hover:text-white hover:border-pb-primary" : "opacity-50 cursor-not-allowed",
                 ].join(" ")}
-                aria-label={t("productCatalog.pagination.next")}
               >
                 ›
               </button>

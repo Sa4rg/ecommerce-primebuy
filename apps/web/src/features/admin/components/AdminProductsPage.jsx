@@ -17,11 +17,11 @@ function formatUSD(n) {
 
 function categoryBadgeClasses(category) {
   const c = String(category || "").toLowerCase();
-  if (c.includes("computer")) return "bg-blue-500/10 text-blue-400";
-  if (c.includes("audio")) return "bg-purple-500/10 text-purple-400";
-  if (c.includes("access")) return "bg-indigo-500/10 text-indigo-400";
-  if (c.includes("mobile") || c.includes("phone")) return "bg-emerald-500/10 text-emerald-400";
-  return "bg-white/10 text-slate-300";
+  if (c.includes("computer")) return "bg-blue-50 text-blue-700";
+  if (c.includes("audio")) return "bg-purple-50 text-purple-700";
+  if (c.includes("access")) return "bg-indigo-50 text-indigo-700";
+  if (c.includes("mobile") || c.includes("phone")) return "bg-emerald-50 text-emerald-700";
+  return "bg-slate-100 text-pb-text-secondary";
 }
 
 function sortList(list, sortKey) {
@@ -375,27 +375,27 @@ export function AdminProductsPage() {
   const nameLabel = language === "es" ? t("adminProducts.form.nameES") : t("adminProducts.form.nameEN");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 bg-pb-bg min-h-screen">
       <div>
-        <h1 className="text-2xl font-bold">{t("adminProducts.title")}</h1>
-        <p className="text-sm text-slate-400">{t("adminProducts.subtitle")}</p>
+        <h1 className="text-2xl font-bold text-pb-text">{t("adminProducts.title")}</h1>
+        <p className="text-sm text-pb-text-secondary">{t("adminProducts.subtitle")}</p>
       </div>
 
       {/* Form */}
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <div className="rounded-2xl border border-pb-border bg-pb-surface p-6">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-lg font-bold">{isEditing ? t("adminProducts.form.editTitle") : t("adminProducts.form.createTitle")}</h2>
+          <h2 className="text-lg font-bold text-pb-text">{isEditing ? t("adminProducts.form.editTitle") : t("adminProducts.form.createTitle")}</h2>
           <button
             type="button"
             onClick={startCreate}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+            className="rounded-xl border border-pb-border bg-pb-surface px-4 py-2 text-sm font-semibold text-pb-text hover:bg-slate-100"
           >
             {t("adminProducts.actions.new")}
           </button>
         </div>
 
         {error && (
-          <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </div>
         )}
@@ -403,7 +403,7 @@ export function AdminProductsPage() {
         <form onSubmit={onSubmit} className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Quick name */}
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-300">{t("adminProducts.form.nameQuick")}</label>
+            <label className="text-sm text-pb-text-secondary">{t("adminProducts.form.nameQuick")}</label>
             <input
               value={form.nameES || form.nameEN || ""}
               onChange={(e) => {
@@ -411,66 +411,66 @@ export function AdminProductsPage() {
                 onChange("nameES", v);
                 onChange("nameEN", v);
               }}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
+              className="mt-1 w-full rounded-xl border border-pb-border bg-white px-4 py-3 text-pb-text outline-none focus:ring-2 focus:ring-pb-primary"
               placeholder={t("adminProducts.form.placeholders.name")}
             />
-            <p className="mt-2 text-xs text-slate-500">{t("adminProducts.form.help.nameQuick")}</p>
+            <p className="mt-2 text-xs text-pb-text-secondary">{t("adminProducts.form.help.nameQuick")}</p>
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-300">{t("adminProducts.form.nameES")}</label>
+            <label className="text-sm text-pb-text-secondary">{t("adminProducts.form.nameES")}</label>
             <input
               value={form.nameES}
               onChange={(e) => onChange("nameES", e.target.value)}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
+              className="mt-1 w-full rounded-xl border border-pb-border bg-white px-4 py-3 text-pb-text outline-none focus:ring-2 focus:ring-pb-primary"
               placeholder={t("adminProducts.form.placeholders.nameES")}
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-300">{t("adminProducts.form.nameEN")}</label>
+            <label className="text-sm text-pb-text-secondary">{t("adminProducts.form.nameEN")}</label>
             <input
               value={form.nameEN}
               onChange={(e) => onChange("nameEN", e.target.value)}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
+              className="mt-1 w-full rounded-xl border border-pb-border bg-white px-4 py-3 text-pb-text outline-none focus:ring-2 focus:ring-pb-primary"
               placeholder={t("adminProducts.form.placeholders.nameEN")}
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-300">{t("adminProducts.form.shortDescES")}</label>
+            <label className="text-sm text-pb-text-secondary">{t("adminProducts.form.shortDescES")}</label>
             <textarea
               value={form.shortDescES}
               onChange={(e) => onChange("shortDescES", e.target.value)}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
+              className="mt-1 w-full rounded-xl border border-pb-border bg-white px-4 py-3 text-pb-text outline-none focus:ring-2 focus:ring-pb-primary"
               rows={3}
               placeholder={t("adminProducts.form.placeholders.shortDescES")}
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-300">{t("adminProducts.form.shortDescEN")}</label>
+            <label className="text-sm text-pb-text-secondary">{t("adminProducts.form.shortDescEN")}</label>
             <textarea
               value={form.shortDescEN}
               onChange={(e) => onChange("shortDescEN", e.target.value)}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
+              className="mt-1 w-full rounded-xl border border-pb-border bg-white px-4 py-3 text-pb-text outline-none focus:ring-2 focus:ring-pb-primary"
               rows={3}
               placeholder={t("adminProducts.form.placeholders.shortDescEN")}
             />
           </div>
 
           {/* Images */}
-          <div className="md:col-span-2 rounded-2xl border border-white/10 bg-black/20 p-5">
+          <div className="md:col-span-2 rounded-2xl border border-pb-border bg-pb-surface p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-white">{t("adminProducts.images.title")}</p>
-                <p className="text-xs text-slate-400">{t("adminProducts.images.subtitle")}</p>
+                <p className="text-sm font-semibold text-pb-text">{t("adminProducts.images.title")}</p>
+                <p className="text-xs text-pb-text-secondary">{t("adminProducts.images.subtitle")}</p>
               </div>
 
               <button
                 type="button"
                 onClick={useCoverAsFirst}
-                className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                className="rounded-lg border border-pb-border bg-pb-surface px-3 py-2 text-xs font-semibold text-pb-text hover:bg-slate-100"
                 title={t("adminProducts.images.useCoverAsFirstTitle")}
               >
                 {t("adminProducts.images.useCoverAsFirst")}
@@ -480,7 +480,7 @@ export function AdminProductsPage() {
             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
               {/* ✅ Cover Image Dropzone */}
               <div className="md:col-span-2">
-                <label className="text-sm text-slate-300">{t("adminProducts.images.coverLabel")}</label>
+                <label className="text-sm text-pb-text-secondary">{t("adminProducts.images.coverLabel")}</label>
                 
                 {/* Hidden file input */}
                 <input
@@ -504,17 +504,17 @@ export function AdminProductsPage() {
                   onDrop={handleCoverDrop}
                   className={`mt-1 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-all ${
                     uploading
-                      ? "border-orange-500/50 bg-orange-500/10"
-                      : "border-white/20 bg-black/30 hover:border-orange-500/50 hover:bg-orange-500/5"
+                      ? "border-pb-primary/50 bg-orange-50"
+                      : "border-pb-border bg-white hover:border-pb-primary hover:bg-orange-50/50"
                   }`}
                 >
                   {uploading ? (
-                    <p className="text-sm text-orange-400">{t("adminProducts.images.uploading")}</p>
+                    <p className="text-sm text-pb-primary">{t("adminProducts.images.uploading")}</p>
                   ) : (
                     <>
                       <span className="text-3xl">📷</span>
-                      <p className="text-sm text-slate-400">{t("adminProducts.images.dropOrClick")}</p>
-                      <p className="text-xs text-slate-500">{t("adminProducts.images.coverHelp")}</p>
+                      <p className="text-sm text-pb-text-secondary">{t("adminProducts.images.dropOrClick")}</p>
+                      <p className="text-xs text-pb-text-secondary">{t("adminProducts.images.coverHelp")}</p>
                     </>
                   )}
                 </div>
@@ -525,12 +525,12 @@ export function AdminProductsPage() {
                     <input
                       value={form.imageUrl}
                       readOnly
-                      className="flex-1 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400 outline-none"
+                      className="flex-1 rounded-lg border border-pb-border bg-slate-50 px-3 py-2 text-xs text-pb-text-secondary outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => onChange("imageUrl", "")}
-                      className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 hover:bg-red-500/20"
+                      className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 hover:bg-red-100"
                     >
                       ✕
                     </button>
@@ -539,8 +539,8 @@ export function AdminProductsPage() {
               </div>
 
               <div className="md:col-span-1">
-                <div className="text-sm text-slate-300 mb-1">{t("adminProducts.images.preview")}</div>
-                <div className="rounded-xl border border-white/10 bg-black/30 overflow-hidden aspect-square">
+                <div className="text-sm text-pb-text-secondary mb-1">{t("adminProducts.images.preview")}</div>
+                <div className="rounded-xl border border-pb-border bg-slate-50 overflow-hidden aspect-square">
                   {previewCover ? (
                     <img
                       src={previewCover}
@@ -551,7 +551,7 @@ export function AdminProductsPage() {
                       }}
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs text-slate-500">
+                    <div className="w-full h-full flex items-center justify-center text-xs text-pb-text-secondary">
                       {t("adminProducts.images.noCover")}
                     </div>
                   )}
@@ -562,7 +562,7 @@ export function AdminProductsPage() {
             {/* ✅ Gallery Section with File Upload */}
             <div className="mt-5">
               <div className="flex items-center justify-between">
-                <label className="text-sm text-slate-300">{t("adminProducts.images.galleryLabel")}</label>
+                <label className="text-sm text-pb-text-secondary">{t("adminProducts.images.galleryLabel")}</label>
 
                 {/* Hidden file input for gallery */}
                 <input
@@ -582,7 +582,7 @@ export function AdminProductsPage() {
                   type="button"
                   onClick={() => galleryInputRef.current?.click()}
                   disabled={uploading}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10 disabled:opacity-50"
+                  className="rounded-lg border border-pb-border bg-pb-surface px-3 py-2 text-xs font-semibold text-pb-text hover:bg-slate-100 disabled:opacity-50"
                 >
                   {uploading ? t("adminProducts.images.uploading") : t("adminProducts.images.addImage")}
                 </button>
@@ -594,19 +594,19 @@ export function AdminProductsPage() {
                 onDragEnter={preventDefaults}
                 onDragLeave={preventDefaults}
                 onDrop={handleGalleryDrop}
-                className="mt-3 rounded-xl border-2 border-dashed border-white/10 bg-black/20 p-4 transition-all hover:border-orange-500/30"
+                className="mt-3 rounded-xl border-2 border-dashed border-pb-border bg-slate-50 p-4 transition-all hover:border-pb-primary"
               >
                 {(form.gallery || []).length === 0 ? (
                   <div className="text-center py-4">
-                    <p className="text-sm text-slate-500">{t("adminProducts.images.emptyGallery")}</p>
-                    <p className="text-xs text-slate-600 mt-1">{t("adminProducts.images.dropMultiple")}</p>
+                    <p className="text-sm text-pb-text-secondary">{t("adminProducts.images.emptyGallery")}</p>
+                    <p className="text-xs text-pb-text-secondary mt-1">{t("adminProducts.images.dropMultiple")}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {(form.gallery || []).map((url, idx) => (
                       <div key={idx} className="flex gap-3 items-center">
                         {/* Thumbnail */}
-                        <div className="w-12 h-12 rounded-lg border border-white/10 bg-black/30 overflow-hidden flex-shrink-0">
+                        <div className="w-12 h-12 rounded-lg border border-pb-border bg-slate-50 overflow-hidden flex-shrink-0">
                           <img
                             src={normalizeUrl(url)}
                             alt={`gallery ${idx + 1}`}
@@ -621,13 +621,13 @@ export function AdminProductsPage() {
                         <input
                           value={url}
                           readOnly
-                          className="flex-1 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-slate-400 outline-none truncate"
+                          className="flex-1 rounded-lg border border-pb-border bg-slate-50 px-3 py-2 text-xs text-pb-text-secondary outline-none truncate"
                         />
 
                         <button
                           type="button"
                           onClick={() => removeGalleryAt(idx)}
-                          className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500 hover:text-white"
+                          className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-500 hover:text-white"
                           title={t("adminProducts.actions.remove")}
                         >
                           ✕
@@ -639,15 +639,15 @@ export function AdminProductsPage() {
               </div>
 
               <div className="mt-5">
-                <div className="text-sm text-slate-300 mb-2">{t("adminProducts.images.galleryPreview")}</div>
+                <div className="text-sm text-pb-text-secondary mb-2">{t("adminProducts.images.galleryPreview")}</div>
                 {previewGallery.length === 0 ? (
-                  <div className="text-sm text-slate-500">{t("adminProducts.images.noPreview")}</div>
+                  <div className="text-sm text-pb-text-secondary">{t("adminProducts.images.noPreview")}</div>
                 ) : (
                   <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                     {previewGallery.map((src) => (
                       <div
                         key={src}
-                        className="rounded-lg overflow-hidden border border-white/10 bg-black/30 aspect-square"
+                        className="rounded-lg overflow-hidden border border-pb-border bg-slate-50 aspect-square"
                         title={src}
                       >
                         <img
@@ -669,7 +669,7 @@ export function AdminProductsPage() {
           {/* Specs */}
           <div className="md:col-span-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm text-slate-300">{t("adminProducts.specs.title")}</label>
+              <label className="text-sm text-pb-text-secondary">{t("adminProducts.specs.title")}</label>
 
               <button
                 type="button"
@@ -679,7 +679,7 @@ export function AdminProductsPage() {
                     specs: [...(prev.specs || []), { labelES: "", valueES: "", labelEN: "", valueEN: "" }],
                   }))
                 }
-                className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold hover:bg-white/10"
+                className="rounded-lg border border-pb-border bg-pb-surface px-3 py-2 text-xs font-semibold text-pb-text hover:bg-slate-100"
               >
                 {t("adminProducts.specs.add")}
               </button>
@@ -687,10 +687,10 @@ export function AdminProductsPage() {
 
             <div className="mt-3 space-y-3">
               {(form.specs || []).length === 0 ? (
-                <div className="text-sm text-slate-500">{t("adminProducts.specs.empty")}</div>
+                <div className="text-sm text-pb-text-secondary">{t("adminProducts.specs.empty")}</div>
               ) : (
                 (form.specs || []).map((s, idx) => (
-                  <div key={idx} className="rounded-xl border border-white/10 bg-black/20 p-4">
+                  <div key={idx} className="rounded-xl border border-pb-border bg-slate-50 p-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <input
                         value={s.labelES || ""}
@@ -702,7 +702,7 @@ export function AdminProductsPage() {
                             return { ...prev, specs };
                           });
                         }}
-                        className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white outline-none focus:ring-1 focus:ring-orange-500"
+                        className="w-full rounded-lg border border-pb-border bg-white px-3 py-2 text-pb-text outline-none focus:ring-1 focus:ring-pb-primary"
                         placeholder={t("adminProducts.specs.labelES")}
                       />
 
@@ -716,7 +716,7 @@ export function AdminProductsPage() {
                             return { ...prev, specs };
                           });
                         }}
-                        className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white outline-none focus:ring-1 focus:ring-orange-500"
+                        className="w-full rounded-lg border border-pb-border bg-white px-3 py-2 text-pb-text outline-none focus:ring-1 focus:ring-pb-primary"
                         placeholder={t("adminProducts.specs.valueES")}
                       />
 
@@ -730,7 +730,7 @@ export function AdminProductsPage() {
                             return { ...prev, specs };
                           });
                         }}
-                        className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white outline-none focus:ring-1 focus:ring-orange-500"
+                        className="w-full rounded-lg border border-pb-border bg-white px-3 py-2 text-pb-text outline-none focus:ring-1 focus:ring-pb-primary"
                         placeholder={t("adminProducts.specs.labelEN")}
                       />
 
@@ -744,7 +744,7 @@ export function AdminProductsPage() {
                             return { ...prev, specs };
                           });
                         }}
-                        className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-white outline-none focus:ring-1 focus:ring-orange-500"
+                        className="w-full rounded-lg border border-pb-border bg-white px-3 py-2 text-pb-text outline-none focus:ring-1 focus:ring-pb-primary"
                         placeholder={t("adminProducts.specs.valueEN")}
                       />
                     </div>
@@ -759,7 +759,7 @@ export function AdminProductsPage() {
                             return { ...prev, specs };
                           });
                         }}
-                        className="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500 hover:text-white"
+                        className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-500 hover:text-white"
                       >
                         {t("adminProducts.actions.remove")}
                       </button>
@@ -771,33 +771,33 @@ export function AdminProductsPage() {
           </div>
 
           <div>
-            <label className="text-sm text-slate-300">{t("adminProducts.form.price")}</label>
+            <label className="text-sm text-pb-text-secondary">{t("adminProducts.form.price")}</label>
             <input
               value={form.priceUSD}
               onChange={(e) => onChange("priceUSD", e.target.value)}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
+              className="mt-1 w-full rounded-xl border border-pb-border bg-white px-4 py-3 text-pb-text outline-none focus:ring-2 focus:ring-pb-primary"
               placeholder={t("adminProducts.form.placeholders.price")}
               inputMode="decimal"
             />
           </div>
 
           <div>
-            <label className="text-sm text-slate-300">{t("adminProducts.form.stock")}</label>
+            <label className="text-sm text-pb-text-secondary">{t("adminProducts.form.stock")}</label>
             <input
               value={form.stock}
               onChange={(e) => onChange("stock", e.target.value)}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
+              className="mt-1 w-full rounded-xl border border-pb-border bg-white px-4 py-3 text-pb-text outline-none focus:ring-2 focus:ring-pb-primary"
               placeholder={t("adminProducts.form.placeholders.stock")}
               inputMode="numeric"
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm text-slate-300">{t("adminProducts.form.category")}</label>
+            <label className="text-sm text-pb-text-secondary">{t("adminProducts.form.category")}</label>
             <input
               value={form.category}
               onChange={(e) => onChange("category", e.target.value)}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
+              className="mt-1 w-full rounded-xl border border-pb-border bg-white px-4 py-3 text-pb-text outline-none focus:ring-2 focus:ring-pb-primary"
               placeholder={t("adminProducts.form.placeholders.category")}
             />
           </div>
@@ -806,7 +806,7 @@ export function AdminProductsPage() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-500/90 disabled:opacity-60"
+              className="rounded-xl bg-pb-primary px-5 py-3 text-sm font-bold text-white hover:bg-pb-primary-hover disabled:opacity-60"
             >
               {saving ? t("adminProducts.actions.saving") : isEditing ? t("adminProducts.actions.save") : t("adminProducts.actions.create")}
             </button>
@@ -815,7 +815,7 @@ export function AdminProductsPage() {
               <button
                 type="button"
                 onClick={startCreate}
-                className="rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold hover:bg-white/10"
+                className="rounded-xl border border-pb-border bg-pb-surface px-5 py-3 text-sm font-semibold text-pb-text hover:bg-slate-100"
               >
                 {t("adminProducts.actions.cancel")}
               </button>
@@ -826,19 +826,19 @@ export function AdminProductsPage() {
 
       {/* Catalog */}
       <section id="catalog-section">
-        <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm">
-          <div className="p-6 sm:p-8 flex items-center justify-between border-b border-white/10">
-            <h2 className="text-xl font-semibold text-white">{t("adminProducts.catalog.title")}</h2>
+        <div className="bg-pb-surface border border-pb-border rounded-2xl overflow-hidden">
+          <div className="p-6 sm:p-8 flex items-center justify-between border-b border-pb-border">
+            <h2 className="text-xl font-semibold text-pb-text">{t("adminProducts.catalog.title")}</h2>
 
             <button
               type="button"
               onClick={load}
-              className="p-2 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors rounded-xl group"
+              className="p-2 bg-pb-surface border border-pb-border hover:bg-slate-100 transition-colors rounded-xl group"
               aria-label={t("adminProducts.actions.refresh")}
               title={t("adminProducts.actions.refresh")}
             >
               <svg
-                className="h-5 w-5 text-slate-400 group-hover:rotate-180 transition-transform duration-500"
+                className="h-5 w-5 text-pb-text-secondary group-hover:rotate-180 transition-transform duration-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -853,9 +853,9 @@ export function AdminProductsPage() {
             </button>
           </div>
 
-          <div className="p-6 bg-white/[0.02] border-b border-white/10 flex flex-col sm:flex-row gap-4">
+          <div className="p-6 bg-slate-50 border-b border-pb-border flex flex-col sm:flex-row gap-4">
             <div className="relative flex-grow">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-pb-text-secondary">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -864,18 +864,18 @@ export function AdminProductsPage() {
               <input
                 value={q}
                 onChange={(e) => onChangeSearch(e.target.value)}
-                className="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-white placeholder-slate-500 focus:ring-1 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+                className="w-full bg-white border border-pb-border rounded-xl pl-10 pr-4 py-2 text-pb-text placeholder-pb-text-secondary focus:ring-1 focus:ring-pb-primary focus:border-transparent transition-all outline-none"
                 placeholder={t("adminProducts.catalog.searchPlaceholder")}
                 type="text"
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-400 whitespace-nowrap">{t("adminProducts.catalog.sortBy")}</label>
+              <label className="text-sm text-pb-text-secondary whitespace-nowrap">{t("adminProducts.catalog.sortBy")}</label>
               <select
                 value={sortBy}
                 onChange={(e) => onChangeSort(e.target.value)}
-                className="bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:ring-1 focus:ring-orange-500 outline-none"
+                className="bg-white border border-pb-border rounded-xl px-3 py-2 text-pb-text text-sm focus:ring-1 focus:ring-pb-primary outline-none"
               >
                 <option value="name">{t("adminProducts.catalog.sort.name")}</option>
                 <option value="price">{t("adminProducts.catalog.sort.price")}</option>
@@ -884,19 +884,19 @@ export function AdminProductsPage() {
             </div>
           </div>
 
-          {status === "loading" && <div className="p-6 text-slate-300/80">{t("adminProducts.states.loading")}</div>}
+          {status === "loading" && <div className="p-6 text-pb-text-secondary">{t("adminProducts.states.loading")}</div>}
 
           {status === "error" && (
             <div className="p-6">
-              <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
-                <p className="font-bold text-red-200">{t("adminProducts.states.errorTitle")}</p>
-                <p className="text-red-200/80">{error || t("adminProducts.errors.load")}</p>
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+                <p className="font-bold text-red-700">{t("adminProducts.states.errorTitle")}</p>
+                <p className="text-red-600">{error || t("adminProducts.errors.load")}</p>
               </div>
             </div>
           )}
 
           {status !== "loading" && status !== "error" && total === 0 && (
-            <div className="p-6 text-slate-300">{t("adminProducts.states.empty")}</div>
+            <div className="p-6 text-pb-text-secondary">{t("adminProducts.states.empty")}</div>
           )}
 
           {status !== "loading" && status !== "error" && total > 0 && (
@@ -904,7 +904,7 @@ export function AdminProductsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="text-slate-400 text-sm uppercase tracking-wider border-b border-white/10 bg-white/[0.01]">
+                    <tr className="text-pb-text-secondary text-sm uppercase tracking-wider border-b border-pb-border bg-slate-50">
                       <th className="px-6 py-4 font-medium">{t("adminProducts.table.id")}</th>
                       <th className="px-6 py-4 font-medium">{t("adminProducts.table.product")}</th>
                       <th className="px-6 py-4 font-medium">{t("adminProducts.table.category")}</th>
@@ -914,17 +914,17 @@ export function AdminProductsPage() {
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y divide-pb-border">
                     {pageItems.map((p) => {
                       const img = p.imageUrl || (Array.isArray(p.gallery) ? p.gallery[0] : "");
                       const display = p.nameES || p.nameEN || p.name;
                       return (
-                        <tr key={p.id} className="hover:bg-white/[0.03] transition-colors group">
-                          <td className="px-6 py-4 text-slate-500 text-sm">{`#EV-${String(p.id).padStart(4, "0")}`}</td>
+                        <tr key={p.id} className="hover:bg-slate-50 transition-colors group">
+                          <td className="px-6 py-4 text-pb-text-secondary text-sm">{`#EV-${String(p.id).padStart(4, "0")}`}</td>
 
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-lg border border-white/10 bg-black/30 overflow-hidden shrink-0">
+                              <div className="h-10 w-10 rounded-lg border border-pb-border bg-slate-50 overflow-hidden shrink-0">
                                 {img ? (
                                   <img
                                     src={img}
@@ -937,8 +937,8 @@ export function AdminProductsPage() {
                                 ) : null}
                               </div>
                               <div className="min-w-0">
-                                <div className="text-white font-medium truncate">{display}</div>
-                                <div className="text-xs text-slate-500 truncate">{p.nameEN || ""}</div>
+                                <div className="text-pb-text font-medium truncate">{display}</div>
+                                <div className="text-xs text-pb-text-secondary truncate">{p.nameEN || ""}</div>
                               </div>
                             </div>
                           </td>
@@ -949,17 +949,17 @@ export function AdminProductsPage() {
                             </span>
                           </td>
 
-                          <td className="px-6 py-4 text-slate-300 font-mono">{formatUSD(p.priceUSD)}</td>
+                          <td className="px-6 py-4 text-pb-text-secondary font-mono">{formatUSD(p.priceUSD)}</td>
 
                           <td className="px-6 py-4">
-                            <span className={Number(p.stock || 0) > 0 ? "text-emerald-400" : "text-slate-500"}>{Number(p.stock || 0)}</span>
+                            <span className={Number(p.stock || 0) > 0 ? "text-emerald-600" : "text-pb-text-secondary"}>{Number(p.stock || 0)}</span>
                           </td>
 
                           <td className="px-6 py-4 text-right space-x-2">
                             <button
                               type="button"
                               onClick={() => startEdit(p)}
-                              className="px-3 py-1.5 rounded-lg border border-orange-500/30 text-orange-400 hover:bg-orange-500 hover:text-white transition-all text-xs font-semibold"
+                              className="px-3 py-1.5 rounded-lg border border-orange-300 text-pb-primary hover:bg-pb-primary hover:text-white transition-all text-xs font-semibold"
                             >
                               {t("adminProducts.actions.edit")}
                             </button>
@@ -968,7 +968,7 @@ export function AdminProductsPage() {
                               type="button"
                               onClick={() => onDelete(p)}
                               disabled={deletingId === String(p.id)}
-                              className="px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all text-xs font-semibold disabled:opacity-60"
+                              className="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-500 hover:text-white transition-all text-xs font-semibold disabled:opacity-60"
                             >
                               {deletingId === String(p.id) ? t("adminProducts.actions.deleting") : t("adminProducts.actions.delete")}
                             </button>
@@ -980,7 +980,7 @@ export function AdminProductsPage() {
                 </table>
               </div>
 
-              <div className="p-6 border-t border-white/10 flex justify-between items-center text-sm text-slate-500">
+              <div className="p-6 border-t border-pb-border flex justify-between items-center text-sm text-pb-text-secondary">
                 <span>
                   {t("adminProducts.pagination.showing", {
                     shown: Math.min(start + pageItems.length, total),
@@ -993,7 +993,7 @@ export function AdminProductsPage() {
                     type="button"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={safePage <= 1}
-                    className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-30"
+                    className="px-3 py-1 rounded bg-pb-surface border border-pb-border hover:bg-slate-100 disabled:opacity-30"
                   >
                     {t("adminProducts.pagination.prev")}
                   </button>
@@ -1002,7 +1002,7 @@ export function AdminProductsPage() {
                     type="button"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={safePage >= totalPages}
-                    className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-30"
+                    className="px-3 py-1 rounded bg-pb-surface border border-pb-border hover:bg-slate-100 disabled:opacity-30"
                   >
                     {t("adminProducts.pagination.next")}
                   </button>

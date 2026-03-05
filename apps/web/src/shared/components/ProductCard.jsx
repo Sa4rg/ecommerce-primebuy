@@ -81,7 +81,7 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
   return (
     <div className="group relative">
       {/* Media */}
-      <div className="relative mb-4 aspect-[4/5] overflow-hidden rounded-2xl bg-white/5 border border-white/10">
+      <div className="relative mb-4 aspect-[4/5] overflow-hidden rounded-2xl bg-pb-surface border border-pb-border">
         {/* Click in image opens detail */}
         <Link to={`/products/${productId}`} className="absolute inset-0 z-10" aria-label={displayName || product?.name} />
 
@@ -99,11 +99,11 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
         {/* Badge */}
         <div className="absolute left-4 top-4 z-20">
           {inStock ? (
-            <span className="rounded-full bg-orange-500 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-white">
+            <span className="rounded-full bg-pb-primary px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-white">
               {t("productCard.stock.available")}
             </span>
           ) : (
-            <span className="rounded-full bg-white/15 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-white/70 border border-white/10">
+            <span className="rounded-full bg-slate-200 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-slate-500 border border-slate-300">
               {t("productCard.stock.out")}
             </span>
           )}
@@ -122,7 +122,7 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
 
             setLocalFav((v) => !v);
           }}
-          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 backdrop-blur-md text-white hover:bg-orange-500 transition-colors"
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-md text-pb-text shadow-sm hover:bg-pb-primary hover:text-white transition-colors"
           aria-label={t("productCard.favorite")}
           aria-pressed={fav}
           title={t("productCard.favorite")}
@@ -139,10 +139,10 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
           }}
           disabled={isDisabled}
           className={[
-            "absolute bottom-4 left-4 right-4 z-20 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-2xl",
+            "absolute bottom-4 left-4 right-4 z-20 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-lg",
             "opacity-0 translate-y-4 transition-all duration-300",
             "group-hover:opacity-100 group-hover:translate-y-0",
-            isDisabled ? "bg-white/20 text-white/60 cursor-not-allowed" : "bg-white text-black hover:bg-orange-500 hover:text-white",
+            isDisabled ? "bg-slate-200 text-slate-400 cursor-not-allowed" : "bg-pb-primary text-white hover:bg-pb-primary-hover",
           ].join(" ")}
         >
           <span className="text-base">🛒</span>
@@ -153,7 +153,7 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
         {addError && (
           <div
             role="alert"
-            className="absolute bottom-2 left-4 right-4 z-20 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
+            className="absolute bottom-2 left-4 right-4 z-20 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700"
           >
             {addError}
           </div>
@@ -163,19 +163,19 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
       {/* Content */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h3 className="truncate text-lg font-bold text-white group-hover:text-orange-400 transition-colors">
-            <Link to={`/products/${productId}`} className="hover:text-orange-400">
+          <h3 className="truncate text-lg font-bold text-pb-text group-hover:text-pb-primary transition-colors">
+            <Link to={`/products/${productId}`} className="hover:text-pb-primary">
               {displayName}
             </Link>
           </h3>
 
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-pb-muted">
             {product?.category ? `${product.category}` : t("productCard.category.general")} <span className="opacity-60">/</span>{" "}
             {inStock ? t("productCard.stock.available") : t("productCard.stock.out")}
           </p>
         </div>
 
-        <span className="shrink-0 text-xl font-bold text-orange-400">${formatMoneyUSD(product?.priceUSD)}</span>
+        <span className="shrink-0 text-xl font-bold text-pb-primary">${formatMoneyUSD(product?.priceUSD)}</span>
       </div>
     </div>
   );

@@ -54,29 +54,29 @@ function statusMeta(status, t) {
   if (s === "submitted") {
     return {
       label: t("adminPayments.status.pendingReview"),
-      pill: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-      dot: "bg-yellow-400",
+      pill: "bg-yellow-50 text-yellow-700 border-yellow-200",
+      dot: "bg-yellow-500",
     };
   }
   if (s === "confirmed") {
     return {
       label: t("adminPayments.status.confirmed"),
-      pill: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-      dot: "bg-emerald-400",
+      pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      dot: "bg-emerald-500",
     };
   }
   if (s === "rejected") {
     return {
       label: t("adminPayments.status.rejected"),
-      pill: "bg-rose-500/20 text-rose-400 border-rose-500/30",
-      dot: "bg-rose-400",
+      pill: "bg-rose-50 text-rose-700 border-rose-200",
+      dot: "bg-rose-500",
     };
   }
 
   return {
     label: status || t("adminPayments.status.pending"),
-    pill: "bg-white/10 text-slate-300 border-white/10",
-    dot: "bg-slate-300",
+    pill: "bg-slate-50 text-slate-600 border-slate-200",
+    dot: "bg-slate-400",
   };
 }
 
@@ -307,19 +307,19 @@ export function AdminPaymentsPage() {
   }, [filtered]);
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 bg-pb-bg min-h-screen">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
-          <h1 className="text-4xl font-bold text-white tracking-tight">{t("adminPayments.title")}</h1>
-          <p className="text-slate-400 mt-2 text-lg">{t("adminPayments.subtitle")}</p>
+          <h1 className="text-4xl font-bold text-pb-text tracking-tight">{t("adminPayments.title")}</h1>
+          <p className="text-pb-text-secondary mt-2 text-lg">{t("adminPayments.subtitle")}</p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => exportPaymentsToCsv(filtered)}
-            className="flex items-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10 px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
+            className="flex items-center gap-2 bg-pb-surface border border-pb-border hover:bg-slate-100 px-4 py-2.5 rounded-lg text-sm font-medium text-pb-text transition-all"
           >
             <span aria-hidden>⬇</span>
             {t("adminPayments.actions.exportCsv")}
@@ -329,7 +329,7 @@ export function AdminPaymentsPage() {
 
       {/* Error */}
       {error && (
-        <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
       )}
@@ -342,8 +342,8 @@ export function AdminPaymentsPage() {
           className={[
             "px-6 py-2.5 rounded-full text-sm font-semibold transition-all",
             activeTab === "all"
-              ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
-              : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/5",
+              ? "bg-pb-primary text-white shadow-lg shadow-pb-primary/20"
+              : "bg-pb-surface text-pb-text-secondary hover:text-pb-text hover:bg-slate-100 border border-pb-border",
           ].join(" ")}
         >
           {t("adminPayments.tabs.all")}
@@ -355,12 +355,12 @@ export function AdminPaymentsPage() {
           className={[
             "px-6 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2",
             activeTab === "submitted"
-              ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
-              : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/5",
+              ? "bg-pb-primary text-white shadow-lg shadow-pb-primary/20"
+              : "bg-pb-surface text-pb-text-secondary hover:text-pb-text hover:bg-slate-100 border border-pb-border",
           ].join(" ")}
         >
           {t("adminPayments.tabs.pendingReview")}
-          <span className="bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full text-[10px] font-black">
+          <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-[10px] font-black">
             {pendingCount}
           </span>
         </button>
@@ -371,8 +371,8 @@ export function AdminPaymentsPage() {
           className={[
             "px-6 py-2.5 rounded-full text-sm font-semibold transition-all",
             activeTab === "confirmed"
-              ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
-              : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/5",
+              ? "bg-pb-primary text-white shadow-lg shadow-pb-primary/20"
+              : "bg-pb-surface text-pb-text-secondary hover:text-pb-text hover:bg-slate-100 border border-pb-border",
           ].join(" ")}
         >
           {t("adminPayments.tabs.confirmed")}
@@ -384,21 +384,21 @@ export function AdminPaymentsPage() {
           className={[
             "px-6 py-2.5 rounded-full text-sm font-semibold transition-all",
             activeTab === "rejected"
-              ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
-              : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/5",
+              ? "bg-pb-primary text-white shadow-lg shadow-pb-primary/20"
+              : "bg-pb-surface text-pb-text-secondary hover:text-pb-text hover:bg-slate-100 border border-pb-border",
           ].join(" ")}
         >
           {t("adminPayments.tabs.rejected")}
         </button>
 
-        <div className="ml-auto flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 text-slate-400 text-sm w-full sm:w-auto">
+        <div className="ml-auto flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 text-pb-text-secondary text-sm w-full sm:w-auto">
           {/* Search */}
           <div className="relative w-full sm:w-64">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔎</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-pb-text-secondary text-sm">🔎</span>
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-100 focus:ring-orange-500 focus:border-orange-500 placeholder:text-slate-500"
+              className="w-full bg-white border border-pb-border rounded-lg pl-9 pr-3 py-2 text-sm text-pb-text focus:ring-pb-primary focus:border-pb-primary placeholder:text-slate-400"
               placeholder={t("adminPayments.search.placeholder")}
               type="text"
             />
@@ -417,7 +417,7 @@ export function AdminPaymentsPage() {
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={safePage <= 1}
-                className="p-1 hover:text-white disabled:opacity-30"
+                className="p-1 hover:text-pb-text disabled:opacity-30"
                 aria-label={t("adminPayments.pagination.prev")}
               >
                 ‹
@@ -426,7 +426,7 @@ export function AdminPaymentsPage() {
                 type="button"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={safePage >= totalPages}
-                className="p-1 hover:text-white disabled:opacity-30"
+                className="p-1 hover:text-pb-text disabled:opacity-30"
                 aria-label={t("adminPayments.pagination.next")}
               >
                 ›
@@ -437,25 +437,25 @@ export function AdminPaymentsPage() {
       </div>
 
       {/* Table Panel */}
-      <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
+      <div className="rounded-2xl overflow-hidden shadow-sm border border-pb-border bg-pb-surface">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-white/5 border-b border-white/10">
-                <th className="px-6 py-5 text-sm font-semibold text-slate-300">{t("adminPayments.table.paymentId")}</th>
-                <th className="px-6 py-5 text-sm font-semibold text-slate-300">{t("adminPayments.table.method")}</th>
-                <th className="px-6 py-5 text-sm font-semibold text-slate-300">{t("adminPayments.table.amount")}</th>
-                <th className="px-6 py-5 text-sm font-semibold text-slate-300">{t("adminPayments.table.reference")}</th>
-                <th className="px-6 py-5 text-sm font-semibold text-slate-300">{t("adminPayments.table.status")}</th>
-                <th className="px-6 py-5 text-sm font-semibold text-slate-300">{t("adminPayments.table.submittedAt")}</th>
-                <th className="px-6 py-5 text-sm font-semibold text-slate-300 text-right">{t("adminPayments.table.actions")}</th>
+              <tr className="bg-slate-50 border-b border-pb-border">
+                <th className="px-6 py-5 text-sm font-semibold text-pb-text">{t("adminPayments.table.paymentId")}</th>
+                <th className="px-6 py-5 text-sm font-semibold text-pb-text">{t("adminPayments.table.method")}</th>
+                <th className="px-6 py-5 text-sm font-semibold text-pb-text">{t("adminPayments.table.amount")}</th>
+                <th className="px-6 py-5 text-sm font-semibold text-pb-text">{t("adminPayments.table.reference")}</th>
+                <th className="px-6 py-5 text-sm font-semibold text-pb-text">{t("adminPayments.table.status")}</th>
+                <th className="px-6 py-5 text-sm font-semibold text-pb-text">{t("adminPayments.table.submittedAt")}</th>
+                <th className="px-6 py-5 text-sm font-semibold text-pb-text text-right">{t("adminPayments.table.actions")}</th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-pb-border">
               {status === "loading" && (
                 <tr>
-                  <td className="px-6 py-6 text-slate-400" colSpan={7}>
+                  <td className="px-6 py-6 text-pb-text-secondary" colSpan={7}>
                     {t("adminPayments.states.loading")}
                   </td>
                 </tr>
@@ -463,7 +463,7 @@ export function AdminPaymentsPage() {
 
               {status !== "loading" && pageItems.length === 0 && (
                 <tr>
-                  <td className="px-6 py-6 text-slate-400" colSpan={7}>
+                  <td className="px-6 py-6 text-pb-text-secondary" colSpan={7}>
                     {t("adminPayments.states.empty")}
                   </td>
                 </tr>
@@ -476,30 +476,30 @@ export function AdminPaymentsPage() {
                 const busy = confirmingId === String(pid) || rejectingId === String(pid);
 
                 return (
-                  <tr key={pid} className="hover:bg-white/[0.03] transition-colors group">
-                    <td className="px-6 py-5 text-sm font-bold text-white">
+                  <tr key={pid} className="hover:bg-slate-50 transition-colors group">
+                    <td className="px-6 py-5 text-sm font-bold text-pb-text">
                       {pid ? `#${String(pid).slice(0, 8)}` : "-"}
                     </td>
 
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-2">
-                        <span className="text-orange-400 text-lg" aria-hidden>
+                        <span className="text-pb-primary text-lg" aria-hidden>
                           {methodIcon(p.method)}
                         </span>
-                        <span className="text-sm text-slate-300">{prettyMethod(p.method)}</span>
+                        <span className="text-sm text-pb-text">{prettyMethod(p.method)}</span>
                       </div>
                     </td>
 
-                    <td className="px-6 py-5 text-sm font-bold text-white">{formatAmount(p)}</td>
+                    <td className="px-6 py-5 text-sm font-bold text-pb-text">{formatAmount(p)}</td>
 
                     <td className="px-6 py-5">
-                      <div className="text-sm font-mono text-slate-400">{getReference(p)}</div>
+                      <div className="text-sm font-mono text-pb-text-secondary">{getReference(p)}</div>
                       {getProofUrl(p) && (
                         <a
                           href={getProofUrl(p)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-orange-400 hover:text-orange-300 mt-1 transition-colors"
+                          className="inline-flex items-center gap-1 text-xs text-pb-primary hover:text-pb-primary-hover mt-1 transition-colors"
                         >
                           📎 {t("adminPayments.table.viewProof")}
                         </a>
@@ -518,7 +518,7 @@ export function AdminPaymentsPage() {
                       </span>
                     </td>
 
-                    <td className="px-6 py-5 text-sm text-slate-400">
+                    <td className="px-6 py-5 text-sm text-pb-text-secondary">
                       {formatCompactDate(p.submittedAt || p.updatedAt || p.createdAt)}
                     </td>
 
@@ -550,7 +550,7 @@ export function AdminPaymentsPage() {
                         <button
                           type="button"
                           onClick={() => nav(`/admin/payments/${pid}`)}
-                          className="bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold border border-white/10 transition-all"
+                          className="bg-pb-surface hover:bg-slate-100 text-pb-text px-3 py-1.5 rounded-lg text-xs font-bold border border-pb-border transition-all"
                         >
                           {t("adminPayments.actions.viewDetails")}
                         </button>
@@ -564,8 +564,8 @@ export function AdminPaymentsPage() {
         </div>
 
         {/* Table Footer */}
-        <div className="px-6 py-6 bg-white/[0.02] border-t border-white/5 flex items-center justify-between">
-          <p className="text-sm text-slate-500">
+        <div className="px-6 py-6 bg-slate-50 border-t border-pb-border flex items-center justify-between">
+          <p className="text-sm text-pb-text-secondary">
             {t("adminPayments.pagination.rowsPerPage")} <b>{pageSize}</b>
           </p>
 
@@ -581,8 +581,8 @@ export function AdminPaymentsPage() {
                   className={[
                     "w-10 h-10 rounded-lg flex items-center justify-center text-sm transition-all",
                     active
-                      ? "bg-orange-500 text-white font-bold shadow-lg shadow-orange-500/20"
-                      : "hover:bg-white/10 text-slate-400 font-medium",
+                      ? "bg-pb-primary text-white font-bold shadow-lg shadow-pb-primary/20"
+                      : "hover:bg-slate-100 text-pb-text-secondary font-medium",
                   ].join(" ")}
                 >
                   {n}
@@ -590,13 +590,13 @@ export function AdminPaymentsPage() {
               );
             })}
 
-            {totalPages > 5 && <span className="text-slate-600 px-2">...</span>}
+            {totalPages > 5 && <span className="text-pb-text-secondary px-2">...</span>}
 
             {totalPages > 5 && (
               <button
                 type="button"
                 onClick={() => setPage(totalPages)}
-                className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-white/10 text-slate-400 text-sm font-medium"
+                className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 text-pb-text-secondary text-sm font-medium"
               >
                 {totalPages}
               </button>
@@ -607,39 +607,39 @@ export function AdminPaymentsPage() {
 
       {/* Summary Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-        <div className="border border-white/10 bg-white/5 backdrop-blur-sm p-6 rounded-2xl">
-          <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">
+        <div className="border border-pb-border bg-pb-surface p-6 rounded-2xl shadow-sm">
+          <p className="text-pb-text-secondary text-sm font-medium uppercase tracking-wider">
             {t("adminPayments.summary.todaysRevenueUsd")}
           </p>
           <div className="flex items-end justify-between mt-2">
-            <h3 className="text-3xl font-bold text-white">{formatUSD(summary.todaysRevenueUsd)}</h3>
-            <span className="text-emerald-400 text-sm font-bold flex items-center bg-emerald-500/10 px-2 py-1 rounded-lg">
+            <h3 className="text-3xl font-bold text-pb-text">{formatUSD(summary.todaysRevenueUsd)}</h3>
+            <span className="text-emerald-600 text-sm font-bold flex items-center bg-emerald-50 px-2 py-1 rounded-lg">
               +12.5%
             </span>
           </div>
         </div>
 
-        <div className="border border-white/10 bg-white/5 backdrop-blur-sm p-6 rounded-2xl">
-          <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">
+        <div className="border border-pb-border bg-pb-surface p-6 rounded-2xl shadow-sm">
+          <p className="text-pb-text-secondary text-sm font-medium uppercase tracking-wider">
             {t("adminPayments.summary.unverifiedPayments")}
           </p>
           <div className="flex items-end justify-between mt-2">
-            <h3 className="text-3xl font-bold text-white">{summary.unverified}</h3>
-            <span className="text-yellow-400 text-sm font-bold flex items-center bg-yellow-500/10 px-2 py-1 rounded-lg">
+            <h3 className="text-3xl font-bold text-pb-text">{summary.unverified}</h3>
+            <span className="text-yellow-700 text-sm font-bold flex items-center bg-yellow-50 px-2 py-1 rounded-lg">
               {t("adminPayments.summary.highPriority")}
             </span>
           </div>
         </div>
 
-        <div className="border border-white/10 bg-white/5 backdrop-blur-sm p-6 rounded-2xl">
-          <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">
+        <div className="border border-pb-border bg-pb-surface p-6 rounded-2xl shadow-sm">
+          <p className="text-pb-text-secondary text-sm font-medium uppercase tracking-wider">
             {t("adminPayments.summary.systemHealth")}
           </p>
           <div className="flex items-end justify-between mt-2">
-            <h3 className="text-3xl font-bold text-white">{t("adminPayments.summary.active")}</h3>
+            <h3 className="text-3xl font-bold text-pb-text">{t("adminPayments.summary.active")}</h3>
             <div className="flex gap-1 items-center">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-emerald-400 text-xs font-bold">{t("adminPayments.summary.stable")}</span>
+              <span className="text-emerald-600 text-xs font-bold">{t("adminPayments.summary.stable")}</span>
             </div>
           </div>
         </div>
@@ -647,16 +647,16 @@ export function AdminPaymentsPage() {
 
       {/* Reject Modal (Tailwind) */}
       {rejectModal.open && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#221910] p-6 shadow-2xl">
-            <h3 className="text-xl font-bold text-white">{t("adminPayments.reject.title")}</h3>
-            <p className="mt-2 text-sm text-slate-400">{t("adminPayments.reject.subtitle")}</p>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-pb-border bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-pb-text">{t("adminPayments.reject.title")}</h3>
+            <p className="mt-2 text-sm text-pb-text-secondary">{t("adminPayments.reject.subtitle")}</p>
 
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder={t("adminPayments.reject.placeholder")}
-              className="mt-4 w-full min-h-[96px] rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-orange-500"
+              className="mt-4 w-full min-h-[96px] rounded-xl border border-pb-border bg-white px-4 py-3 text-pb-text placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-pb-primary"
             />
 
             <div className="mt-5 flex items-center justify-end gap-3">
@@ -664,7 +664,7 @@ export function AdminPaymentsPage() {
                 type="button"
                 onClick={closeRejectModal}
                 disabled={rejectingId}
-                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 disabled:opacity-60"
+                className="rounded-xl border border-pb-border bg-pb-surface px-4 py-2 text-sm font-semibold text-pb-text hover:bg-slate-100 disabled:opacity-60"
               >
                 {t("adminPayments.actions.cancel")}
               </button>
@@ -673,7 +673,7 @@ export function AdminPaymentsPage() {
                 type="button"
                 onClick={handleReject}
                 disabled={rejectingId}
-                className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-bold text-white hover:bg-rose-500/90 disabled:opacity-60"
+                className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-bold text-white hover:bg-rose-600 disabled:opacity-60"
               >
                 {rejectingId ? t("adminPayments.actions.rejecting") : t("adminPayments.actions.rejectPayment")}
               </button>

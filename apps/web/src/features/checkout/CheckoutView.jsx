@@ -53,7 +53,7 @@ function RadioCard({ checked, onClick, icon, title }) {
       onClick={onClick}
       className={[
         "w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left",
-        checked ? "border-orange-500 bg-black/20" : "border-white/10 bg-black/10 hover:border-orange-500/40",
+        checked ? "border-orange-500 bg-pb-surface" : "border-pb-border bg-pb-surface hover:border-pb-primary",
       ].join(" ")}
       aria-pressed={checked}
     >
@@ -61,13 +61,13 @@ function RadioCard({ checked, onClick, icon, title }) {
         <span
           className={[
             "material-symbols-outlined text-xl",
-            checked ? "text-orange-400" : "text-slate-400",
+            checked ? "text-orange-400" : "text-pb-text-secondary",
           ].join(" ")}
           aria-hidden="true"
         >
           {icon}
         </span>
-        <span className={checked ? "font-bold text-slate-100" : "font-bold text-slate-200/80"}>
+        <span className={checked ? "font-bold text-pb-text" : "font-bold text-pb-text-secondary"}>
           {title}
         </span>
       </div>
@@ -75,7 +75,7 @@ function RadioCard({ checked, onClick, icon, title }) {
       <span
         className={[
           "w-5 h-5 rounded-full",
-          checked ? "bg-orange-500 border-4 border-orange-500" : "border-2 border-white/20",
+          checked ? "bg-orange-500 border-4 border-orange-500" : "border-2 border-pb-border",
         ].join(" ")}
         aria-hidden="true"
       />
@@ -398,7 +398,7 @@ export function CheckoutView() {
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/20 font-bold text-orange-400">
                 1
               </span>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-100">
+              <h2 className="text-2xl font-bold tracking-tight text-pb-text">
                 {t("checkout.title.shippingInfo")}
               </h2>
             </div>
@@ -410,10 +410,10 @@ export function CheckoutView() {
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">📍</span>
                     <div>
-                      <p className="text-sm font-medium text-slate-100">
+                      <p className="text-sm font-medium text-pb-text">
                         {t("checkout.prefill.title")}
                       </p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-pb-text-secondary">
                         {savedAddress.city}, {savedAddress.state}
                       </p>
                     </div>
@@ -421,7 +421,7 @@ export function CheckoutView() {
                   <button
                     type="button"
                     onClick={applyLastAddress}
-                    className="px-4 py-2 text-sm font-bold text-orange-400 border border-orange-500/40 rounded-lg hover:bg-orange-500/20 transition-colors"
+                    className="px-4 py-2 text-sm font-bold text-orange-400 border border-pb-primary rounded-lg hover:bg-orange-500/20 transition-colors"
                   >
                     {t("checkout.prefill.useButton")}
                   </button>
@@ -431,14 +431,14 @@ export function CheckoutView() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
-                <label htmlFor={ids.fullName} className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                <label htmlFor={ids.fullName} className="mb-1.5 block text-sm font-medium text-pb-text-secondary">
                   {t("checkout.form.fullName")}
                 </label>
                 <input
                   id={ids.fullName}
                   name="fullName"
                   autoComplete="name"
-                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-lg border border-pb-border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
                   placeholder={t("checkout.placeholders.fullName")}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
@@ -446,7 +446,7 @@ export function CheckoutView() {
               </div>
 
               <div className="md:col-span-2">
-                <label htmlFor={ids.email} className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                <label htmlFor={ids.email} className="mb-1.5 block text-sm font-medium text-pb-text-secondary">
                   {t("checkout.form.email")}
                 </label>
                 <input
@@ -455,7 +455,7 @@ export function CheckoutView() {
                   type="email"
                   inputMode="email"
                   autoComplete="email"
-                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-lg border border-pb-border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
                   placeholder={t("checkout.placeholders.email")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -463,14 +463,14 @@ export function CheckoutView() {
               </div>
 
               <div>
-                <label htmlFor={ids.city} className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                <label htmlFor={ids.city} className="mb-1.5 block text-sm font-medium text-pb-text-secondary">
                   {t("checkout.form.city")}
                 </label>
                 <input
                   id={ids.city}
                   name="city"
                   autoComplete="address-level2"
-                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-lg border border-pb-border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
                   placeholder={t("checkout.placeholders.city")}
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
@@ -479,7 +479,7 @@ export function CheckoutView() {
               </div>
 
               <div>
-                <label htmlFor={ids.phone} className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                <label htmlFor={ids.phone} className="mb-1.5 block text-sm font-medium text-pb-text-secondary">
                   {t("checkout.form.phone")}
                 </label>
                 <input
@@ -488,7 +488,7 @@ export function CheckoutView() {
                   type="tel"
                   inputMode="tel"
                   autoComplete="tel"
-                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-lg border border-pb-border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
                   placeholder={t("checkout.placeholders.phone")}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -496,14 +496,14 @@ export function CheckoutView() {
               </div>
 
               <div className="md:col-span-2">
-                <label htmlFor={ids.street} className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                <label htmlFor={ids.street} className="mb-1.5 block text-sm font-medium text-pb-text-secondary">
                   {t("checkout.form.street")}
                 </label>
                 <input
                   id={ids.street}
                   name="street"
                   autoComplete="address-line1"
-                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-lg border border-pb-border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
                   placeholder={t("checkout.placeholders.street")}
                   value={street}
                   onChange={(e) => setStreet(e.target.value)}
@@ -512,14 +512,14 @@ export function CheckoutView() {
               </div>
 
               <div>
-                <label htmlFor={ids.state} className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                <label htmlFor={ids.state} className="mb-1.5 block text-sm font-medium text-pb-text-secondary">
                   {t("checkout.form.state")}
                 </label>
                 <input
                   id={ids.state}
                   name="state"
                   autoComplete="address-level1"
-                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-lg border border-pb-border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
                   placeholder={t("checkout.placeholders.state")}
                   value={stateRegion}
                   onChange={(e) => setStateRegion(e.target.value)}
@@ -528,14 +528,14 @@ export function CheckoutView() {
               </div>
 
               <div>
-                <label htmlFor={ids.reference} className="mb-1.5 block text-sm font-medium text-slate-300/80">
+                <label htmlFor={ids.reference} className="mb-1.5 block text-sm font-medium text-pb-text-secondary">
                   {t("checkout.form.reference")}
                 </label>
                 <input
                   id={ids.reference}
                   name="reference"
                   autoComplete="off"
-                  className="w-full rounded-lg border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-slate-100 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-lg border border-pb-border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
                   placeholder={t("checkout.placeholders.reference")}
                   value={reference}
                   onChange={(e) => setReference(e.target.value)}
@@ -545,7 +545,7 @@ export function CheckoutView() {
             </div>
 
             {!needsAddress && (
-              <p className="mt-3 text-sm text-slate-400">
+              <p className="mt-3 text-sm text-pb-text-secondary">
                 {t("checkout.form.pickupHint")}
               </p>
             )}
@@ -561,12 +561,12 @@ export function CheckoutView() {
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/20 font-bold text-orange-400">
                     2
                   </span>
-                  <h2 className="text-2xl font-bold tracking-tight text-slate-100">
+                  <h2 className="text-2xl font-bold tracking-tight text-pb-text">
                     {t("checkout.title.deliveryType")}
                   </h2>
                 </div>
 
-                <div className="space-y-4 rounded-xl border border-orange-500/20 bg-orange-500/5 p-6">
+                <div className="space-y-4 rounded-xl border border-pb-border bg-pb-surface p-6">
                   {SHIPPING_METHODS.map((m) => (
                     <RadioCard
                       key={m.value}
@@ -584,12 +584,12 @@ export function CheckoutView() {
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500/20 font-bold text-orange-400">
                     3
                   </span>
-                  <h2 className="text-2xl font-bold tracking-tight text-slate-100">
+                  <h2 className="text-2xl font-bold tracking-tight text-pb-text">
                     {t("checkout.title.paymentMethod")}
                   </h2>
                 </div>
 
-                <div className="space-y-4 rounded-xl border border-orange-500/20 bg-orange-500/5 p-6">
+                <div className="space-y-4 rounded-xl border border-pb-border bg-pb-surface p-6">
                   {PAYMENT_METHODS.map((m) => (
                     <RadioCard
                       key={m.value}
@@ -608,13 +608,13 @@ export function CheckoutView() {
         {/* Right: Summary */}
         <div className="lg:col-span-5">
           <div className="sticky top-24">
-            <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-8">
-              <h3 className="mb-6 text-xl font-bold text-slate-100">
+            <div className="rounded-2xl border border-pb-border bg-pb-surface p-8">
+              <h3 className="mb-6 text-xl font-bold text-pb-text">
                 {t("checkout.title.orderSummary")}
               </h3>
 
               {items.length === 0 ? (
-                <p className="text-slate-400">{t("checkout.summary.emptyCart")}</p>
+                <p className="text-pb-text-secondary">{t("checkout.summary.emptyCart")}</p>
               ) : (
                 <div className="space-y-4">
                   {items.map((it) => {
@@ -629,16 +629,16 @@ export function CheckoutView() {
                           <img
                             src={it.imageUrl}
                             alt={it.name || "Product"}
-                            className="h-16 w-16 rounded-lg border border-white/10 bg-black/30 object-cover"
+                            className="h-16 w-16 rounded-lg border border-pb-border bg-slate-100 object-cover"
                           />
                         ) : (
-                          <div className="h-16 w-16 rounded-lg border border-white/10 bg-black/30 flex items-center justify-center text-slate-500 text-xs">
+                          <div className="h-16 w-16 rounded-lg border border-pb-border bg-slate-100 flex items-center justify-center text-pb-text-secondary text-xs">
                             📦
                           </div>
                         )}
                         <div className="flex flex-1 flex-col justify-center">
-                          <h4 className="font-bold text-slate-100">{it.name}</h4>
-                          <p className="text-sm text-slate-400">
+                          <h4 className="font-bold text-pb-text">{it.name}</h4>
+                          <p className="text-sm text-pb-text-secondary">
                             {t("checkout.summary.qty", { qty })}
                           </p>
                         </div>
@@ -646,7 +646,7 @@ export function CheckoutView() {
                           <span className="font-bold text-orange-400">
                             {formatUSD(lineTotal)}
                           </span>
-                          <span className="text-[11px] text-slate-400">
+                          <span className="text-[11px] text-pb-text-secondary">
                             {formatUSD(unit)} × {qty}
                           </span>
                         </div>
@@ -657,14 +657,14 @@ export function CheckoutView() {
               )}
 
               <div className="mt-8 space-y-4 border-t border-orange-500/10 pt-6 text-sm">
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-pb-text-secondary">
                   <span className="opacity-70">{t("checkout.summary.subtotal")}</span>
                   <span className="font-medium">{formatUSD(subtotalUSD)}</span>
                 </div>
 
                 {/* Shipping line - only show for national_shipping */}
                 {shippingMethod === "national_shipping" && (
-                  <div className="flex justify-between text-slate-300">
+                  <div className="flex justify-between text-pb-text-secondary">
                     <span className="opacity-70">{t("checkout.summary.shipping")}</span>
                     <span className="font-medium">{formatUSD(shippingCostUSD)}</span>
                   </div>
@@ -679,12 +679,12 @@ export function CheckoutView() {
                   </div>
                 )}
 
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-pb-text-secondary">
                   <span className="opacity-70">{t("checkout.summary.estimatedTaxes")}</span>
                   <span className="font-medium">{formatUSD(estimatedTaxesUSD)}</span>
                 </div>
                 <div className="flex items-center justify-between border-t border-orange-500/10 pt-4">
-                  <span className="text-xl font-bold tracking-tight text-slate-100">
+                  <span className="text-xl font-bold tracking-tight text-pb-text">
                     {t("checkout.summary.total")}
                   </span>
                   <span className="text-2xl font-bold tracking-tight text-orange-400">
@@ -694,14 +694,14 @@ export function CheckoutView() {
 
                 {/* Equivalencia en VES */}
                 {fxRate && !isLocalDelivery && (
-                  <div className="mt-2 text-sm text-slate-400">
+                  <div className="mt-2 text-sm text-pb-text-secondary">
                     <div className="flex justify-between">
                       <span>{t("checkout.summary.equivalentVES")}</span>
-                      <span className="text-slate-300">
+                      <span className="text-pb-text-secondary">
                         Bs. {(totalUSD * fxRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 text-right mt-1">
+                    <p className="text-xs text-pb-text-secondary text-right mt-1">
                       {t("checkout.summary.rateInfo", { rate: fxRate.toLocaleString("es-VE") })}
                     </p>
                   </div>

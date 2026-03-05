@@ -33,21 +33,21 @@ export function FaqPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-slate-400 mb-8">
-        <Link className="hover:text-orange-400 transition-colors" to="/">
+      <nav className="flex items-center gap-2 text-sm text-pb-text-secondary mb-8">
+        <Link className="hover:text-pb-primary transition-colors" to="/">
           {language === "en" ? "Home" : "Inicio"}
         </Link>
-        <span className="text-slate-600">/</span>
-        <span className="text-slate-100 font-medium">{t("support.faq.title")}</span>
+        <span className="text-pb-text-secondary">/</span>
+        <span className="text-pb-text font-medium">{t("support.faq.title")}</span>
       </nav>
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 md:p-8">
-        <h1 className="text-3xl font-extrabold text-slate-100">{t("support.faq.title")}</h1>
-        <p className="mt-2 text-sm text-slate-400">
+      <div className="rounded-2xl border border-pb-border bg-white shadow-sm p-6 md:p-8">
+        <h1 className="text-3xl font-extrabold text-pb-text">{t("support.faq.title")}</h1>
+        <p className="mt-2 text-sm text-pb-text-secondary">
           {t("support.common.updatedAt", { date: formatToday(language) })}
         </p>
 
-        <p className="mt-6 text-slate-300">{t("support.faq.intro")}</p>
+        <p className="mt-6 text-pb-text-secondary">{t("support.faq.intro")}</p>
 
         <div className="mt-8 space-y-6">
           <Section title={t("support.faq.sections.paymentsTitle")} text={t("support.faq.sections.paymentsText")} />
@@ -57,9 +57,9 @@ export function FaqPage() {
           <Section title={t("support.faq.sections.supportTitle")} text={t("support.faq.sections.supportText")} />
         </div>
 
-        <div className="mt-10 rounded-xl border border-white/10 bg-black/20 p-5">
-          <h3 className="text-sm font-extrabold text-slate-100">{t("support.common.contactTitle")}</h3>
-          <div className="mt-2 space-y-1 text-sm text-slate-300">
+        <div className="mt-10 rounded-xl border border-pb-border bg-pb-surface p-5">
+          <h3 className="text-sm font-extrabold text-pb-text">{t("support.common.contactTitle")}</h3>
+          <div className="mt-2 space-y-1 text-sm text-pb-text-secondary">
             <p>{t("support.common.contactEmail", { email })}</p>
             <p>{t("support.common.location", { location })}</p>
           </div>
@@ -69,21 +69,21 @@ export function FaqPage() {
               href={supportHref}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-orange-300 hover:bg-white/10 transition-colors"
+              className="inline-flex items-center gap-2 rounded-xl border border-pb-border bg-pb-surface px-4 py-2 text-sm font-bold text-pb-primary hover:bg-slate-100 transition-colors"
             >
               💬 {t("support.common.contactWhatsapp")}
             </a>
           </div>
 
-          <p className="mt-3 text-xs text-slate-500">{t("support.common.disclaimer")}</p>
+          <p className="mt-3 text-xs text-pb-text-secondary">{t("support.common.disclaimer")}</p>
         </div>
 
         <div className="mt-8">
           <Link
             to="/"
             className={cx(
-              "inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2",
-              "text-sm font-bold text-slate-200 hover:bg-white/10 transition-colors"
+              "inline-flex items-center gap-2 rounded-xl border border-pb-border bg-pb-surface px-4 py-2",
+              "text-sm font-bold text-pb-text hover:bg-slate-100 transition-colors"
             )}
           >
             ← {language === "en" ? "Back to store" : "Volver a la tienda"}
@@ -97,8 +97,8 @@ export function FaqPage() {
 function Section({ title, text }) {
   return (
     <section>
-      <h2 className="text-lg font-extrabold text-slate-100">{title}</h2>
-      <p className="mt-2 text-slate-300 leading-relaxed">{text}</p>
+      <h2 className="text-lg font-extrabold text-pb-text">{title}</h2>
+      <p className="mt-2 text-pb-text-secondary leading-relaxed">{text}</p>
     </section>
   );
 }
