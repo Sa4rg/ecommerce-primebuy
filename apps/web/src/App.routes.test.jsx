@@ -4,10 +4,9 @@ import App from "./App.jsx";
 import { renderWithProviders } from "./test/renderWithProviders.jsx";
 
 describe("App routing", () => {
-  it("renders catalog on /", async () => {
+  it("renders home page on /", async () => {
     renderWithProviders(<App />, { route: "/" });
-    // Catalog page shows "Cameras & Gear" heading
-    expect(await screen.findByRole("heading", { name: /electrónica|electronics/i })).toBeInTheDocument();
-
+    // Home page shows hero heading
+    expect(await screen.findByRole("heading", { name: /tecnología premium|premium tech/i })).toBeInTheDocument();
   });
 })

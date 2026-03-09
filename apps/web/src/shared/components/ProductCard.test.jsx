@@ -176,36 +176,18 @@ describe("ProductCard (with CartProvider)", () => {
 
     await user.click(screen.getByRole("button", { name: /agregar al carrito|add to cart/i }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/stock insuficiente|insufficient stock/i);
+    expect(await screen.findByRole("alert")).toHaveTextContent(/no hay suficiente stock|insufficient stock|not enough stock/i);
   });
 
-  it("clears inline error when user retries add to cart", async () => {
+  it("hides quick-add button when stock error is displayed", async () => {
     localStorage.setItem("cartId", "existing-cart-id");
 
-    let call = 0;
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url, options) => {
       if (String(url).includes("/api/cart/existing-cart-id/items") && options?.method === "POST") {
-        call += 1;
-        if (call === 1) {
-          return {
-            ok: false,
-            status: 400,
-            json: async () => ({ success: false, message: "Insufficient stock" }),
-          };
-        }
-
         return {
-          ok: true,
-          status: 200,
-          json: async () => ({
-            success: true,
-            data: {
-              cartId: "existing-cart-id",
-              items: [],
-              summary: { itemsCount: 0, subtotalUSD: 0 },
-              metadata: { market: "VE", baseCurrency: "USD", status: "active" },
-            },
-          }),
+          ok: false,
+          status: 400,
+          json: async () => ({ success: false, message: "Insufficient stock" }),
         };
       }
 
@@ -219,13 +201,12 @@ describe("ProductCard (with CartProvider)", () => {
 
     const button = screen.getByRole("button", { name: /agregar al carrito|add to cart/i });
     await user.click(button);
+
+    // Error is displayed
     expect(await screen.findByRole("alert")).toBeInTheDocument();
 
-    await user.click(button);
-
-    await waitFor(() => {
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    });
+    // Quick-add button is hidden when error is visible (by design)
+    expect(screen.queryByRole("button", { name: /agregar al carrito|add to cart/i })).not.toBeInTheDocument();
   });
 
   it("does not scale the product image on hover (no zoom effect)", () => {

@@ -8,7 +8,7 @@ describe("Navbar i18n integration", () => {
   it("renders Spanish by default", () => {
     renderWithProviders(<Navbar />, { route: "/" });
 
-    expect(screen.getByText("Electrónica")).toBeInTheDocument();
+    expect(screen.getByText("Cámaras")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Buscar productos...")).toBeInTheDocument();
   });
 
@@ -18,7 +18,7 @@ describe("Navbar i18n integration", () => {
     renderWithProviders(<Navbar />, { route: "/" });
 
     // default ES
-    expect(screen.getByText("Electrónica")).toBeInTheDocument();
+    expect(screen.getByText("Cámaras")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "EN" }));
 
@@ -26,7 +26,8 @@ describe("Navbar i18n integration", () => {
     expect(screen.getByPlaceholderText("Search products...")).toBeInTheDocument();
 
     // right actions (public state -> Login visible)
-    expect(screen.getByRole("link", { name: "Login" })).toBeInTheDocument();
+    // The link name includes the icon text + label, so we use regex
+    expect(screen.getByRole("link", { name: /login/i })).toBeInTheDocument();
 
     // cart accessibility label
     expect(screen.getByRole("link", { name: "Cart" })).toBeInTheDocument();
