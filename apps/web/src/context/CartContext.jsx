@@ -35,11 +35,9 @@ export function CartProvider({ children, initialState }) {
       setStatus("loading");
       setError("");
 
-      // 1) intenta cargar el carrito actual
       let cartId = await ensureCartId();
       let loadedCart = await getCart(cartId);
 
-      // 2) si está locked/checked_out => este carrito ya NO sirve para nuevas compras
       if (loadedCart?.metadata?.status && loadedCart.metadata.status !== "active") {
         clearCartSession();
         cartId = await ensureCartId();
@@ -50,15 +48,13 @@ export function CartProvider({ children, initialState }) {
       setStatus("ready");
     } catch (err) {
       const msg = err?.message || "Unknown error";
-      
-      // Detect 401/Unauthorized - session expired for claimed cart
+
       if (msg.includes("Unauthorized") || msg.includes("401")) {
         setStatus("session-expired");
         setError(msg);
         return;
       }
 
-      // 403 Forbidden = cart belongs to another user, create fresh one
       if (msg.includes("Forbidden") || msg.includes("403")) {
         clearCartSession();
         const newCartId = await ensureCartId();
@@ -67,7 +63,7 @@ export function CartProvider({ children, initialState }) {
         setStatus("ready");
         return;
       }
-      
+
       setStatus("error");
       setError(msg);
     }
@@ -83,26 +79,18 @@ export function CartProvider({ children, initialState }) {
     setStatus("ready");
   }
 
-  // ✅ ESTA ES LA FUNCIÓN “DENTRO DEL PROVIDER”
   async function startNewCart() {
-    // 1) Clear local storages that can "stick" to old purchases
-    clearCheckoutId();                 // checkoutId global (previous purchase)
-    clearAllPaymentsForCheckouts();    // checkoutId -> paymentId mapping
+    clearCheckoutId();
+    clearAllPaymentsForCheckouts();
 
-    // 2) Clear cart session (cartId/cartSecret/etc)
     clearCartSession();
 
-    // 3) Reset state and bootstrap a fresh cart
     setCart(null);
     setStatus("idle");
     setError("");
     await initializeCart();
   }
-  /**
-   * Sync cart with authenticated user's cart.
-   * Merges current guest cart items into user's cart if any.
-   * Call this after successful login.
-   */
+
   async function syncUserCart() {
     try {
       setStatus("loading");
@@ -121,28 +109,34 @@ export function CartProvider({ children, initialState }) {
       throw err;
     }
   }
+
   async function addItem({ productId, quantity }) {
     try {
       setError("");
       const updatedCart = await addItemToCart({ productId, quantity });
       setCart(updatedCart);
       setStatus("ready");
-      // ✅ Cart changed: invalidate stale checkout snapshot
       invalidateCheckoutSnapshot();
       return updatedCart;
     } catch (err) {
-      const msg = err?.message || "Unknown error";
+      const msg = String(err?.message || "Unknown error");
+
       if (msg.includes("Unauthorized") || msg.includes("401")) {
         setStatus("session-expired");
         setError(msg);
         return;
       }
-      // 403 Forbidden = cart belongs to another user, create new one
+
       if (msg.includes("Forbidden") || msg.includes("403")) {
         await startNewCart();
-        // Retry the add with new cart
         return addItem({ productId, quantity });
       }
+
+      if (/insufficient stock/i.test(msg)) {
+        setStatus(cart ? "ready" : "idle");
+        throw err;
+      }
+
       setStatus("error");
       setError(msg);
       throw err;
@@ -158,7 +152,6 @@ export function CartProvider({ children, initialState }) {
 
       setCart(updatedCart);
       setStatus("ready");
-      // ✅ Cart changed: invalidate stale checkout snapshot
       invalidateCheckoutSnapshot();
       return updatedCart;
     } catch (err) {
@@ -170,16 +163,21 @@ export function CartProvider({ children, initialState }) {
         return;
       }
 
-      setStatus("error");
-      setError(msg);
-
       if (msg.includes("Item not found in cart")) {
+        setStatus("ready");
         try {
           await refreshCart();
         } catch {}
         return;
       }
 
+      if (/insufficient stock/i.test(msg)) {
+        setStatus("ready");
+        throw err;
+      }
+
+      setStatus("error");
+      setError(msg);
       throw err;
     }
   }
@@ -191,7 +189,6 @@ export function CartProvider({ children, initialState }) {
       const updatedCart = await removeItemFromCart({ productId });
       setCart(updatedCart);
       setStatus("ready");
-      // ✅ Cart changed: invalidate stale checkout snapshot
       invalidateCheckoutSnapshot();
       return updatedCart;
     } catch (err) {
@@ -224,8 +221,8 @@ export function CartProvider({ children, initialState }) {
       itemsCount,
       initializeCart,
       refreshCart,
-      startNewCart, // ✅ EXPUESTO PARA USAR EN /account
-      syncUserCart, // ✅ EXPUESTO PARA USAR DESPUÉS DE LOGIN
+      startNewCart,
+      syncUserCart,
       addItem,
       updateQuantity,
       removeItem,

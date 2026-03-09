@@ -615,21 +615,25 @@ export const translations = {
         general: "General",
       },
       errors: {
-        insufficientStock: "Stock insuficiente",
-        unknown: "Error desconocido",
+        notEnoughStockToAdd: "No hay suficiente stock para agregar otra unidad.",
+        unknown: "No se pudo agregar el producto al carrito.",
       },
     },
 
     productCatalog: {
       breadcrumbs: {
         home: "Home",
+        catalog: "Catálogo",
         electronics: "Electrónica",
       },
       sidebar: {
         categories: "Categorías",
         all: "Todos",
+        cameras: "Cámaras",
         watches: "Relojes",
-        securityCameras: "Cámaras de seguridad",
+        adultToys: "Juguetes para Adultos",
+        ledAccessories: "Accesorios LED",
+        vehicleAccessories: "Accesorios de Vehículos",
         priceRange: "Rango de precios",
         minPrice: "Precio mín.",
         maxPrice: "Precio máx.",
@@ -661,6 +665,7 @@ export const translations = {
     cart: {
       breadcrumb: {
         home: "Home",
+        catalog: "Catálogo",
         cart: "Carrito",
       },
       title: "Carrito de compras",
@@ -683,6 +688,10 @@ export const translations = {
         increase: "Aumentar cantidad",
         remove: "Eliminar",
         removeAria: "Eliminar {name}",
+        errors: {
+          insufficientStock: "No puedes agregar más unidades de este producto.",
+          generic: "No fue posible actualizar la cantidad.",
+        },
       },
       summary: {
         title: "Resumen del pedido",
@@ -725,7 +734,7 @@ export const translations = {
         backToCatalog: "Volver al catálogo",
         goToCart: "Ir al carrito",
         startNewCart: "Iniciar nuevo carrito",
-        refresh: "Refresh",
+        refresh: "Actualizar",
       },
       tabs: {
         orders: "Mis Pedidos",
@@ -782,7 +791,7 @@ export const translations = {
         body: "Nuestro equipo de soporte está disponible para ayudarte con cualquier inconveniente con tus transacciones.",
         cta: "Contactar Soporte",
         ctaPlaceholder: "Soporte: próximamente (placeholder)",
-        whatsappMessage: "Hola, necesito ayuda con un pago en ElectroVar.",
+        whatsappMessage: "Hola, necesito ayuda con un pago en Prime Buy.",
       },
     },
 
@@ -868,8 +877,8 @@ export const translations = {
       trackShipment: "Seguir mi envío",
     },
     support: {
-      whatsappMessageOrder: "Hola, necesito ayuda con mi pedido #{orderId} en ElectroVar.",
-      whatsappMessageProblemOrder: "Hola, quiero reportar un problema con mi pedido #{orderId} en ElectroVar.",
+      whatsappMessageOrder: "Hola, necesito ayuda con mi pedido #{orderId} en Prime Buy.",
+      whatsappMessageProblemOrder: "Hola, quiero reportar un problema con mi pedido #{orderId} en Prime Buy.",
     },
 
     auth: {
@@ -885,7 +894,7 @@ export const translations = {
       },
       login: {
         title: "Bienvenida de vuelta",
-        subtitle: "Inicia sesión en tu cuenta de ElectroVar",
+        subtitle: "Inicia sesión en tu cuenta de Prime Buy",
         forgotPassword: "¿Olvidaste tu contraseña?",
         signIn: "Iniciar sesión",
         signingIn: "Iniciando...",
@@ -896,7 +905,7 @@ export const translations = {
       },
       register: {
         title: "Crear cuenta",
-        subtitle: "Crea tu cuenta de ElectroVar",
+        subtitle: "Crea tu cuenta de Prime Buy",
         nameLabel: "Nombre (opcional)",
         namePlaceholder: "Tu nombre",
         signUp: "Crear cuenta",
@@ -1771,8 +1780,8 @@ export const translations = {
         general: "General",
       },
       errors: {
-        insufficientStock: "Insufficient stock",
-        unknown: "Unknown error",
+        notEnoughStockToAdd: "There is not enough stock to add another unit.",
+        unknown: "Could not add the product to the cart.",
       },
     },
 
@@ -1784,8 +1793,11 @@ export const translations = {
       sidebar: {
         categories: "Categories",
         all: "All",
+        cameras: "Cameras",
         watches: "Watches",
-        securityCameras: "Security Cameras",
+        adultToys: "Adult Toys",
+        ledAccessories: "LED Accessories",
+        vehicleAccessories: "Vehicle Accessories",
         priceRange: "Price Range",
         minPrice: "Min price",
         maxPrice: "Max price",
@@ -1817,6 +1829,7 @@ export const translations = {
     cart: {
       breadcrumb: {
         home: "Home",
+        catalog: "Catalog",
         cart: "Cart",
       },
       title: "Shopping Cart",
@@ -1839,6 +1852,10 @@ export const translations = {
         increase: "Increase quantity",
         remove: "Remove",
         removeAria: "Remove {name}",
+        errors: {
+          insufficientStock: "You cannot add more units of this product.",
+          generic: "Could not update the quantity.",
+        },
       },
       summary: {
         title: "Order summary",
@@ -1938,7 +1955,7 @@ export const translations = {
         body: "Our support team is available to help you with any issues regarding your transactions.",
         cta: "Contact support",
         ctaPlaceholder: "Support: coming soon (placeholder)",
-        whatsappMessage: "Hi, I need help with a payment on ElectroVar.",
+        whatsappMessage: "Hi, I need help with a payment on Prime Buy.",
       },
     },
 
@@ -2024,8 +2041,8 @@ export const translations = {
       trackShipment: "Track shipment",
     },
     support: {
-      whatsappMessageOrder: "Hi, I need help with my order #{orderId} at ElectroVar.",
-      whatsappMessageProblemOrder: "Hi, I want to report a problem with my order #{orderId} at ElectroVar.",
+      whatsappMessageOrder: "Hi, I need help with my order #{orderId} at Prime Buy.",
+      whatsappMessageProblemOrder: "Hi, I want to report a problem with my order #{orderId} at Prime Buy.",
     },
 
     auth: {
@@ -2041,7 +2058,7 @@ export const translations = {
       },
       login: {
         title: "Welcome Back",
-        subtitle: "Log in to your ElectroVar account",
+        subtitle: "Log in to your Prime Buy account",
         forgotPassword: "Forgot password?",
         signIn: "Sign In",
         signingIn: "Signing in...",
@@ -2052,7 +2069,7 @@ export const translations = {
       },
       register: {
         title: "Create account",
-        subtitle: "Create your ElectroVar account",
+        subtitle: "Create your Prime Buy account",
         nameLabel: "Name (optional)",
         namePlaceholder: "Your name",
         signUp: "Create account",

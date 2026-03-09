@@ -15,7 +15,7 @@ async function sendPasswordResetCode({ to, code }) {
     return { skipped: true };
   }
 
-  const subject = 'Your password reset code';
+  const subject = 'Your Prime Buy password reset code';
   const html = `
     <div style="font-family: Arial, sans-serif;">
       <h2>Password Reset</h2>
@@ -47,11 +47,11 @@ async function sendVerificationEmail({ to, code }) {
     return { skipped: true };
   }
 
-  const subject = 'Verifica tu email - ElectroVar';
+  const subject = 'Verifica tu email - Prime Buy';
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 20px;">
       <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="color: #f97316; margin: 0;">ElectroVar</h1>
+        <h1 style="color: #f97316; margin: 0;">Prime Buy</h1>
       </div>
       <h2 style="color: #333; margin-bottom: 16px;">Verifica tu correo electrónico</h2>
       <p style="color: #555; margin-bottom: 24px;">

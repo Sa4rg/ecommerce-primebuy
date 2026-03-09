@@ -178,8 +178,8 @@ function openInvoicePrint({ order, derived, t, language }) {
         : "";
 
     // Datos básicos tienda (ajusta si quieres)
-    const shopName = "ElectroVar";
-    const shopEmail = "support@electrovar.com";
+    const shopName = "Prime Buy";
+    const shopEmail = "cyaimport.c.a@gmail.com";
     const shopPhone = "+58 412 621 6402";
 
     const html = `<!doctype html>

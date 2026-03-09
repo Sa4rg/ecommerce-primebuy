@@ -10,15 +10,13 @@ function formatMoneyUSD(value) {
 }
 
 function normalizeUrl(u) {
-  const s = String(u || "").trim();
-  return s;
+  return String(u || "").trim();
 }
 
 function getFirstGalleryUrl(product) {
   const g = Array.isArray(product?.gallery) ? product.gallery : [];
   if (!g.length) return "";
 
-  // gallery puede venir como strings o como objetos {url, publicId}
   const first = g[0];
   const url = typeof first === "string" ? first : first?.url;
   return normalizeUrl(url);
@@ -35,7 +33,11 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
   const fav = typeof isFavorite === "boolean" ? isFavorite : localFav;
 
   const baseStock = Number(product?.stock || 0);
-  const inStock = typeof product?.inStock === "boolean" ? product.inStock && baseStock > 0 : baseStock > 0;
+  const inStock =
+    typeof product?.inStock === "boolean"
+      ? product.inStock && baseStock > 0
+      : baseStock > 0;
+
   const isDisabled = isAdding || !inStock;
 
   const displayName = useMemo(() => {
@@ -44,8 +46,11 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
   }, [language, product]);
 
   function getErrorMessage(message) {
-    if (/insufficient stock/i.test(message)) return t("productCard.errors.insufficientStock");
-    return message;
+    if (/insufficient stock/i.test(message)) {
+      return t("productCard.errors.notEnoughStockToAdd");
+    }
+
+    return t("productCard.errors.unknown");
   }
 
   async function handleAddToCart() {
@@ -79,104 +84,125 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
   const productId = product?.productId || product?.id;
 
   return (
-    <div className="group relative">
-      {/* Media */}
-      <div className="relative mb-4 aspect-[4/5] overflow-hidden rounded-2xl bg-pb-surface border border-pb-border">
-        {/* Click in image opens detail */}
-        <Link to={`/products/${productId}`} className="absolute inset-0 z-10" aria-label={displayName || product?.name} />
+    <article
+      className={[
+        "group relative",
+        "rounded-3xl bg-white",
+        "border border-pb-border/60",
+        "shadow-md hover:shadow-xl",
+        "transition-shadow duration-200",
+        "overflow-hidden",
+      ].join(" ")}
+    >
+      {/* Media area */}
+      <div className="relative p-4">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-pb-surface">
+          <Link
+            to={`/products/${productId}`}
+            className="absolute inset-0 z-10"
+            aria-label={displayName || product?.name}
+          />
 
-        <img
-          src={imgUrl}
-          alt={displayName || product?.name || "Product"}
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-          loading="lazy"
-          onError={(e) => {
-            // si la URL falla, baja opacidad (para depurar rápido)
-            e.currentTarget.style.opacity = "0.35";
-          }}
-        />
+          <img
+            src={imgUrl}
+            alt={displayName || product?.name || "Product"}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.style.opacity = "0.35";
+            }}
+          />
 
-        {/* Badge */}
-        <div className="absolute left-4 top-4 z-20">
-          {inStock ? (
-            <span className="rounded-full bg-pb-primary px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-white">
-              {t("productCard.stock.available")}
-            </span>
-          ) : (
-            <span className="rounded-full bg-slate-200 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-slate-500 border border-slate-300">
-              {t("productCard.stock.out")}
-            </span>
+          {/* Stock badge */}
+          <div className="absolute left-3 top-3 z-20">
+            {inStock ? (
+              <span className="rounded-full bg-pb-primary px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-white">
+                {t("productCard.stock.available")}
+              </span>
+            ) : (
+              <span className="rounded-full bg-slate-200 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-slate-500 border border-slate-300">
+                {t("productCard.stock.out")}
+              </span>
+            )}
+          </div>
+
+          {/* Favorite */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+
+              if (typeof onToggleFavorite === "function") {
+                onToggleFavorite(product.id);
+                return;
+              }
+
+              setLocalFav((v) => !v);
+            }}
+            className="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-md text-pb-text shadow-sm hover:bg-pb-primary hover:text-white transition-colors"
+            aria-label={t("productCard.favorite")}
+            aria-pressed={fav}
+            title={t("productCard.favorite")}
+          >
+            <span className="text-lg">{fav ? "♥" : "♡"}</span>
+          </button>
+
+          {/* Quick add (only when in stock and no error visible) */}
+          {inStock && !addError && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                handleAddToCart();
+              }}
+              disabled={isDisabled}
+              className={[
+                "absolute bottom-3 left-3 right-3 z-20 flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold",
+                "shadow-md",
+                "opacity-0 translate-y-2 transition-all duration-200",
+                "group-hover:opacity-100 group-hover:translate-y-0",
+                "bg-pb-primary text-white hover:bg-pb-primary-hover",
+              ].join(" ")}
+            >
+              <span className="text-base">🛒</span>
+              {isAdding ? t("productCard.actions.adding") : t("productCard.actions.addToCart")}
+            </button>
+          )}
+
+          {/* Inline floating error */}
+          {addError && (
+            <div
+              role="alert"
+              className="absolute bottom-3 left-3 right-3 z-20 rounded-2xl border border-red-200 bg-white/95 px-3 py-2 text-xs font-medium text-red-600 shadow-sm"
+            >
+              {addError}
+            </div>
           )}
         </div>
+      </div>
 
-        {/* Favorite */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
+      {/* Content area */}
+      <div className="px-5 pb-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h3 className="truncate text-lg font-bold text-pb-text group-hover:text-pb-primary transition-colors">
+              <Link to={`/products/${productId}`} className="hover:text-pb-primary">
+                {displayName}
+              </Link>
+            </h3>
 
-            if (typeof onToggleFavorite === "function") {
-              onToggleFavorite(product.id);
-              return;
-            }
-
-            setLocalFav((v) => !v);
-          }}
-          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-md text-pb-text shadow-sm hover:bg-pb-primary hover:text-white transition-colors"
-          aria-label={t("productCard.favorite")}
-          aria-pressed={fav}
-          title={t("productCard.favorite")}
-        >
-          <span className="text-lg">{fav ? "♥" : "♡"}</span>
-        </button>
-
-        {/* Quick add */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            handleAddToCart();
-          }}
-          disabled={isDisabled}
-          className={[
-            "absolute bottom-4 left-4 right-4 z-20 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-lg",
-            "opacity-0 translate-y-4 transition-all duration-300",
-            "group-hover:opacity-100 group-hover:translate-y-0",
-            isDisabled ? "bg-slate-200 text-slate-400 cursor-not-allowed" : "bg-pb-primary text-white hover:bg-pb-primary-hover",
-          ].join(" ")}
-        >
-          <span className="text-base">🛒</span>
-          {isAdding ? t("productCard.actions.adding") : inStock ? t("productCard.actions.addToCart") : t("productCard.stock.out")}
-        </button>
-
-        {/* Inline error */}
-        {addError && (
-          <div
-            role="alert"
-            className="absolute bottom-2 left-4 right-4 z-20 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700"
-          >
-            {addError}
+            <p className="mt-1 text-sm text-pb-muted">
+              {product?.category ? `${product.category}` : t("productCard.category.general")}{" "}
+              <span className="opacity-60">/</span>{" "}
+              {inStock ? t("productCard.stock.available") : t("productCard.stock.out")}
+            </p>
           </div>
-        )}
-      </div>
 
-      {/* Content */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h3 className="truncate text-lg font-bold text-pb-text group-hover:text-pb-primary transition-colors">
-            <Link to={`/products/${productId}`} className="hover:text-pb-primary">
-              {displayName}
-            </Link>
-          </h3>
-
-          <p className="mt-1 text-sm text-pb-muted">
-            {product?.category ? `${product.category}` : t("productCard.category.general")} <span className="opacity-60">/</span>{" "}
-            {inStock ? t("productCard.stock.available") : t("productCard.stock.out")}
-          </p>
+          <span className="shrink-0 text-xl font-bold text-pb-primary">
+            ${formatMoneyUSD(product?.priceUSD)}
+          </span>
         </div>
-
-        <span className="shrink-0 text-xl font-bold text-pb-primary">${formatMoneyUSD(product?.priceUSD)}</span>
       </div>
-    </div>
+    </article>
   );
 }

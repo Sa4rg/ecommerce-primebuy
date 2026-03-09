@@ -15,7 +15,7 @@ function createSendgridEmailSender() {
     const msg = {
       to,
       from: SENDGRID_FROM_EMAIL,
-      subject: 'Your ElectroVar password reset code',
+      subject: 'Your Prime Buy password reset code',
       text: `Your password reset code is: ${code}\n\nThis code expires soon.`,
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.5">

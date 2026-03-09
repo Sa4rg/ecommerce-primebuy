@@ -13,8 +13,10 @@ const app = express();
 // Disable X-Powered-By
 app.disable('x-powered-by');
 
-// Basic security headers
-app.use(helmet());
+// Basic security headers (relax CSP for development/demo)
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for now (allows API connections through tunnel)
+}));
 
 // Request logging
 app.use(requestLogger);
@@ -39,7 +41,9 @@ const cookieParser = require("cookie-parser");
 
 // CORS configuration based on environment
 const corsOrigin =
-  NODE_ENV === "production" ? FRONTEND_ORIGIN : "http://localhost:5173";
+  NODE_ENV === "production" 
+    ? FRONTEND_ORIGIN 
+    : ["http://localhost:5173", "https://uniocular-tensibly-aura.ngrok-free.dev"];
 
 // ✅ IMPORTANTE: credentials: true para que el browser envíe cookies
 app.use(
@@ -53,8 +57,12 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Serve frontend build (for production/demo)
+const frontendDistPath = path.join(__dirname, '../../web/dist');
+app.use(express.static(frontendDistPath));
+
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
 
@@ -80,6 +88,16 @@ app.get('/ready', async (req, res) => {
 
 // Apply rate limiting only to API routes
 app.use('/api', limiter, require('./routes/index'));
+
+// SPA fallback: serve frontend for non-API routes
+app.use((req, res, next) => {
+  // Skip if it's an API route or has a file extension
+  if (req.path.startsWith('/api') || req.path.includes('.')) {
+    return next();
+  }
+  const frontendDistPath = path.join(__dirname, '../../web/dist');
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
 
 app.use(require('./middlewares/error.middleware'));
 

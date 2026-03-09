@@ -12,15 +12,26 @@ export function CartItem({ item }) {
   const { t } = useTranslation();
   const { updateQuantity, removeItem } = useCart();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [quantityError, setQuantityError] = useState("");
+
+  function getErrorMessage(message) {
+    if (/insufficient stock/i.test(message)) {
+      return t("cart.item.errors.insufficientStock");
+    }
+
+    return t("cart.item.errors.generic");
+  }
 
   async function changeQuantity(nextQuantity) {
     if (isUpdating) return;
     if (nextQuantity < 1) return;
 
     try {
+      setQuantityError("");
       setIsUpdating(true);
       await updateQuantity({ productId: item.productId, quantity: nextQuantity });
     } catch (error) {
+      setQuantityError(getErrorMessage(String(error?.message || "")));
       console.error("Failed to update quantity:", error);
     } finally {
       setIsUpdating(false);
@@ -75,43 +86,51 @@ export function CartItem({ item }) {
             </div>
           </div>
 
-          <div className="mt-5 flex items-center justify-between gap-4">
-            {/* Qty control */}
-            <div className="inline-flex items-center overflow-hidden rounded-lg border border-pb-border">
+          <div className="mt-5">
+            <div className="flex items-center justify-between gap-4">
+              {/* Qty control */}
+              <div className="inline-flex items-center overflow-hidden rounded-lg border border-pb-border">
+                <button
+                  type="button"
+                  onClick={() => changeQuantity(item.quantity - 1)}
+                  disabled={isUpdating || item.quantity <= 1}
+                  className="px-3 py-2 text-pb-text hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  aria-label={t("cart.item.decrease")}
+                >
+                  −
+                </button>
+
+                <span className="px-4 py-2 text-sm font-semibold text-pb-text">{item.quantity}</span>
+
+                <button
+                  type="button"
+                  onClick={() => changeQuantity(item.quantity + 1)}
+                  disabled={isUpdating}
+                  className="px-3 py-2 text-pb-text hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  aria-label={t("cart.item.increase")}
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Remove */}
               <button
                 type="button"
-                onClick={() => changeQuantity(item.quantity - 1)}
-                disabled={isUpdating || item.quantity <= 1}
-                className="px-3 py-2 text-pb-text hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                aria-label={t("cart.item.decrease")}
-              >
-                −
-              </button>
-
-              <span className="px-4 py-2 text-sm font-semibold text-pb-text">{item.quantity}</span>
-
-              <button
-                type="button"
-                onClick={() => changeQuantity(item.quantity + 1)}
+                onClick={handleRemove}
                 disabled={isUpdating}
-                className="px-3 py-2 text-pb-text hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                aria-label={t("cart.item.increase")}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-pb-text-secondary hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                aria-label={t("cart.item.removeAria", { name: item.name })}
               >
-                +
+                <span className="text-base">🗑️</span>
+                {t("cart.item.remove")}
               </button>
             </div>
 
-            {/* Remove */}
-            <button
-              type="button"
-              onClick={handleRemove}
-              disabled={isUpdating}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-pb-text-secondary hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              aria-label={t("cart.item.removeAria", { name: item.name })}
-            >
-              <span className="text-base">🗑️</span>
-              {t("cart.item.remove")}
-            </button>
+            {quantityError && (
+              <div className="mt-3 max-w-md rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {quantityError}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -32,7 +32,7 @@ const EMAIL_TEMPLATES = {
         <p>Estamos verificando tu pago. Te notificaremos cuando tu orden sea confirmada.</p>
         <p style="color: #6b7280; font-size: 14px;">Tiempo estimado de verificación: 1-24 horas hábiles.</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
-        <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de ElectroVar. No respondas a este mensaje.</p>
+        <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de Prime Buy. No respondas a este mensaje.</p>
       </div>
     `,
   },
@@ -58,7 +58,7 @@ const EMAIL_TEMPLATES = {
         </table>
         <p style="margin-top: 16px;">Próximo paso: Tu pedido será procesado y preparado para envío.</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
-        <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de ElectroVar.</p>
+        <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de Prime Buy. No respondas a este mensaje.</p>
       </div>
     `,
   },
@@ -74,7 +74,7 @@ const EMAIL_TEMPLATES = {
         </div>
         <p>Te notificaremos cuando tu pedido sea enviado.</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
-        <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de ElectroVar.</p>
+        <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de Prime Buy. No respondas a este mensaje.</p>
       </div>
     `,
   },
@@ -95,7 +95,7 @@ const EMAIL_TEMPLATES = {
         ${data.shippingAddress?.city || ''}, ${data.shippingAddress?.state || ''}<br>
         ${data.shippingAddress?.recipientName || ''} - ${data.shippingAddress?.phone || ''}</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
-        <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de ElectroVar.</p>
+        <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de Prime Buy. No respondas a este mensaje.</p>
       </div>
     `,
   },
@@ -112,7 +112,7 @@ const EMAIL_TEMPLATES = {
         <p>Esperamos que disfrutes tu compra. ¡Gracias por elegirnos!</p>
         <p style="margin-top: 16px;">Si tienes alguna pregunta o problema con tu pedido, no dudes en contactarnos.</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
-        <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de ElectroVar.</p>
+        <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de Prime Buy. No respondas a este mensaje.</p>
       </div>
     `,
   },
@@ -129,7 +129,7 @@ const EMAIL_TEMPLATES = {
         </div>
         <p>Si tienes alguna pregunta, por favor contáctanos.</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
-        <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de ElectroVar.</p>
+        <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de Prime Buy. No respondas a este mensaje.</p>
       </div>
     `,
   },

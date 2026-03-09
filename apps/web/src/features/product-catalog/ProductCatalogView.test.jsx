@@ -33,6 +33,7 @@ vi.mock("../../shared/components/ProductCard.jsx", () => ({
 }));
 
 function makeProducts(count) {
+  const categories = ["Camaras", "Relojes", "Juguetes Sexuales", "Accesorios LED", "Accesorios de Vehiculos"];
   return Array.from({ length: count }, (_, i) => {
     const n = i + 1;
     return {
@@ -41,7 +42,7 @@ function makeProducts(count) {
       priceUSD: n * 10, // 10, 20, 30...
       stock: 5,
       inStock: true,
-      category: n % 2 === 0 ? "Watches" : "Security Cameras",
+      category: categories[i % categories.length],
     };
   });
 }
@@ -68,21 +69,55 @@ describe("ProductCatalogView", () => {
     expect(screen.queryByPlaceholderText(/search gadgets/i)).not.toBeInTheDocument();
   });
 
-  it("shows only All, Watches, Security Cameras categories", async () => {
+  it("shows the new product categories", async () => {
     const { fetchProducts } = await import("../../api/products");
-    fetchProducts.mockResolvedValueOnce(makeProducts(4));
+    fetchProducts.mockResolvedValueOnce(makeProducts(10));
 
     renderWithProviders(<ProductCatalogView />, { route: "/" });
 
     expect(await screen.findByRole("button", { name: /todos/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /cámaras/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /relojes/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /cámaras de seguridad/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /juguetes para adultos|adult toys/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /accesorios led/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /accesorios de vehículos/i })).toBeInTheDocument();
 
     // Old categories should not be present
-    expect(screen.queryByRole("button", { name: /photography/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /audio/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /wearables/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /home office/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /security cameras/i })).not.toBeInTheDocument();
+  });
+
+  it("filters products when clicking a category", async () => {
+    const user = userEvent.setup();
+    const { fetchProducts } = await import("../../api/products");
+    // Products: p-1 Camaras, p-2 Relojes, p-3 Juguetes Sexuales, p-4 Accesorios LED, p-5 Accesorios de Vehiculos, p-6 Camaras, p-7 Relojes...
+    fetchProducts.mockResolvedValueOnce(makeProducts(10));
+
+    renderWithProviders(<ProductCatalogView />, { route: "/" });
+
+    expect(await screen.findByText("Product 1")).toBeInTheDocument();
+
+    // Click Relojes category
+    await user.click(screen.getByRole("button", { name: /relojes/i }));
+
+    // Should show only Relojes products (p-2, p-7)
+    expect(screen.getByText("Product 2")).toBeInTheDocument();
+    expect(screen.getByText("Product 7")).toBeInTheDocument();
+    // Should not show other categories
+    expect(screen.queryByText("Product 1")).not.toBeInTheDocument();
+    expect(screen.queryByText("Product 3")).not.toBeInTheDocument();
+  });
+
+  it("reads category from URL query param on load", async () => {
+    const { fetchProducts } = await import("../../api/products");
+    fetchProducts.mockResolvedValueOnce(makeProducts(10));
+
+    // Navigate with ?category=cameras
+    renderWithProviders(<ProductCatalogView />, { route: "/products?category=cameras" });
+
+    // Should auto-filter to Camaras (p-1, p-6)
+    expect(await screen.findByText("Product 1")).toBeInTheDocument();
+    expect(screen.getByText("Product 6")).toBeInTheDocument();
+    expect(screen.queryByText("Product 2")).not.toBeInTheDocument();
   });
 
   it("filters products by price range inputs", async () => {
@@ -97,8 +132,8 @@ describe("ProductCatalogView", () => {
     expect(screen.getByText("Product 9")).toBeInTheDocument();
     expect(screen.queryByText("Product 10")).not.toBeInTheDocument();
 
-    const minInput = screen.getByLabelText(/min price/i);
-    const maxInput = screen.getByLabelText(/max price/i);
+    const minInput = screen.getByLabelText(/min price|precio m[íi]n/i);
+    const maxInput = screen.getByLabelText(/max price|precio m[áa]x/i);
 
     await user.clear(minInput);
     await user.type(minInput, "30");
@@ -167,20 +202,20 @@ describe("ProductCatalogView", () => {
   it("updates the page title based on selected category", async () => {
     const user = userEvent.setup();
     const { fetchProducts } = await import("../../api/products");
-    fetchProducts.mockResolvedValueOnce(makeProducts(4));
+    fetchProducts.mockResolvedValueOnce(makeProducts(8));
 
     renderWithProviders(<ProductCatalogView />, { route: "/" });
 
     // Default title should be section name (Electronics in ES)
     expect(await screen.findByRole("heading", { name: /electrónica/i })).toBeInTheDocument();
 
-    // Select Watches -> title changes
+    // Select Relojes -> title changes
     await user.click(screen.getByRole("button", { name: /relojes/i }));
     expect(screen.getByRole("heading", { name: /relojes/i })).toBeInTheDocument();
 
-    // Select Security Cameras -> title changes
-    await user.click(screen.getByRole("button", { name: /cámaras de seguridad/i }));
-    expect(screen.getByRole("heading", { name: /cámaras de seguridad/i })).toBeInTheDocument();
+    // Select Cámaras -> title changes
+    await user.click(screen.getByRole("button", { name: /cámaras/i }));
+    expect(screen.getByRole("heading", { name: /cámaras/i })).toBeInTheDocument();
   });
 
   it("persists favorites to localStorage and restores them on remount", async () => {

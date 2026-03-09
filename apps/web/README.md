@@ -1,6 +1,6 @@
-# 🛒 ElectroVar — E-Commerce Platform
+# 🛒 Prime Buy — E-Commerce Platform
 
-ElectroVar is a modern full-stack e-commerce platform built for real production usage.
+Prime Buy is a modern full-stack e-commerce platform built for real production usage.
 
 The system supports customer shopping flows, checkout, payment processing, and administrative product and payment management.
 

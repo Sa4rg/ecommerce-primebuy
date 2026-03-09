@@ -5,6 +5,7 @@ import { useCart } from "../../context/CartContext.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useTranslation } from "../i18n/useTranslation.js";
 import PrimeBuyLogo from "../../assets/primebuy-logo-whitefont.png";
+import { PRODUCT_CATEGORIES } from "../constants/productCategories.js";
 
 function cx(...xs) {
   return xs.filter(Boolean).join(" ");
@@ -224,6 +225,21 @@ function MobileMenu({ isOpen, onClose, isAuthenticated, role, onLogout, t, navig
             {t("navbar.cart")}
           </Link>
 
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              setTimeout(() => {
+                const el = document.getElementById("contact");
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 100);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-pb-text hover:bg-pb-bg-subtle text-left"
+          >
+            <span className="material-symbols-outlined text-pb-muted">mail</span>
+            {t("navbar.contact")}
+          </button>
+
           {isAuthenticated ? (
             <>
               <Link
@@ -297,11 +313,42 @@ function MobileMenu({ isOpen, onClose, isAuthenticated, role, onLogout, t, navig
   );
 }
 
+function HomeCategorySubnav({ t }) {
+  const items = PRODUCT_CATEGORIES.filter((c) => c.slug !== "all");
+
+  return (
+    <div className="border-t border-pb-border-light bg-white/70 backdrop-blur-md">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <nav
+          aria-label="Home categories"
+          className="flex items-center justify-center gap-6 py-3 overflow-x-auto md:overflow-visible"
+        >
+          {items.map((c) => (
+            <Link
+              key={c.slug}
+              to={`/products?category=${encodeURIComponent(c.slug)}`}
+              className={[
+                "shrink-0",
+                "text-[11px] font-bold uppercase tracking-[0.22em]",
+                "text-pb-muted hover:text-pb-primary",
+                "transition-colors",
+                "focus:outline-none focus:ring-2 focus:ring-pb-primary/30 rounded",
+              ].join(" ")}
+            >
+              {t(c.tKey)}
+            </Link>
+          ))}
+        </nav>
+      </div>
+    </div>
+  );
+}
+
 export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, role, logout } = useAuth();
-  const { startNewCart } = useCart();
+  const { startNewCart, initializeCart, status, cart } = useCart();
   const { t, language, setLanguage } = useTranslation();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -334,7 +381,7 @@ export function Navbar() {
           if (next) p.set("q", next);
           else p.delete("q");
           return p;
-        });
+        }, { replace: true });
       }
     }, 250);
 
@@ -344,6 +391,12 @@ export function Navbar() {
   function onSubmitSearch(e) {
     e.preventDefault();
   }
+
+  useEffect(() => {
+    if (status === "idle" && !cart) {
+      initializeCart();
+    }
+  }, [status, cart, initializeCart]);
 
   return (
     <>
@@ -413,6 +466,19 @@ export function Navbar() {
 
               <CartBadge label={t("navbar.cart")} />
 
+              {/* Contact button */}
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById("contact");
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="hidden md:inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-pb-text hover:text-pb-primary transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-lg">mail</span>
+                <span>{t("navbar.contact")}</span>
+              </button>
+
               <div className="hidden md:block">
                 <UserMenu
                   isAuthenticated={isAuthenticated}
@@ -463,6 +529,8 @@ export function Navbar() {
           )}
         </div>
       </header>
+
+      {location.pathname === "/" && <HomeCategorySubnav t={t} />}
 
       <MobileMenu
         isOpen={mobileMenuOpen}

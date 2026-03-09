@@ -36,11 +36,19 @@ export function CartView() {
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-pb-text-secondary mb-8">
+      <nav className="mb-8 flex items-center gap-2 text-sm text-pb-text-secondary">
         <Link className="hover:text-orange-400 transition-colors" to="/">
           {t("cart.breadcrumb.home")}
         </Link>
+
         <span className="opacity-50">/</span>
+
+        <Link className="hover:text-orange-400 transition-colors" to="/products">
+          {t("cart.breadcrumb.catalog")}
+        </Link>
+
+        <span className="opacity-50">/</span>
+
         <span className="text-pb-text font-medium">{t("cart.breadcrumb.cart")}</span>
       </nav>
 
@@ -54,7 +62,7 @@ export function CartView() {
         </div>
 
         <Link
-          to="/"
+          to="/products"
           className="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-pb-text-secondary hover:text-orange-400 transition-colors"
         >
           ← {t("cart.continueShopping")}
@@ -101,7 +109,7 @@ export function CartView() {
             <div className="rounded-xl border border-pb-border bg-white shadow-sm p-6">
               <p className="text-pb-text-secondary">{t("cart.empty.title")}</p>
               <Link
-                to="/"
+                to="/products"
                 className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-orange-400 hover:text-orange-300 transition-colors"
               >
                 {t("cart.empty.cta")}
@@ -112,10 +120,7 @@ export function CartView() {
           )}
 
           <div className="pt-2">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-sm font-medium text-pb-text-secondary hover:text-orange-400 transition-colors"
-            >
+            <Link to="/products" className="inline-flex sm:hidden items-center ...">
               ← {t("cart.continueShopping")}
             </Link>
           </div>

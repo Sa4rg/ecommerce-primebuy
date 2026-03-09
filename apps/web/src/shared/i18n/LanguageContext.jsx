@@ -3,7 +3,7 @@ import { translations } from "./translations.js";
 
 const LanguageContext = createContext();
 
-const STORAGE_KEY = "electrovar:lang";
+const STORAGE_KEY = "primebuy:lang";
 
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState(() => {

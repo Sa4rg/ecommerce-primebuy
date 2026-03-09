@@ -228,4 +228,21 @@ describe("ProductCard (with CartProvider)", () => {
     });
   });
 
+  it("does not scale the product image on hover (no zoom effect)", () => {
+  const product = {
+    id: "p-1",
+    name: "Test Product",
+    priceUSD: 10,
+    stock: 5,
+    category: "Test",
+    inStock: true,
+    imageUrl: "https://example.com/img.jpg",
+  };
+
+  renderWithProviders(<ProductCard product={product} />, { route: "/" });
+
+  const img = screen.getByRole("img", { name: /test product/i });
+  expect(img.className).not.toMatch(/group-hover:scale-/i);
+});
+
 });

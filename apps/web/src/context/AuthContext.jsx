@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { getAccessToken, setAccessToken, clearAccessToken } from "../features/auth/authStorage";
 import { login as apiLogin, logout as apiLogout } from "../features/auth/authCommand";
 import { apiClient } from "../infrastructure/apiClient";
+import { API_BASE_URL } from "../config";
 
 function getRoleFromToken(token) {
   if (!token) return null;
@@ -26,8 +27,6 @@ async function fetchMeSafe() {
 }
 
 const AuthContext = createContext(null);
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
 export function AuthProvider({ children }) {
   const [status, setStatus] = useState("checking"); // checking | ready
@@ -54,7 +53,7 @@ export function AuthProvider({ children }) {
 
       // 2) Silent refresh para obtener token
       try {
-        const res = await fetch(`${API_BASE}/api/auth/refresh`, {
+        const res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },

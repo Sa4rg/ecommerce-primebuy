@@ -1,17 +1,12 @@
 ﻿import { useEffect, useMemo, useState, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { fetchProducts } from "../../api/products";
 import { ProductCard } from "../../shared/components/ProductCard.jsx";
 import { useTranslation } from "../../shared/i18n/useTranslation.js";
-
-const CATEGORIES = [
-  { key: "all", tKey: "productCatalog.sidebar.all" },
-  { key: "Watches", tKey: "productCatalog.sidebar.watches" },
-  { key: "Security Cameras", tKey: "productCatalog.sidebar.securityCameras" },
-];
+import { PRODUCT_CATEGORIES, productMatchesCategory } from "../../shared/constants/productCategories.js";
 
 const PAGE_SIZE = 9;
-const FAVORITES_STORAGE_KEY = "electrovar:favorites";
+const FAVORITES_STORAGE_KEY = "primebuy:favorites";
 
 function sortProducts(list, sortKey) {
   const arr = [...list];
@@ -29,15 +24,20 @@ function clampNumber(value, fallback) {
 
 export function ProductCatalogView() {
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [products, setProducts] = useState([]);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
 
+  // Read initial values from URL
   const [q, setQ] = useState(searchParams.get("q") || "");
   const [sort, setSort] = useState("newest");
-  const [category, setCategory] = useState("all");
+  const [category, setCategory] = useState(() => {
+    const urlCategory = searchParams.get("category");
+    const validSlugs = PRODUCT_CATEGORIES.map((c) => c.slug);
+    return urlCategory && validSlugs.includes(urlCategory) ? urlCategory : "all";
+  });
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
@@ -97,8 +97,9 @@ export function ProductCatalogView() {
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     let list = products;
+    // Filter by category using normalized matching
     if (category !== "all") {
-      list = list.filter((p) => String(p.category || "").toLowerCase().includes(category.toLowerCase()));
+      list = list.filter((p) => productMatchesCategory(p, category));
     }
     if (query) {
       list = list.filter((p) => {
@@ -116,6 +117,19 @@ export function ProductCatalogView() {
     }
     return sortProducts(list, sort);
   }, [products, q, sort, category, minPrice, maxPrice, favoritesOnly, favoriteIds]);
+
+  // Sync category to URL when it changes
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (category && category !== "all") {
+        next.set("category", category);
+      } else {
+        next.delete("category");
+      }
+      return next;
+    }, { replace: true });
+  }, [category, setSearchParams]);
 
   useEffect(() => { setPage(1); }, [category, sort, minPrice, maxPrice, favoritesOnly, q]);
 
@@ -135,18 +149,19 @@ export function ProductCatalogView() {
     setPage(clamped);
   }
 
-  const pageTitle =
-    category === "all"
-      ? t("productCatalog.header.titleElectronics")
-      : category === "Watches"
-        ? t("productCatalog.sidebar.watches")
-        : t("productCatalog.sidebar.securityCameras");
+  // Get page title from selected category
+  const selectedCat = PRODUCT_CATEGORIES.find((c) => c.slug === category);
+  const pageTitle = category === "all"
+    ? t("productCatalog.header.titleElectronics")
+    : t(selectedCat?.tKey || "productCatalog.header.titleElectronics");
 
   return (
     <section className="mx-auto max-w-[1440px]">
       {/* Breadcrumbs */}
       <nav className="mb-8 flex items-center gap-2 text-sm text-pb-muted">
-        <span className="hover:text-pb-primary cursor-pointer">{t("productCatalog.breadcrumbs.home")}</span>
+        <Link to="/" className="hover:text-pb-primary cursor-pointer">
+          {t("productCatalog.breadcrumbs.home")}
+        </Link>
         <span className="opacity-50">›</span>
         <span className="text-pb-text">{t("productCatalog.breadcrumbs.electronics")}</span>
       </nav>
@@ -161,14 +176,14 @@ export function ProductCatalogView() {
             </h3>
 
             <ul className="space-y-3">
-              {CATEGORIES.map((c) => (
-                <li key={c.key}>
+              {PRODUCT_CATEGORIES.map((c) => (
+                <li key={c.slug}>
                   <button
                     type="button"
-                    onClick={() => setCategory(c.key)}
+                    onClick={() => setCategory(c.slug)}
                     className={[
                       "w-full flex items-center justify-between rounded-xl px-4 py-3 text-left transition-colors border",
-                      category === c.key
+                      category === c.slug
                         ? "bg-pb-primary/10 text-pb-primary border-pb-primary/30"
                         : "bg-pb-bg-subtle text-pb-text border-pb-border hover:bg-pb-surface hover:border-pb-primary/20",
                     ].join(" ")}
@@ -177,16 +192,14 @@ export function ProductCatalogView() {
                     <span
                       className={[
                         "text-xs rounded-full px-2.5 py-0.5 font-bold",
-                        category === c.key
+                        category === c.slug
                           ? "bg-pb-primary/20 text-pb-primary"
                           : "bg-pb-border/50 text-pb-muted",
                       ].join(" ")}
                     >
-                      {c.key === "all"
+                      {c.slug === "all"
                         ? totalCount
-                        : products.filter((p) =>
-                            String(p.category || "").toLowerCase().includes(c.key.toLowerCase())
-                          ).length}
+                        : products.filter((p) => productMatchesCategory(p, c.slug)).length}
                     </span>
                   </button>
                 </li>

@@ -6,6 +6,14 @@ import { Footer } from "../components/Footer.jsx";
 export function AppLayout() {
   const location = useLocation();
 
+  // Scroll to top when navigating to a new page (no hash)
+  useEffect(() => {
+    if (!location.hash) {
+      window.scrollTo(0, 0);
+    }
+  }, [location.pathname]);
+
+  // Scroll to anchor if hash is present
   useEffect(() => {
     if (!location.hash) return;
     const el = document.querySelector(location.hash);

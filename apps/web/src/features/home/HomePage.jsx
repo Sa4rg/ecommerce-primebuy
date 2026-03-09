@@ -7,6 +7,7 @@ export function HomePage() {
 
   return (
     <main className="bg-pb-bg">
+
       {/* Hero Section */}
       <section className="relative py-4 md:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -79,7 +80,7 @@ export function HomePage() {
             <span className="material-symbols-outlined text-pb-primary text-2xl group-hover:scale-110 transition-transform duration-300">verified</span>
             <div>
               <h4 className="font-bold text-sm text-pb-text">
-                {language === "en" ? "2-Year Warranty" : "Garantía de 2 Años"}
+                {language === "en" ? "4 months Warranty per fabric defects" : "Garantía de 4 meses por defectos de fabricación"}
               </h4>
               <p className="text-xs text-pb-text-secondary mt-1">
                 {language === "en" 

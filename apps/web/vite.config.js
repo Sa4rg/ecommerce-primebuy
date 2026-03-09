@@ -7,6 +7,7 @@ export default defineConfig({
     proxy: {
       "/api": "http://localhost:3000",
     },
+    allowedHosts: ["uniocular-tensibly-aura.ngrok-free.dev"],
   },
   test: {
     environment: "jsdom",
