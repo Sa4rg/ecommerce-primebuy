@@ -7,6 +7,7 @@ import { clearAllPaymentsForCheckouts } from "../paymentStorage";
 import { useCart } from "../../../context/CartContext.jsx";
 import { getCheckoutById } from "../../checkout/checkoutQuery";
 import { useTranslation } from "../../../shared/i18n/useTranslation.js";
+import { formatShortId } from "../../../shared/utils/formatId.js";
 
 function unwrapApiResponse(res) {
   return res?.data?.data ?? res?.data ?? res;
@@ -119,7 +120,7 @@ export function PaymentStatusPage() {
 
       await startNewCart();
     } catch {}
-    nav("/", { replace: true });
+    nav("/products", { replace: true });
   }
 
   async function onSubmitProof() {
@@ -197,7 +198,9 @@ export function PaymentStatusPage() {
 
   if (!payment) return <p className="p-8 text-pb-text-secondary">{err || t("payment.loading")}</p>;
 
-  const orderIdText = payment.orderId ? `#${payment.orderId}` : `#${payment.checkoutId || "—"}`;
+  const orderIdText = payment.orderId
+    ? `#${formatShortId(payment.orderId)}`
+    : `#${formatShortId(payment.checkoutId) || "—"}`;
 
   return (
     <section className="min-h-screen text-pb-text">
@@ -206,21 +209,31 @@ export function PaymentStatusPage() {
           {/* Main */}
           <div className="flex-1 space-y-8">
             {/* Breadcrumb / Back */}
-            <div className="flex items-center gap-2 text-sm text-pb-text-secondary">
-              <Link className="hover:text-orange-400 transition-colors" to="/cart">
-                {t("payment.breadcrumb.cart")}
-              </Link>
-              <span className="text-slate-400">›</span>
-              {payment?.checkoutId && status === "pending" ? (
-                <Link
-                  className="flex items-center gap-1 hover:text-orange-400 transition-colors"
-                  to={`/checkout/${payment.checkoutId}`}
-                >
-                  ← {t("payment.breadcrumb.backToCheckout")}
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-2 text-sm text-pb-text-secondary">
+                <Link className="hover:text-orange-400 transition-colors" to="/account">
+                  {t("payment.breadcrumb.account")}
                 </Link>
-              ) : (
-                <span className="text-slate-400">{t("payment.breadcrumb.checkoutLocked")}</span>
-              )}
+                <span className="text-slate-400">/</span>
+                {payment?.checkoutId && status === "pending" ? (
+                  <Link
+                    className="flex items-center gap-1 hover:text-orange-400 transition-colors"
+                    to={`/checkout/${payment.checkoutId}`}
+                  >
+                    {t("payment.breadcrumb.backToCheckout")}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-pb-text">{t("payment.title")}</span>
+                )}
+              </div>
+
+              <Link
+                to="/account"
+                className="inline-flex items-center gap-2 text-sm font-bold text-orange-400 hover:underline"
+              >
+                <span aria-hidden>←</span>
+                {t("payment.breadcrumb.backToPayments")}
+              </Link>
             </div>
 
             <div className="space-y-2">
@@ -401,33 +414,44 @@ export function PaymentStatusPage() {
               )}
 
               {status === "submitted" && (
-                <div className="space-y-3">
+                <div className="space-y-6">
                   <p className="text-pb-text-secondary">{t("payment.submitted.message")}</p>
-                  <button
-                    type="button"
-                    onClick={continueShopping}
-                    className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-100"
-                  >
-                    {t("payment.actions.continueShopping")}
-                  </button>
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={continueShopping}
+                      className="px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-pb-text font-semibold transition-colors"
+                    >
+                      {t("payment.actions.continueShopping")}
+                    </button>
+                  </div>
                 </div>
               )}
 
               {status === "confirmed" && (
-                <div className="space-y-3">
-                  <p className="text-green-600 font-semibold">{t("payment.confirmed.message")}</p>
-                  {payment.orderId && (
-                    <Link className="text-orange-400 hover:underline" to={`/orders/${payment.orderId}`}>
-                      {t("payment.confirmed.viewOrder")}
-                    </Link>
-                  )}
-                  <button
-                    type="button"
-                    onClick={continueShopping}
-                    className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-100"
-                  >
-                    {t("payment.actions.continueShopping")}
-                  </button>
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">✅</span>
+                    <p className="text-green-600 text-lg font-semibold">{t("payment.confirmed.message")}</p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                    {payment.orderId && (
+                      <Link
+                        to={`/orders/${payment.orderId}`}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold transition-colors"
+                      >
+                        {t("payment.confirmed.viewOrder")}
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      onClick={continueShopping}
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-pb-border bg-white hover:bg-slate-50 text-pb-text font-semibold transition-colors"
+                    >
+                      {t("payment.actions.continueShopping")}
+                    </button>
+                  </div>
                 </div>
               )}
 

@@ -24,6 +24,8 @@ function renderWithRouter(paymentId = "pay-123") {
             <Routes>
               <Route path="/payment/:paymentId" element={<PaymentStatusPage />} />
               <Route path="/orders/:orderId" element={<div>Order Page</div>} />
+              <Route path="/account" element={<div>Account Page</div>} />
+              <Route path="/products" element={<div>Products Page</div>} />
             </Routes>
           </MemoryRouter>
         </CartProvider>
@@ -71,6 +73,7 @@ function mockFetchError(errorMessage) {
 describe("PaymentStatusPage", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    mockNavigate.mockClear();
   });
 
   afterEach(() => {
@@ -245,5 +248,52 @@ describe("PaymentStatusPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /choose another method|volver al checkout/i }));
 
     expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/^\/checkout\/checkout-789(?:\/payment)?$/));
+  });
+
+  it("shows a back link to account/payments", async () => {
+    mockFetchPayment({
+      paymentId: "pay-123",
+      method: "zelle",
+      amount: 50,
+      currency: "USD",
+      status: "confirmed",
+      orderId: "order-456",
+    });
+
+    renderWithRouter();
+
+    await waitFor(() => {
+      expect(screen.getByText(/payment confirmed|pago confirmado/i)).toBeInTheDocument();
+    });
+
+    // Should have a link back to account
+    const backLink = screen.getByRole("link", { name: /volver a mis pagos|back to my payments/i });
+    expect(backLink).toBeInTheDocument();
+    expect(backLink).toHaveAttribute("href", "/account");
+  });
+
+  it("continue shopping navigates to /products", async () => {
+    mockFetchPayment({
+      paymentId: "pay-123",
+      method: "zelle",
+      amount: 50,
+      currency: "USD",
+      status: "confirmed",
+      orderId: "order-456",
+    });
+
+    renderWithRouter();
+
+    await waitFor(() => {
+      expect(screen.getByText(/payment confirmed|pago confirmado/i)).toBeInTheDocument();
+    });
+
+    const continueBtn = screen.getByRole("button", { name: /continuar comprando|continue shopping/i });
+    fireEvent.click(continueBtn);
+
+    // continueShopping is async (calls startNewCart), so wait for navigation
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/products", expect.any(Object));
+    });
   });
 });

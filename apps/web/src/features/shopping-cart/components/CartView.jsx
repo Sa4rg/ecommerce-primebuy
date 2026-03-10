@@ -34,28 +34,28 @@ export function CartView() {
   const plural = itemsCount === 1 ? "" : "s";
 
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 xs:py-8 sm:py-10">
       {/* Breadcrumb */}
-      <nav className="mb-8 flex items-center gap-2 text-sm text-pb-text-secondary">
+      <nav className="mb-5 xs:mb-6 sm:mb-8 flex items-center gap-2 text-sm text-pb-text-secondary">
         <Link className="hover:text-orange-400 transition-colors" to="/">
           {t("cart.breadcrumb.home")}
         </Link>
 
-        <span className="opacity-50">/</span>
+        <span className="opacity-50">›</span>
 
         <Link className="hover:text-orange-400 transition-colors" to="/products">
           {t("cart.breadcrumb.catalog")}
         </Link>
 
-        <span className="opacity-50">/</span>
+        <span className="opacity-50">›</span>
 
         <span className="text-pb-text font-medium">{t("cart.breadcrumb.cart")}</span>
       </nav>
 
       {/* Title */}
-      <div className="flex items-end justify-between gap-4 mb-10">
+      <div className="flex items-end justify-between gap-4 mb-6 xs:mb-8 sm:mb-10">
         <div>
-          <h1 className="text-3xl font-bold text-pb-text">{t("cart.title")}</h1>
+          <h1 className="text-2xl xs:text-3xl font-bold text-pb-text">{t("cart.title")}</h1>
           <p className="text-pb-text-secondary mt-1">
             {t("cart.itemsCount", { count: String(itemsCount), plural })}
           </p>
@@ -102,7 +102,7 @@ export function CartView() {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-12">
+      <div className="flex flex-col lg:flex-row gap-8 xs:gap-10 lg:gap-12">
         {/* Items list */}
         <div className="flex-grow lg:w-2/3 space-y-6">
           {cart.items.length === 0 ? (
@@ -142,18 +142,6 @@ export function CartView() {
                 <h4 className="text-sm font-bold text-pb-text">{t("cart.summary.shippingInfoTitle")}</h4>
                 <p className="text-xs text-pb-text-secondary mt-1">{t("cart.summary.shippingInfoBody")}</p>
               </div>
-            </div>
-
-            {/* Mobile checkout button */}
-            <div className="mt-6 lg:hidden">
-              <button
-                type="button"
-                onClick={() => navigate("/checkout")}
-                disabled={!isActive || cart.items.length === 0}
-                className="w-full rounded-lg bg-orange-500 px-4 py-3 text-base font-bold text-white hover:bg-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {t("cart.summary.proceedToCheckout")}
-              </button>
             </div>
           </div>
         </div>

@@ -1,4 +1,3 @@
-// web/src/features/checkout/CheckoutView.jsx
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -85,7 +84,6 @@ function RadioCard({ checked, onClick, icon, title }) {
 
 function isCheckoutLockedError(e) {
   const msg = String(e?.message || "");
-  // be pragmatic: backend returns "Checkout is not editable"
   return msg.toLowerCase().includes("checkout is not editable") || msg.includes("409");
 }
 
@@ -100,7 +98,6 @@ export function CheckoutView() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ Last shipping address prefill
   const [savedAddress, setSavedAddress] = useState(null);
   const addressLoadedRef = useRef(false);
 
@@ -117,7 +114,6 @@ export function CheckoutView() {
   const [shippingMethod, setShippingMethod] = useState("pickup");
   const [paymentMethod, setPaymentMethod] = useState("zelle");
 
-  // FX Rate for VES calculations
   const [fxRate, setFxRate] = useState(null);
 
   useEffect(() => {
@@ -125,9 +121,7 @@ export function CheckoutView() {
       .then((data) => {
         if (data) setFxRate(data.rate);
       })
-      .catch(() => {
-        // Silently ignore - FX rate display is optional
-      });
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -149,7 +143,6 @@ export function CheckoutView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartStatus]);
 
-  // ✅ Load last shipping address for authenticated users (once)
   useEffect(() => {
     if (!isAuthenticated || addressLoadedRef.current) return;
     addressLoadedRef.current = true;
@@ -158,30 +151,22 @@ export function CheckoutView() {
       try {
         const res = await accountService.getLastShippingAddress();
         const addr = res?.data ?? res;
-        // Backend returns null if pickup or no address
         if (addr && addr.method && addr.method !== "pickup") {
           setSavedAddress(addr);
         }
-      } catch {
-        // Silently ignore - prefill is optional
-      }
+      } catch {}
     }
 
     loadSavedAddress();
   }, [isAuthenticated]);
 
-  /**
-   * Apply the saved address to form fields
-   */
   function applyLastAddress() {
     if (!savedAddress) return;
 
-    // Set shipping method first (enables address fields)
     if (savedAddress.method) {
       setShippingMethod(savedAddress.method);
     }
 
-    // Prefill address fields
     if (savedAddress.recipientName) setFullName(savedAddress.recipientName);
     if (savedAddress.phone) setPhone(savedAddress.phone);
     if (savedAddress.state) setStateRegion(savedAddress.state);
@@ -189,7 +174,6 @@ export function CheckoutView() {
     if (savedAddress.line1) setStreet(savedAddress.line1);
     if (savedAddress.reference) setReference(savedAddress.reference);
 
-    // Clear the offer after applying
     setSavedAddress(null);
   }
 
@@ -227,23 +211,20 @@ export function CheckoutView() {
     return sub * taxRate;
   }, [subtotalUSD, taxRate, priceIncludesVAT]);
 
-  // Shipping cost based on method
   const shippingCostUSD = useMemo(() => {
     if (shippingMethod === "pickup") return 0;
     if (shippingMethod === "national_shipping") return 5;
-    // local_delivery requires WhatsApp coordination
     return null;
   }, [shippingMethod]);
 
   const isLocalDelivery = shippingMethod === "local_delivery";
+  const needsAddress = shippingMethod !== "pickup";
 
   const totalUSD = useMemo(() => {
     const sub = Number(subtotalUSD) || 0;
     const shipping = shippingCostUSD ?? 0;
     return sub + shipping;
   }, [subtotalUSD, shippingCostUSD]);
-
-  const needsAddress = shippingMethod !== "pickup";
 
   const canContinue = useMemo(() => {
     const nameOk = fullName.trim().length >= 2;
@@ -262,12 +243,16 @@ export function CheckoutView() {
     return true;
   }, [fullName, phone, email, needsAddress, street, city, stateRegion]);
 
+  const continueBlockedMessage = useMemo(() => {
+    if (canContinue || saving || isLocalDelivery) return "";
+    return t("checkout.actions.completeAddressHint");
+  }, [canContinue, saving, isLocalDelivery, t]);
+
   async function recreateCheckoutAndRedirect() {
     if (!cart?.cartId) {
       throw new Error(t("checkout.errors.noCart"));
     }
 
-    // Clean stale linkage for the old checkout
     if (checkoutId) {
       clearPaymentForCheckout(checkoutId);
     }
@@ -318,21 +303,17 @@ export function CheckoutView() {
           : null,
       });
 
-      // ✅ Only reuse a stored payment if it's still valid (pending)
       const existingPaymentId = getPaymentForCheckout(checkoutId);
       if (existingPaymentId) {
         try {
           const existingPayment = await paymentService.getPayment(existingPaymentId);
           const p = existingPayment?.data?.data ?? existingPayment?.data ?? existingPayment;
-          // Reuse only if pending and belongs to this checkout
           if (p?.status === "pending" && p?.checkoutId === checkoutId) {
             navigate(`/payments/${existingPaymentId}`);
             return;
           }
-          // Otherwise clear stale mapping and proceed to create new payment
           clearPaymentForCheckout(checkoutId);
         } catch {
-          // Payment not found or error - clear and create new
           clearPaymentForCheckout(checkoutId);
         }
       }
@@ -352,7 +333,6 @@ export function CheckoutView() {
       savePaymentForCheckout(checkoutId, paymentId);
       navigate(`/payments/${paymentId}`);
     } catch (e) {
-      // ✅ Key fix: if checkout got locked, recover by creating a new checkout
       if (isCheckoutLockedError(e)) {
         try {
           await recreateCheckoutAndRedirect();
@@ -380,9 +360,9 @@ export function CheckoutView() {
   };
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
-        <div className="lg:col-span-7 space-y-10">
+    <main className="mx-auto max-w-7xl px-4 py-6 xs:py-8 sm:py-10 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 gap-8 xs:gap-10 lg:gap-12 lg:grid-cols-12">
+        <div className="lg:col-span-7 space-y-6 xs:space-y-8 sm:space-y-10">
           {error && (
             <div
               role="alert"
@@ -403,7 +383,6 @@ export function CheckoutView() {
               </h2>
             </div>
 
-            {/* ✅ Use last address button */}
             {savedAddress && (
               <div className="mb-6 rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -624,7 +603,6 @@ export function CheckoutView() {
 
                     return (
                       <div key={it.productId} className="flex gap-4">
-                        {/* Product image */}
                         {it.imageUrl ? (
                           <img
                             src={it.imageUrl}
@@ -662,7 +640,6 @@ export function CheckoutView() {
                   <span className="font-medium">{formatUSD(subtotalUSD)}</span>
                 </div>
 
-                {/* Shipping line - only show for national_shipping */}
                 {shippingMethod === "national_shipping" && (
                   <div className="flex justify-between text-pb-text-secondary">
                     <span className="opacity-70">{t("checkout.summary.shipping")}</span>
@@ -670,7 +647,6 @@ export function CheckoutView() {
                   </div>
                 )}
 
-                {/* Local delivery notice */}
                 {isLocalDelivery && (
                   <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
                     <p className="text-xs text-orange-300">
@@ -692,7 +668,6 @@ export function CheckoutView() {
                   </span>
                 </div>
 
-                {/* Equivalencia en VES */}
                 {fxRate && !isLocalDelivery && (
                   <div className="mt-2 text-sm text-pb-text-secondary">
                     <div className="flex justify-between">
@@ -720,17 +695,25 @@ export function CheckoutView() {
                   <span className="text-xl" aria-hidden="true">💬</span>
                 </a>
               ) : (
-                <button
-                  type="button"
-                  disabled={saving || !canContinue}
-                  onClick={onContinue}
-                  className="group mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-4 font-bold text-white transition-all hover:bg-orange-500/90 disabled:opacity-60"
-                >
-                  {saving ? t("checkout.actions.processing") : t("checkout.actions.continueToPayment")}
-                  <span className="material-symbols-outlined transition-transform group-hover:translate-x-1" aria-hidden="true">
-                    arrow_forward
-                  </span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    disabled={saving || !canContinue}
+                    onClick={onContinue}
+                    className="group mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-4 font-bold text-white transition-all hover:bg-orange-500/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {saving ? t("checkout.actions.processing") : t("checkout.actions.continueToPayment")}
+                    <span className="material-symbols-outlined transition-transform group-hover:translate-x-1" aria-hidden="true">
+                      arrow_forward
+                    </span>
+                  </button>
+
+                  {!saving && !canContinue && (
+                    <p className="mt-3 text-center text-xs text-pb-text-secondary">
+                      {t("checkout.actions.completeAddressHint")}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>

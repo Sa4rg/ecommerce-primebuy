@@ -54,7 +54,6 @@ export function OrderSummaryCard({
 
       {/* Totals */}
       <div className="border-t border-pb-border pt-4 space-y-3 text-sm">
-        {/* Subtotal — test depends on this exact text */}
         <div className="flex justify-between">
           <p className="text-pb-text-secondary">
             Subtotal: ${Number(subtotalUSD).toFixed(2)}
@@ -137,10 +136,27 @@ export function OrderSummaryCard({
         </svg>
       </button>
 
-      {disabled && blockedReason && (
-        <p className="mt-3 text-xs text-center text-pb-text-secondary">
-          {blockedReason}
-        </p>
+      {/* Helper message under CTA */}
+      {disabled && (
+        <div className="mt-3 flex items-start justify-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 border border-amber-100">
+          <svg
+            className="mt-0.5 h-4 w-4 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"
+            />
+          </svg>
+
+          <p className="text-center leading-relaxed">
+            {blockedReason || "Completa todos los campos de la dirección para habilitar el pago."}
+          </p>
+        </div>
       )}
 
       {/* Trust badges */}

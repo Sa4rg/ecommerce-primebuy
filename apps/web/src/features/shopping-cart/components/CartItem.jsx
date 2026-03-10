@@ -57,9 +57,9 @@ export function CartItem({ item }) {
 
   return (
     <div className="group rounded-xl border border-pb-border bg-white shadow-sm p-4 sm:p-5">
-      <div className="flex flex-col sm:flex-row gap-6">
-        {/* Image */}
-        <div className="w-full sm:w-40 aspect-square rounded-xl overflow-hidden bg-slate-100 border border-pb-border">
+      <div className="flex flex-col xs:flex-row gap-4 xs:gap-5 sm:gap-6">
+        {/* Image - compact from xs, full only on tiny screens */}
+        <div className="w-full xs:w-24 sm:w-32 md:w-40 aspect-square rounded-xl overflow-hidden bg-slate-100 border border-pb-border flex-shrink-0">
           <img
             src={imgUrl}
             alt={item.name}

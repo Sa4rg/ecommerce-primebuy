@@ -102,6 +102,7 @@ export const translations = {
       actions: {
         processing: "Procesando...",
         continueToPayment: "Continuar con el pago",
+        completeAddressHint: "Completa toda la información de envío para habilitar el pago.",
       },
       delivery: {
         whatsappNotice: "El precio de envío para delivery local se coordina por WhatsApp antes del pago.",
@@ -134,6 +135,8 @@ export const translations = {
         cart: "Carrito",
         backToCheckout: "Volver al checkout",
         checkoutLocked: "Checkout bloqueado",
+        account: "Mi Cuenta",
+        backToPayments: "Volver a mis pagos",
       },
       status: {
         orderId: "ID del Pedido",
@@ -610,6 +613,7 @@ export const translations = {
       actions: {
         addToCart: "Agregar al carrito",
         adding: "Agregando...",
+        added: "Agregado",
       },
       category: {
         general: "General",
@@ -624,7 +628,6 @@ export const translations = {
       breadcrumbs: {
         home: "Home",
         catalog: "Catálogo",
-        electronics: "Electrónica",
       },
       sidebar: {
         categories: "Categorías",
@@ -640,7 +643,7 @@ export const translations = {
         resetPrice: "Resetear precio",
       },
       header: {
-        titleElectronics: "Electrónica",
+        titleCatalog: "Catálogo",
         showing: "Mostrando {showing} de {total} productos",
       },
       controls: {
@@ -984,7 +987,7 @@ export const translations = {
     },
 
     productDetail: {
-      breadcrumbs: { home: "Home", products: "Products" },
+      breadcrumbs: { home: "Home", products: "Catálogo" },
       stock: { available: "Disponible", out: "Sin stock" },
       actions: {
         addToCart: "Agregar al carrito",
@@ -1273,6 +1276,7 @@ export const translations = {
       actions: {
         processing: "Processing...",
         continueToPayment: "Continue to payment",
+        completeAddressHint: "Complete all shipping information to enable payment.",
       },
       delivery: {
         whatsappNotice: "Local delivery price is coordinated via WhatsApp before payment.",
@@ -1305,6 +1309,8 @@ export const translations = {
         cart: "Cart",
         backToCheckout: "Back to checkout",
         checkoutLocked: "Checkout locked",
+        account: "My Account",
+        backToPayments: "Back to my payments",
       },
       status: {
         orderId: "Order ID",
@@ -1775,6 +1781,7 @@ export const translations = {
       actions: {
         addToCart: "Add to cart",
         adding: "Adding...",
+        added: "Added ✓",
       },
       category: {
         general: "General",
@@ -1788,7 +1795,7 @@ export const translations = {
     productCatalog: {
       breadcrumbs: {
         home: "Home",
-        electronics: "Electronics",
+        catalog: "Catalog",
       },
       sidebar: {
         categories: "Categories",
@@ -1804,7 +1811,7 @@ export const translations = {
         resetPrice: "Reset price",
       },
       header: {
-        titleElectronics: "Electronics",
+        titleCatalog: "Catalog",
         showing: "Showing {showing} of {total} products",
       },
       controls: {
@@ -2145,7 +2152,7 @@ export const translations = {
     },
 
     productDetail: {
-      breadcrumbs: { home: "Home", products: "Products" },
+      breadcrumbs: { home: "Home", products: "Catalog" },
       stock: { available: "Available", out: "Out of stock" },
       actions: {
         addToCart: "Add to cart",

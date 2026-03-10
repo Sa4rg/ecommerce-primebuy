@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext.jsx";
 import { useTranslation } from "../i18n/useTranslation.js";
@@ -27,8 +27,11 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
   const { t, language } = useTranslation();
 
   const [isAdding, setIsAdding] = useState(false);
+  const [added, setAdded] = useState(false);
   const [localFav, setLocalFav] = useState(false);
   const [addError, setAddError] = useState("");
+
+  const addedTimerRef = useRef(null);
 
   const fav = typeof isFavorite === "boolean" ? isFavorite : localFav;
 
@@ -45,6 +48,14 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
     return product?.nameEN || product?.name || "";
   }, [language, product]);
 
+  useEffect(() => {
+    return () => {
+      if (addedTimerRef.current) {
+        clearTimeout(addedTimerRef.current);
+      }
+    };
+  }, []);
+
   function getErrorMessage(message) {
     if (/insufficient stock/i.test(message)) {
       return t("productCard.errors.notEnoughStockToAdd");
@@ -58,8 +69,20 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
 
     try {
       setAddError("");
+      setAdded(false);
       setIsAdding(true);
+
       await addItem({ productId: product.id, quantity: 1 });
+
+      setAdded(true);
+
+      if (addedTimerRef.current) {
+        clearTimeout(addedTimerRef.current);
+      }
+
+      addedTimerRef.current = setTimeout(() => {
+        setAdded(false);
+      }, 1200);
     } catch (err) {
       const msg = String(err?.message || t("productCard.errors.unknown"));
       setAddError(getErrorMessage(msg));
@@ -82,6 +105,8 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
   }, [product]);
 
   const productId = product?.productId || product?.id;
+  const showQuickAdd = inStock && !addError;
+  const forceVisibleCta = isAdding || added;
 
   return (
     <article
@@ -94,9 +119,8 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
         "overflow-hidden",
       ].join(" ")}
     >
-      {/* Media area */}
-      <div className="relative p-4">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-pb-surface">
+      <div className="relative p-2.5 xs:p-3 sm:p-4">
+        <div className="relative aspect-[4/4.4] xs:aspect-[4/4.7] sm:aspect-[4/5] overflow-hidden rounded-2xl bg-pb-surface">
           <Link
             to={`/products/${productId}`}
             className="absolute inset-0 z-10"
@@ -113,20 +137,18 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
             }}
           />
 
-          {/* Stock badge */}
-          <div className="absolute left-3 top-3 z-20">
+          <div className="absolute left-2.5 xs:left-3 top-2.5 xs:top-3 z-20">
             {inStock ? (
-              <span className="rounded-full bg-pb-primary px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-white">
+              <span className="rounded-full bg-pb-primary px-2 py-1 text-[9px] xs:text-[10px] font-bold uppercase tracking-tight text-white">
                 {t("productCard.stock.available")}
               </span>
             ) : (
-              <span className="rounded-full bg-slate-200 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-slate-500 border border-slate-300">
+              <span className="rounded-full bg-slate-200 px-2 py-1 text-[9px] xs:text-[10px] font-bold uppercase tracking-tight text-slate-500 border border-slate-300">
                 {t("productCard.stock.out")}
               </span>
             )}
           </div>
 
-          {/* Favorite */}
           <button
             type="button"
             onClick={(e) => {
@@ -139,16 +161,15 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
 
               setLocalFav((v) => !v);
             }}
-            className="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-md text-pb-text shadow-sm hover:bg-pb-primary hover:text-white transition-colors"
+            className="absolute right-2.5 xs:right-3 top-2.5 xs:top-3 z-20 flex h-8 w-8 xs:h-9 xs:w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-md text-pb-text shadow-sm hover:bg-pb-primary hover:text-white transition-colors"
             aria-label={t("productCard.favorite")}
             aria-pressed={fav}
             title={t("productCard.favorite")}
           >
-            <span className="text-lg">{fav ? "♥" : "♡"}</span>
+            <span className="text-sm xs:text-base sm:text-lg">{fav ? "♥" : "♡"}</span>
           </button>
 
-          {/* Quick add (only when in stock and no error visible) */}
-          {inStock && !addError && (
+          {showQuickAdd && (
             <button
               type="button"
               onClick={(e) => {
@@ -157,23 +178,39 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
               }}
               disabled={isDisabled}
               className={[
-                "absolute bottom-3 left-3 right-3 z-20 flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold",
-                "shadow-md",
-                "opacity-0 translate-y-2 transition-all duration-200",
-                "group-hover:opacity-100 group-hover:translate-y-0",
-                "bg-pb-primary text-white hover:bg-pb-primary-hover",
+                "absolute bottom-2.5 xs:bottom-3 left-2.5 xs:left-3 right-2.5 xs:right-3 z-20 flex items-center justify-center gap-1.5 xs:gap-2 rounded-2xl py-2 xs:py-2.5 sm:py-3 text-[11px] xs:text-xs sm:text-sm font-semibold",
+                "shadow-sm border",
+                // Transition only opacity and transform - NOT colors (avoids ghost states on breakpoint change)
+                "transition-[opacity,transform] duration-200",
+                // Mobile/tablet: always visible, light/neutral style
+                "opacity-100 translate-y-0 bg-white/95 backdrop-blur-md border-pb-border text-pb-text",
+                "hover:border-pb-primary hover:text-pb-primary",
+                // Desktop: hidden by default, revealed on hover with primary style
+                "lg:opacity-0 lg:translate-y-2 lg:pointer-events-none",
+                "lg:group-hover:opacity-100 lg:group-hover:translate-y-0 lg:group-hover:pointer-events-auto",
+                "lg:bg-pb-primary lg:border-pb-primary lg:text-white lg:hover:bg-pb-primary-hover lg:hover:border-pb-primary-hover lg:hover:text-white",
+                // Force visible when adding/added (both mobile and desktop)
+                forceVisibleCta ? "lg:opacity-100 lg:translate-y-0 lg:pointer-events-auto" : "",
+                // Added state: green styling with lg: variants to override desktop primary colors
+                added
+                  ? "bg-green-500 border-green-500 text-white hover:bg-green-500 hover:text-white lg:bg-green-500 lg:border-green-500 lg:text-white lg:hover:bg-green-500 lg:hover:text-white"
+                  : "",
+                isAdding ? "pointer-events-none" : "",
               ].join(" ")}
             >
-              <span className="text-base">🛒</span>
-              {isAdding ? t("productCard.actions.adding") : t("productCard.actions.addToCart")}
+              <span className="text-sm xs:text-sm sm:text-base">{added ? "✓" : "🛒"}</span>
+              {isAdding
+                ? t("productCard.actions.adding")
+                : added
+                  ? t("productCard.actions.added")
+                  : t("productCard.actions.addToCart")}
             </button>
           )}
 
-          {/* Inline floating error */}
           {addError && (
             <div
               role="alert"
-              className="absolute bottom-3 left-3 right-3 z-20 rounded-2xl border border-red-200 bg-white/95 px-3 py-2 text-xs font-medium text-red-600 shadow-sm"
+              className="absolute bottom-2.5 xs:bottom-3 left-2.5 xs:left-3 right-2.5 xs:right-3 z-20 rounded-2xl border border-red-200 bg-white/95 px-2.5 xs:px-3 py-2 text-[10px] xs:text-[11px] sm:text-xs font-medium text-red-600 shadow-sm"
             >
               {addError}
             </div>
@@ -181,24 +218,23 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
         </div>
       </div>
 
-      {/* Content area */}
-      <div className="px-5 pb-5">
-        <div className="flex items-start justify-between gap-4">
+      <div className="px-3 xs:px-4 sm:px-5 pb-3 xs:pb-4 sm:pb-5">
+        <div className="flex items-start justify-between gap-2 xs:gap-3 sm:gap-4">
           <div className="min-w-0">
-            <h3 className="truncate text-lg font-bold text-pb-text group-hover:text-pb-primary transition-colors">
+            <h3 className="truncate text-[15px] xs:text-base sm:text-lg font-bold text-pb-text group-hover:text-pb-primary transition-colors">
               <Link to={`/products/${productId}`} className="hover:text-pb-primary">
                 {displayName}
               </Link>
             </h3>
 
-            <p className="mt-1 text-sm text-pb-muted">
+            <p className="mt-1 text-[11px] xs:text-xs sm:text-sm text-pb-muted">
               {product?.category ? `${product.category}` : t("productCard.category.general")}{" "}
               <span className="opacity-60">/</span>{" "}
               {inStock ? t("productCard.stock.available") : t("productCard.stock.out")}
             </p>
           </div>
 
-          <span className="shrink-0 text-xl font-bold text-pb-primary">
+          <span className="shrink-0 text-base xs:text-lg sm:text-xl font-bold text-pb-primary">
             ${formatMoneyUSD(product?.priceUSD)}
           </span>
         </div>

@@ -178,18 +178,20 @@ export function ProductDetailView() {
   return (
     <div className="w-full">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-sm text-slate-400 mb-8">
+      <nav className="flex items-center gap-2 text-sm text-slate-400 mb-5 xs:mb-6 sm:mb-8">
         <Link className="hover:text-orange-400 transition-colors" to="/">
           {t("productDetail.breadcrumbs.home")}
         </Link>
         <span className="opacity-60">›</span>
-        <span className="opacity-80">{t("productDetail.breadcrumbs.products")}</span>
+        <Link className="hover:text-orange-400 transition-colors" to={`/products`}>
+        {t("productDetail.breadcrumbs.products")}
+        </Link>
         <span className="opacity-60">›</span>
         <span className="text-pb-text font-medium truncate">{displayName}</span>
       </nav>
 
       {/* HERO */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-12 mb-16">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 xs:gap-8 lg:gap-10 xl:gap-12 mb-10 xs:mb-12 sm:mb-16">
         {/* Gallery */}
         <div className="flex flex-col md:flex-row gap-4">
           {/* Thumbs */}
@@ -255,7 +257,7 @@ export function ProductDetailView() {
             )}
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-bold text-pb-text mb-4 leading-tight">{displayName}</h1>
+          <h1 className="text-2xl xs:text-3xl md:text-5xl font-bold text-pb-text mb-4 leading-tight">{displayName}</h1>
 
           <div className="mb-6">
             <span className="text-4xl font-bold text-orange-400">{price}</span>
@@ -306,9 +308,9 @@ export function ProductDetailView() {
       </section>
 
       {/* TECH SPECS */}
-      <section className="py-12 border-t border-orange-500/10">
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl md:text-3xl font-bold text-pb-text">{t("productDetail.specs.title")}</h2>
+      <section className="py-8 xs:py-10 sm:py-12 border-t border-orange-500/10">
+        <div className="mb-6 xs:mb-8 flex items-center justify-between">
+          <h2 className="text-xl xs:text-2xl md:text-3xl font-bold text-pb-text">{t("productDetail.specs.title")}</h2>
 
           <button type="button" className="text-orange-400 font-medium hover:underline flex items-center gap-2">
             {t("productDetail.specs.downloadPdf")} <span className="opacity-80">⬇</span>

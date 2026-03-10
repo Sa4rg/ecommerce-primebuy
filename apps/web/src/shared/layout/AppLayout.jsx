@@ -23,7 +23,7 @@ export function AppLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-pb-bg text-pb-text">
       <Navbar />
-      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 xs:py-8 sm:py-10">
         <Outlet />
       </main>
       <Footer />

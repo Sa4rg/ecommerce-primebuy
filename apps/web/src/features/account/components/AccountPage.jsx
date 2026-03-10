@@ -5,6 +5,7 @@ import { accountService } from "../accountService.js";
 import { useCart } from "../../../context/CartContext.jsx";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { useTranslation } from "../../../shared/i18n/useTranslation.js";
+import { formatShortId } from "../../../shared/utils/formatId.js";
 import { WHATSAPP_SUPPORT } from "../../../config.js";
 
 function cx(...classes) {
@@ -200,7 +201,7 @@ export function AccountPage() {
         {/* Actions */}
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Link
-            to="/"
+            to="/products"
             className="inline-flex items-center gap-2 rounded-xl border border-pb-border bg-white px-4 py-2 text-sm font-semibold text-pb-text hover:bg-pb-bg-subtle"
           >
             ← {t("account.actions.backToCatalog")}
@@ -304,7 +305,7 @@ export function AccountPage() {
                     <div>
                       <h3 className="text-lg font-bold text-pb-text">
                         {t("account.orders.card.title")}{" "}
-                        <span className="text-pb-muted">#{String(o.orderId).slice(0, 8)}</span>
+                        <span className="text-pb-muted">#{formatShortId(o.orderId)}</span>
                       </h3>
                       <p className="text-sm text-pb-muted flex items-center gap-1 mt-1">
                         <span className="material-symbols-outlined text-xs">calendar_today</span>
@@ -364,7 +365,6 @@ export function AccountPage() {
           ) : (
             sortedPayments.map((p) => {
               const status = String(p.status || "").toLowerCase();
-              const idShort = String(p.paymentId || "").slice(0, 8);
               const date = p.submittedAt || p.createdAt || null;
 
               const amountText = formatMoney(p.amount, p.currency, language);
@@ -382,7 +382,7 @@ export function AccountPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-mono text-pb-muted">
-                          {t("account.payments.card.id")} {idShort}-xxxx
+                          {t("account.payments.card.id")} #{formatShortId(p.paymentId)}
                         </span>
                         <span className="w-1 h-1 rounded-full bg-pb-border" />
                         <span className="text-xs text-pb-muted">{formatDateTime(date, language)}</span>

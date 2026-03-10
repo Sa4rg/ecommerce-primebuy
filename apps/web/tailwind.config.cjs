@@ -3,8 +3,11 @@ module.exports = {
   content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      screens: {
+        xs: "480px",
+        md2: "900px",
+      },
       colors: {
-        // Theme tokens as Tailwind colors
         pb: {
           bg: "var(--pb-bg)",
           "bg-subtle": "var(--pb-bg-subtle)",

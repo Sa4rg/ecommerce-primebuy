@@ -15,21 +15,21 @@ export function HomePage() {
             {/* Decorative gradient glow */}
             <div className="absolute -inset-1 bg-gradient-to-r from-pb-primary/20 via-transparent to-pb-accent/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
             
-            <div className="relative h-[400px] md:h-[600px] w-full overflow-hidden">
+            <div className="relative h-[300px] xs:h-[360px] sm:h-[400px] md:h-[600px] w-full overflow-hidden">
               <img
                 alt={language === "en" ? "Premium electronics and tech" : "Electrónica y tecnología premium"}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 src={heroCameraImg}
               />
               {/* Overlay with gradient - darkens on hover */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 group-hover:from-black/80 group-hover:via-black/40 transition-all duration-500 flex flex-col items-center justify-center text-center p-6">
-                <h1 className="text-4xl md:text-6xl font-light text-white mb-6 drop-shadow-lg">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 group-hover:from-black/80 group-hover:via-black/40 transition-all duration-500 flex flex-col items-center justify-center text-center p-4 xs:p-6">
+                <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-6xl font-light text-white mb-4 xs:mb-6 drop-shadow-lg">
                   {language === "en" 
                     ? "Premium Tech, Delivered" 
                     : "Tecnología Premium, Entregada"
                   }
                 </h1>
-                <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl">
+                <p className="text-sm xs:text-base sm:text-lg md:text-xl text-white/90 mb-6 xs:mb-8 max-w-2xl">
                   {language === "en"
                     ? "Discover our curated selection of electronics and gadgets"
                     : "Descubre nuestra selección curada de electrónicos y gadgets"
@@ -57,8 +57,8 @@ export function HomePage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 py-10 border-t border-pb-border">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 xs:pb-16 sm:pb-20">
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-4 xs:gap-5 sm:gap-6 py-6 xs:py-8 sm:py-10 border-t border-pb-border">
           {/* Free Shipping */}
           <div className="group flex items-start space-x-4 p-4 rounded-xl hover:bg-pb-surface transition-colors duration-300 cursor-default">
             <span className="material-symbols-outlined text-pb-primary text-2xl group-hover:scale-110 transition-transform duration-300">local_shipping</span>
@@ -132,12 +132,12 @@ export function HomePage() {
       </section>
 
       {/* Featured Categories CTA */}
-      <section className="bg-pb-surface py-16">
+      <section className="bg-pb-surface py-10 xs:py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-pb-text mb-4">
+          <h2 className="text-xl xs:text-2xl md:text-3xl font-bold text-pb-text mb-3 xs:mb-4">
             {language === "en" ? "Ready to explore?" : "¿Listo para explorar?"}
           </h2>
-          <p className="text-pb-text-secondary mb-8 max-w-2xl mx-auto">
+          <p className="text-sm xs:text-base text-pb-text-secondary mb-6 xs:mb-8 max-w-2xl mx-auto">
             {language === "en"
               ? "Browse our complete catalog of premium electronics, gadgets, and accessories."
               : "Explora nuestro catálogo completo de electrónicos premium, gadgets y accesorios."
@@ -145,7 +145,7 @@ export function HomePage() {
           </p>
           <Link
             to="/products"
-            className="inline-flex items-center gap-2 bg-pb-primary hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-pb-primary/30 hover:scale-105"
+            className="inline-flex items-center gap-2 bg-pb-primary hover:bg-orange-600 text-white px-6 xs:px-8 py-2.5 xs:py-3 rounded-lg font-semibold text-sm xs:text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-pb-primary/30 hover:scale-105"
           >
             {language === "en" ? "View All Products" : "Ver Todos los Productos"}
             <span className="material-symbols-outlined text-lg">arrow_forward</span>
