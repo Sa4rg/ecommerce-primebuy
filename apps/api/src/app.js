@@ -3,49 +3,69 @@ const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
+
 const requestLogger = require('./middlewares/request-logger.middleware');
 const { pingDb } = require('./utils/dbHealth');
 const { NODE_ENV, FRONTEND_ORIGIN } = require('./config/env');
 
-
 const app = express();
+const isProduction = NODE_ENV === 'production';
+
+// Trust first proxy in production
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
 
 // Disable X-Powered-By
 app.disable('x-powered-by');
 
-// Basic security headers (relax CSP for development/demo)
-app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP for now (allows API connections through tunnel)
-}));
+// Security headers
+app.use(
+  helmet(
+    isProduction
+      ? {
+          contentSecurityPolicy: {
+            directives: {
+              defaultSrc: ["'self'"],
+              baseUri: ["'self'"],
+              formAction: ["'self'"],
+              frameAncestors: ["'self'"],
+              objectSrc: ["'none'"],
+              scriptSrc: ["'self'"],
+              scriptSrcAttr: ["'none'"],
+              styleSrc: ["'self'", "'unsafe-inline'", 'https:'],
+              imgSrc: ["'self'", 'data:', 'https:'],
+              fontSrc: ["'self'", 'data:', 'https:'],
+              connectSrc: ["'self'", 'https:'],
+              upgradeInsecureRequests: [],
+            },
+          },
+        }
+      : {
+          contentSecurityPolicy: false,
+        }
+  )
+);
 
 // Request logging
 app.use(requestLogger);
 
 // Rate limiter configuration (disabled in test environment)
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: NODE_ENV === 'development' ? 1000 : 100, // Higher limit in dev (StrictMode doubles requests)
-  standardHeaders: true, // Return rate limit info in RateLimit-* headers
-  legacyHeaders: false, // Disable X-RateLimit-* headers
+  windowMs: 15 * 60 * 1000,
+  max: NODE_ENV === 'development' ? 1000 : 100,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: 'Too many requests from this IP, please try again later',
-  skip: () => NODE_ENV === 'test', // Disable rate limiting in tests
+  skip: () => NODE_ENV === 'test',
 });
 
-// Trust proxy in production (for X-Forwarded-* headers)
-//if (NODE_ENV === 'production') {
-//  app.set('trust proxy', 1);
-//}
+// CORS configuration
+const corsOrigin = isProduction
+  ? FRONTEND_ORIGIN
+  : ['http://localhost:5173', 'https://uniocular-tensibly-aura.ngrok-free.dev'];
 
-// CORS configuration based on environment
-const cookieParser = require("cookie-parser");
-
-// CORS configuration based on environment
-const corsOrigin =
-  NODE_ENV === "production" 
-    ? FRONTEND_ORIGIN 
-    : ["http://localhost:5173", "https://uniocular-tensibly-aura.ngrok-free.dev"];
-
-// ✅ IMPORTANTE: credentials: true para que el browser envíe cookies
 app.use(
   cors({
     origin: corsOrigin,
@@ -57,47 +77,28 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve frontend build (for production/demo)
-const frontendDistPath = path.join(__dirname, '../../web/dist');
-app.use(express.static(frontendDistPath));
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(frontendDistPath, 'index.html'));
-});
-
-
 const getUptimeSeconds = () => Math.floor(process.uptime());
 
 app.get('/health', (req, res) => {
   const meta = { uptimeSeconds: getUptimeSeconds() };
-  if (NODE_ENV === 'production') meta.env = 'production';
-  res.json({ status: "ok", ...meta });
+  if (isProduction) meta.env = 'production';
+  res.json({ status: 'ok', ...meta });
 });
-
 
 app.get('/ready', async (req, res) => {
   const dbOk = await pingDb();
   const meta = { uptimeSeconds: getUptimeSeconds() };
-  if (NODE_ENV === 'production') meta.env = 'production';
+  if (isProduction) meta.env = 'production';
+
   if (dbOk) {
-    res.status(200).json({ status: "ok", db: "ok", ...meta });
+    res.status(200).json({ status: 'ok', db: 'ok', ...meta });
   } else {
-    res.status(503).json({ status: "degraded", db: "down", ...meta });
+    res.status(503).json({ status: 'degraded', db: 'down', ...meta });
   }
 });
 
-// Apply rate limiting only to API routes
+// API routes
 app.use('/api', limiter, require('./routes/index'));
-
-// SPA fallback: serve frontend for non-API routes
-app.use((req, res, next) => {
-  // Skip if it's an API route or has a file extension
-  if (req.path.startsWith('/api') || req.path.includes('.')) {
-    return next();
-  }
-  const frontendDistPath = path.join(__dirname, '../../web/dist');
-  res.sendFile(path.join(frontendDistPath, 'index.html'));
-});
 
 app.use(require('./middlewares/error.middleware'));
 

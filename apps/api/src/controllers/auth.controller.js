@@ -26,10 +26,12 @@ function getCookieValue(cookieHeader, name) {
   return null;
 }
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const cookieBaseOptions = {
   httpOnly: true,
-  sameSite: 'lax',
-  secure: process.env.NODE_ENV === 'production',
+  sameSite: isProduction ? 'none' : 'lax',
+  secure: isProduction,
   path: '/api/auth',
 };
 

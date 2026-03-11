@@ -1,0 +1,14 @@
+node_modules
+.pnpm-store
+.git
+.gitignore
+.vscode
+coverage
+dist
+apps/web/node_modules
+apps/web/dist
+apps/web/.vite
+apps/api/node_modules
+apps/api/coverage
+.env
+.env.*
