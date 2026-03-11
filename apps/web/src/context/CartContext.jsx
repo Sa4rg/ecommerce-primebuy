@@ -6,7 +6,7 @@ import {
   removeItemFromCart,
 } from "../features/shopping-cart/cartCommand";
 import { clearCartSession, ensureCartId, fetchMyCart } from "../features/shopping-cart/cartService";
-import { clearCheckoutId, getCheckoutId } from "../features/checkout/CheckoutStorage";
+import { clearCheckoutId, getCheckoutId } from "../features/checkout/checkoutStorage";
 import { clearAllPaymentsForCheckouts, clearPaymentForCheckout } from "../features/payment/paymentStorage";
 
 /**

@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { paymentService } from "../paymentService";
-import { clearCheckoutId } from "../../checkout/CheckoutStorage";
+import { clearCheckoutId } from "../../checkout/checkoutStorage";
 import { clearAllPaymentsForCheckouts } from "../paymentStorage";
 import { useCart } from "../../../context/CartContext.jsx";
 import { getCheckoutById } from "../../checkout/checkoutQuery";

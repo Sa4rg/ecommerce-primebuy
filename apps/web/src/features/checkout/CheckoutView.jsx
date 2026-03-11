@@ -15,7 +15,7 @@ import { useTranslation } from "../../shared/i18n/useTranslation.js";
 // Payments
 import { paymentService } from "../payment/paymentService";
 import { savePaymentForCheckout, getPaymentForCheckout, clearPaymentForCheckout } from "../payment/paymentStorage";
-import { clearCheckoutId } from "./CheckoutStorage";
+import { clearCheckoutId } from "./checkoutStorage";
 
 // FX
 import { fxService } from "../fx/fxService.js";

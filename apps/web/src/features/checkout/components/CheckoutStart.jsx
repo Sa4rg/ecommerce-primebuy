@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createCheckout } from "../checkoutCommand";
 import { useCart } from "../../../context/CartContext.jsx";
-import { getCheckoutId, setCheckoutId, clearCheckoutId } from "../CheckoutStorage";
+import { getCheckoutId, setCheckoutId, clearCheckoutId } from "../checkoutStorage";
 import { clearPaymentForCheckout } from "../../payment/paymentStorage";
 
 export function CheckoutStart() {
