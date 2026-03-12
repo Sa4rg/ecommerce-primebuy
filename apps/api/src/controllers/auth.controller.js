@@ -51,8 +51,21 @@ async function register(req, res, next) {
       email: user.email,
     });
 
-    await emailVerificationService.sendVerificationCode(user.userId, user.email);
-    console.log("[AUTH REGISTER] verification email sent", { email: user.email });
+    try {
+      await emailVerificationService.sendVerificationCode(user.userId, user.email);
+      console.log("[AUTH REGISTER] verification email sent successfully", { email: user.email });
+    } catch (emailError) {
+      // Log email failure but don't block registration
+      console.error("[AUTH REGISTER] verification email FAILED", {
+        email: user.email,
+        error: emailError.message,
+        stack: emailError.stack,
+      });
+      // Still return success - user can use resend
+      // But maybe add a flag to the response
+      res.status(201);
+      return success(res, { ...user, emailSendFailed: true }, "User registered. Email sending failed, please use resend.");
+    }
 
     res.status(201);
     success(res, user, "User registered. Please verify your email.");

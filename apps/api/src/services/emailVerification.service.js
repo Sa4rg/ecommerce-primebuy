@@ -53,13 +53,25 @@ function createEmailVerificationService({
       createdAt: now,
     });
 
-    console.log("[EMAIL VERIFICATION] sending email", { userId, email });
+    console.log("[EMAIL VERIFICATION] DB record created, now sending email", { userId, email });
 
-    await emailService.sendVerificationEmail({ to: email, code });
-
-    console.log("[EMAIL VERIFICATION] sent ok", { userId, email });
-
-    return { sent: true };
+    try {
+      const emailResult = await emailService.sendVerificationEmail({ to: email, code });
+      console.log("[EMAIL VERIFICATION] email sent successfully", { 
+        userId, 
+        email,
+        emailId: emailResult.id,
+      });
+      return { sent: true, emailId: emailResult.id };
+    } catch (emailError) {
+      console.error("[EMAIL VERIFICATION] email send FAILED", {
+        userId,
+        email,
+        error: emailError.message,
+        stack: emailError.stack,
+      });
+      throw emailError;
+    }
   }
 
   /**

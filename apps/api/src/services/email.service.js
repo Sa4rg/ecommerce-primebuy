@@ -41,9 +41,18 @@ async function sendWithResend({ to, subject, html, tag = "email" }) {
     );
   }
 
+  // Validate that Resend actually accepted the email
+  if (!result?.data?.id) {
+    console.error(`[EMAIL ERROR] ${tag} - No ID returned`, result);
+    throw new AppError(
+      "Email provider did not confirm email acceptance",
+      502
+    );
+  }
+
   return {
     skipped: false,
-    id: result?.data?.id || null,
+    id: result.data.id,
   };
 }
 
