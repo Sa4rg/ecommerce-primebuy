@@ -136,7 +136,7 @@ pnpm dev
 Create a .env file in the root directory:
 
 Code snippet
-VITE_API_BASE_URL=http://localhost:3000
+VITE_API_BASE_URL=
 📌 Current Development Focus
 [ ] Checkout UI improvements
 
