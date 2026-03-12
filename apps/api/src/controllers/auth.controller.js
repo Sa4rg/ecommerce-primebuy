@@ -43,14 +43,24 @@ const cookieOptions = {
 async function register(req, res, next) {
   try {
     const { email, password, name } = req.body;
+    console.log("[AUTH REGISTER] start", { email });
+
     const user = await authService.register(email, password, name);
-    
-    // Send verification code after registration
+    console.log("[AUTH REGISTER] user created", {
+      userId: user.userId,
+      email: user.email,
+    });
+
     await emailVerificationService.sendVerificationCode(user.userId, user.email);
-    
+    console.log("[AUTH REGISTER] verification email sent", { email: user.email });
+
     res.status(201);
-    success(res, user, 'User registered. Please verify your email.');
+    success(res, user, "User registered. Please verify your email.");
   } catch (err) {
+    console.error("[AUTH REGISTER] failed", {
+      message: err.message,
+      stack: err.stack,
+    });
     next(err);
   }
 }
@@ -83,9 +93,17 @@ async function verifyEmail(req, res, next) {
 async function resendVerification(req, res, next) {
   try {
     const { email } = req.body;
+    console.log("[AUTH RESEND] start", { email });
+
     await emailVerificationService.resendVerificationCode(email);
-    success(res, { sent: true }, 'Verification code sent');
+
+    console.log("[AUTH RESEND] success", { email });
+    success(res, { sent: true }, "Verification code sent");
   } catch (err) {
+    console.error("[AUTH RESEND] failed", {
+      message: err.message,
+      stack: err.stack,
+    });
     next(err);
   }
 }

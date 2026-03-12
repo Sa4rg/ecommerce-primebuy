@@ -50,8 +50,18 @@ export function LoginView() {
 
       nav(returnTo, { replace: true });
     } catch (e2) {
-      if (mountedRef.current) setErr(e2?.message || "Login failed");
-    } finally {
+        const message = e2?.message || "Login failed";
+
+        if (message === "Email not verified") {
+          nav("/verify-email", {
+            replace: true,
+            state: { email: email.trim() },
+          });
+          return;
+        }
+
+        if (mountedRef.current) setErr(message);
+      } finally {
       if (mountedRef.current) setLoading(false);
     }
   }

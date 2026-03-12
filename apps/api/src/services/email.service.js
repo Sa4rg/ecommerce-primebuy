@@ -1,8 +1,9 @@
-const { Resend } = require('resend');
-const { RESEND_API_KEY, RESEND_FROM } = require('../config/env');
+const { Resend } = require("resend");
+const { AppError } = require("../utils/errors");
+const { RESEND_API_KEY, RESEND_FROM } = require("../config/env");
 
 if (!RESEND_API_KEY) {
-  console.warn('⚠️  RESEND_API_KEY is not set. Emails will be skipped.');
+  console.warn("⚠️ RESEND_API_KEY is not set. Emails will be skipped.");
 }
 
 function getResendClient() {
@@ -10,12 +11,44 @@ function getResendClient() {
   return new Resend(RESEND_API_KEY);
 }
 
-async function sendPasswordResetCode({ to, code }) {
+async function sendWithResend({ to, subject, html, tag = "email" }) {
   if (!RESEND_API_KEY) {
+    console.log(`[EMAIL SKIPPED] ${tag} -> ${to}`);
     return { skipped: true };
   }
 
-  const subject = 'Your Prime Buy password reset code';
+  const resend = getResendClient();
+
+  console.log(`[EMAIL SEND] ${tag}`, {
+    to,
+    from: RESEND_FROM,
+    subject,
+  });
+
+  const result = await resend.emails.send({
+    from: RESEND_FROM,
+    to,
+    subject,
+    html,
+  });
+
+  console.log(`[EMAIL RESULT] ${tag}`, result);
+
+  if (result?.error) {
+    throw new AppError(
+      result.error.message || "Email provider error",
+      502
+    );
+  }
+
+  return {
+    skipped: false,
+    id: result?.data?.id || null,
+  };
+}
+
+async function sendPasswordResetCode({ to, code }) {
+  const subject = "Your Prime Buy password reset code";
   const html = `
     <div style="font-family: Arial, sans-serif;">
       <h2>Password Reset</h2>
@@ -26,15 +59,12 @@ async function sendPasswordResetCode({ to, code }) {
     </div>
   `;
 
-  const resend = getResendClient();
-  await resend.emails.send({
-    from: RESEND_FROM,
+  return sendWithResend({
     to,
     subject,
     html,
+    tag: "password-reset",
   });
-
-  return { skipped: false };
 }
 
 async function sendPasswordResetEmail({ to, code }) {
@@ -42,12 +72,7 @@ async function sendPasswordResetEmail({ to, code }) {
 }
 
 async function sendVerificationEmail({ to, code }) {
-  if (!RESEND_API_KEY) {
-    console.log(`[EMAIL SKIPPED] Verification code for ${to}: ${code}`);
-    return { skipped: true };
-  }
-
-  const subject = 'Verifica tu email - Prime Buy';
+  const subject = "Verifica tu email - Prime Buy";
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 20px;">
       <div style="text-align: center; margin-bottom: 24px;">
@@ -69,39 +94,21 @@ async function sendVerificationEmail({ to, code }) {
     </div>
   `;
 
-  const resend = getResendClient();
-  await resend.emails.send({
-    from: RESEND_FROM,
+  return sendWithResend({
     to,
     subject,
     html,
+    tag: "email-verification",
   });
-
-  return { skipped: false };
 }
 
-/**
- * Send a transactional email (order confirmations, status updates, etc.)
- * @param {Object} params
- * @param {string} params.to - Recipient email
- * @param {string} params.subject - Email subject
- * @param {string} params.html - Email HTML body
- */
 async function sendTransactionalEmail({ to, subject, html }) {
-  if (!RESEND_API_KEY) {
-    console.log(`[EMAIL SKIPPED] Transactional email to ${to}: ${subject}`);
-    return { skipped: true };
-  }
-
-  const resend = getResendClient();
-  await resend.emails.send({
-    from: RESEND_FROM,
+  return sendWithResend({
     to,
     subject,
     html,
+    tag: "transactional",
   });
-
-  return { skipped: false };
 }
 
 module.exports = {

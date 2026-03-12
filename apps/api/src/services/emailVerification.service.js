@@ -39,6 +39,12 @@ function createEmailVerificationService({
     const code = generate6DigitCode();
     const codeHash = hashCode(code);
 
+    console.log("[EMAIL VERIFICATION] creating code", {
+      userId,
+      email,
+      expiresAt: expiresAt.toISOString(),
+    });
+
     await emailVerificationsRepository.create({
       verificationId: idGenerator(),
       userId,
@@ -47,7 +53,11 @@ function createEmailVerificationService({
       createdAt: now,
     });
 
+    console.log("[EMAIL VERIFICATION] sending email", { userId, email });
+
     await emailService.sendVerificationEmail({ to: email, code });
+
+    console.log("[EMAIL VERIFICATION] sent ok", { userId, email });
 
     return { sent: true };
   }
