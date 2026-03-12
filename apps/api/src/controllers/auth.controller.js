@@ -128,6 +128,23 @@ async function login(req, res, next) {
     res.cookie('refreshToken', refreshToken, cookieOptions);
     success(res, { accessToken }, 'Login successful');
   } catch (err) {
+    try {
+      const normalizedEmail = req.body?.email?.trim?.().toLowerCase?.();
+
+      if (err.statusCode === 403 && err.message === 'Email not verified' && normalizedEmail) {
+        console.log('[AUTH LOGIN] email not verified, triggering verification resend', {
+          email: normalizedEmail,
+        });
+
+        await emailVerificationService.resendVerificationCode(normalizedEmail);
+      }
+    } catch (emailErr) {
+      console.error('[AUTH LOGIN] failed to trigger verification resend', {
+        message: emailErr.message,
+        stack: emailErr.stack,
+      });
+    }
+
     next(err);
   }
 }

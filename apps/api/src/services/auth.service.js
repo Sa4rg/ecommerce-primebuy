@@ -387,6 +387,11 @@ function createAuthService({
     return usersRepository.findById(userId);
   }
 
+  async function getUserByEmail(email) {
+    if (!email || typeof email !== 'string') return null;
+    return usersRepository.findByEmail(email.trim().toLowerCase());
+  }
+
   return {
     register,
     login,
@@ -397,6 +402,7 @@ function createAuthService({
     resetPasswordWithCode,
     loginWithGoogle,
     getUserById,
+    getUserByEmail,
     issueTokensForUser,
   };
 }
