@@ -13,7 +13,7 @@
 const crypto = require('crypto');
 const argon2 = require('argon2');
 
-const ADMIN_EMAIL = 'admin@ecommerce.com';
+const ADMIN_EMAIL = 'admin@primebuy.com';
 const ADMIN_PASSWORD = 'Admin123!';
 
 /**

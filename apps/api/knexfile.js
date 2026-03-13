@@ -1,4 +1,17 @@
 // Load environment variables
+// Carga .env.{NODE_ENV} si existe, luego .env como fallback
+const path = require('path');
+const fs = require('fs');
+
+const nodeEnv = process.env.NODE_ENV || 'development';
+const envFile = path.resolve(__dirname, `.env.${nodeEnv}`);
+
+// Si existe .env.test o .env.local, lo carga
+if (fs.existsSync(envFile)) {
+  require('dotenv').config({ path: envFile });
+}
+
+// Siempre carga .env como fallback para variables no definidas
 require('dotenv').config();
 
 /**
@@ -54,6 +67,9 @@ module.exports = {
       directory: './src/db/migrations',
       tableName: 'knex_migrations',
     },
+    seeds: {
+      directory: './src/db/seeds',
+    },
     pool: {
       min: 1,
       max: 5,
@@ -74,6 +90,9 @@ module.exports = {
     migrations: {
       directory: './src/db/migrations',
       tableName: 'knex_migrations',
+    },
+    seeds: {
+      directory: './src/db/seeds',
     },
     pool: {
       min: 2,

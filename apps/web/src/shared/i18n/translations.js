@@ -466,6 +466,7 @@ export const translations = {
           price: "2499",
           stock: "10",
           category: "Ej: Cámaras",
+          categorySelect: "Selecciona una categoría...",
         },
         help: {
           nameQuick: "Este campo sincroniza ES + EN (puedes editarlos después por separado).",
@@ -634,6 +635,8 @@ export const translations = {
         all: "Todos",
         cameras: "Cámaras",
         watches: "Relojes",
+        toysGames: "Juguetes y juegos",
+        home: "Hogar",
         adultToys: "Juguetes para Adultos",
         ledAccessories: "Accesorios LED",
         vehicleAccessories: "Accesorios de Vehículos",
@@ -1636,6 +1639,7 @@ export const translations = {
           price: "2499",
           stock: "10",
           category: "e.g. Cameras",
+          categorySelect: "Select a category...",
         },
         help: {
           nameQuick: "This field syncs ES + EN (you can edit them separately below).",
@@ -1802,6 +1806,8 @@ export const translations = {
         all: "All",
         cameras: "Cameras",
         watches: "Watches",
+        toysGames: "Toys and Games",
+        home: "Home",
         adultToys: "Adult Toys",
         ledAccessories: "LED Accessories",
         vehicleAccessories: "Vehicle Accessories",

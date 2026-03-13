@@ -1,4 +1,17 @@
-require('dotenv').config();
+// Load environment variables
+const path = require('path');
+const fs = require('fs');
+
+const nodeEnv = process.env.NODE_ENV || 'development';
+const envFile = path.resolve(__dirname, '../../', `.env.${nodeEnv}`);
+
+// Si existe .env.test o .env.local, lo carga
+if (fs.existsSync(envFile)) {
+  require('dotenv').config({ path: envFile });
+}
+
+// Siempre carga .env como fallback para variables no definidas
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;

@@ -8,6 +8,8 @@ export const PRODUCT_CATEGORIES = [
   { slug: "all", tKey: "productCatalog.sidebar.all", match: [] },
   { slug: "cameras", tKey: "productCatalog.sidebar.cameras", match: ["camaras", "cameras", "cámaras"] },
   { slug: "watches", tKey: "productCatalog.sidebar.watches", match: ["relojes", "watches"] },
+  { slug: "toys-games", tKey: "productCatalog.sidebar.toysGames", match: ["juguetes y juegos", "toys and games", "juguetes", "toys"] },
+  { slug: "home", tKey: "productCatalog.sidebar.home", match: ["hogar", "home"] },
   { slug: "adult-toys", tKey: "productCatalog.sidebar.adultToys", match: ["juguetes sexuales", "adult toys", "sex toys"] },
   { slug: "led-accessories", tKey: "productCatalog.sidebar.ledAccessories", match: ["accesorios led", "led accessories"] },
   { slug: "vehicle-accessories", tKey: "productCatalog.sidebar.vehicleAccessories", match: ["accesorios de vehiculos", "accesorios de vehículos", "vehicle accessories"] },

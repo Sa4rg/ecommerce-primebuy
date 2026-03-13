@@ -146,6 +146,7 @@ export function ProductCatalogView() {
     const n = clampNumber(nextPage, 1);
     const clamped = Math.min(Math.max(1, n), totalPages);
     setPage(clamped);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
@@ -306,19 +307,81 @@ export function ProductCatalogView() {
 
           {/* Products grid */}
           {status === "success" && pageItems.length > 0 && (
+            <>
+              <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 xs:gap-5 lg:gap-5 xl:gap-8">
 
-            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 xs:gap-5 lg:gap-5 xl:gap-8">
+                {pageItems.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    product={p}
+                    isFavorite={favoriteIds.has(String(p.id))}
+                    onToggleFavorite={onToggleFavorite}
+                  />
+                ))}
 
-              {pageItems.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  product={p}
-                  isFavorite={favoriteIds.has(String(p.id))}
-                  onToggleFavorite={onToggleFavorite}
-                />
-              ))}
+              </div>
 
-            </div>
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-2">
+                  
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => goToPage(safePage - 1)}
+                    disabled={safePage === 1}
+                    className="rounded-xl border border-pb-border bg-pb-surface px-4 py-2 text-sm font-semibold text-pb-text hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label={t("productCatalog.pagination.prev")}
+                  >
+                    ← {t("productCatalog.pagination.prev")}
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="flex gap-2">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                      // Show first page, last page, current page, and pages around current
+                      const showPage = 
+                        pageNum === 1 || 
+                        pageNum === totalPages || 
+                        Math.abs(pageNum - safePage) <= 1;
+
+                      if (!showPage) {
+                        // Show ellipsis for gaps
+                        if (pageNum === safePage - 2 || pageNum === safePage + 2) {
+                          return <span key={pageNum} className="px-2 text-pb-text-secondary">...</span>;
+                        }
+                        return null;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => goToPage(pageNum)}
+                          className={[
+                            "rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
+                            pageNum === safePage
+                              ? "bg-pb-primary text-white"
+                              : "border border-pb-border bg-pb-surface text-pb-text hover:bg-slate-100",
+                          ].join(" ")}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => goToPage(safePage + 1)}
+                    disabled={safePage === totalPages}
+                    className="rounded-xl border border-pb-border bg-pb-surface px-4 py-2 text-sm font-semibold text-pb-text hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label={t("productCatalog.pagination.next")}
+                  >
+                    {t("productCatalog.pagination.next")} →
+                  </button>
+
+                </div>
+              )}
+            </>
           )}
 
         </div>

@@ -3,6 +3,17 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { adminProductsService } from "../adminProductsService";
 import { useTranslation } from "../../../shared/i18n/useTranslation";
 
+// Categorías canónicas que se guardan en la base de datos
+const CATEGORY_VALUES = [
+  { value: "Cámaras", labelES: "Cámaras", labelEN: "Cameras" },
+  { value: "Relojes", labelES: "Relojes", labelEN: "Watches" },
+  { value: "Juguetes y juegos", labelES: "Juguetes y juegos", labelEN: "Toys and Games" },
+  { value: "Hogar", labelES: "Hogar", labelEN: "Home" },
+  { value: "Juguetes sexuales", labelES: "Juguetes sexuales", labelEN: "Adult Toys" },
+  { value: "Accesorios LED", labelES: "Accesorios LED", labelEN: "LED Accessories" },
+  { value: "Accesorios de vehículos", labelES: "Accesorios de vehículos", labelEN: "Vehicle Accessories" },
+];
+
 function toNumberOrNull(v) {
   if (v === "" || v === null || v === undefined) return null;
   const n = Number(v);
@@ -794,12 +805,18 @@ export function AdminProductsPage() {
 
           <div className="md:col-span-2">
             <label className="text-sm text-pb-text-secondary">{t("adminProducts.form.category")}</label>
-            <input
+            <select
               value={form.category}
               onChange={(e) => onChange("category", e.target.value)}
               className="mt-1 w-full rounded-xl border border-pb-border bg-white px-4 py-3 text-pb-text outline-none focus:ring-2 focus:ring-pb-primary"
-              placeholder={t("adminProducts.form.placeholders.category")}
-            />
+            >
+              <option value="">{t("adminProducts.form.placeholders.categorySelect")}</option>
+              {CATEGORY_VALUES.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {language === "es" ? cat.labelES : cat.labelEN}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="md:col-span-2 flex items-center gap-3 pt-2">
