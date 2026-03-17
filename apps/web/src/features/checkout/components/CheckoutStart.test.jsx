@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "../../../context/CartContext.jsx";
+import { LanguageProvider } from "../../../shared/i18n/LanguageContext.jsx";
 import { CheckoutStart } from "./CheckoutStart.jsx";
 
 // Mock navigate
@@ -40,24 +41,26 @@ describe("CheckoutStart", () => {
     });
 
     render(
-      <CartProvider
-        initialState={{
-          status: "ready",
-          cart: {
-            cartId: "cart-1",
-            items: [{ productId: "p-1", name: "Product A", quantity: 2, lineTotalUSD: 20 }],
-            summary: { itemsCount: 2, subtotalUSD: 20 },
-            metadata: { market: "VE", baseCurrency: "USD" },
-          },
-          error: "",
-        }}
-      >
-        <MemoryRouter initialEntries={["/checkout"]}>
-          <Routes>
-            <Route path="/checkout" element={<CheckoutStart />} />
-          </Routes>
-        </MemoryRouter>
-      </CartProvider>
+      <LanguageProvider>
+        <CartProvider
+          initialState={{
+            status: "ready",
+            cart: {
+              cartId: "cart-1",
+              items: [{ productId: "p-1", name: "Product A", quantity: 2, lineTotalUSD: 20 }],
+              summary: { itemsCount: 2, subtotalUSD: 20 },
+              metadata: { market: "VE", baseCurrency: "USD" },
+            },
+            error: "",
+          }}
+        >
+          <MemoryRouter initialEntries={["/checkout"]}>
+            <Routes>
+              <Route path="/checkout" element={<CheckoutStart />} />
+            </Routes>
+          </MemoryRouter>
+        </CartProvider>
+      </LanguageProvider>
     );
 
     await waitFor(() => {
@@ -88,26 +91,29 @@ describe("CheckoutStart", () => {
     });
 
     render(
-      <CartProvider
-        initialState={{
-          status: "ready",
-          cart: {
-            cartId: "cart-1",
-            items: [{ productId: "p-1", name: "Product A", quantity: 1, lineTotalUSD: 10 }],
-            summary: { itemsCount: 1, subtotalUSD: 10 },
-            metadata: { market: "VE", baseCurrency: "USD" },
-          },
-          error: "",
-        }}
-      >
-        <MemoryRouter initialEntries={["/checkout"]}>
-          <Routes>
-            <Route path="/checkout" element={<CheckoutStart />} />
-          </Routes>
-        </MemoryRouter>
-      </CartProvider>
+      <LanguageProvider>
+        <CartProvider
+          initialState={{
+            status: "ready",
+            cart: {
+              cartId: "cart-1",
+              items: [{ productId: "p-1", name: "Product A", quantity: 1, lineTotalUSD: 10 }],
+              summary: { itemsCount: 1, subtotalUSD: 10 },
+              metadata: { market: "VE", baseCurrency: "USD" },
+            },
+            error: "",
+          }}
+        >
+          <MemoryRouter initialEntries={["/checkout"]}>
+            <Routes>
+              <Route path="/checkout" element={<CheckoutStart />} />
+            </Routes>
+          </MemoryRouter>
+        </CartProvider>
+      </LanguageProvider>
     );
 
-    expect(await screen.findByText(/unauthorized/i)).toBeInTheDocument();
+    // Now shows friendly auth-required message instead of raw "Unauthorized"
+    expect(await screen.findByText(/iniciar sesión para proceder al checkout/i)).toBeInTheDocument();
   });
 });

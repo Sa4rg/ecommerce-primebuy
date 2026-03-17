@@ -17,6 +17,10 @@ describe("AuthCallbackView", () => {
     vi.restoreAllMocks();
     syncUserCartMock.mockReset();
     localStorage.clear();
+    
+    // Mock window.location.replace
+    delete window.location;
+    window.location = { replace: vi.fn() };
   });
 
   it("calls /refresh once, stores accessToken and redirects to returnTo", async () => {
@@ -44,7 +48,7 @@ describe("AuthCallbackView", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /checkout/i })).toBeInTheDocument();
+      expect(window.location.replace).toHaveBeenCalledWith("/checkout");
     });
 
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);

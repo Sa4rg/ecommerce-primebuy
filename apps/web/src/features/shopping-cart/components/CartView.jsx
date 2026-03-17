@@ -34,9 +34,9 @@ export function CartView() {
   const plural = itemsCount === 1 ? "" : "s";
 
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 xs:py-8 sm:py-10">
+    <section className="mx-auto max-w-7xl px-3 xxs:px-4 sm:px-6 lg:px-8 py-4 xxs:py-6 xs:py-8 sm:py-10">
       {/* Breadcrumb */}
-      <nav className="mb-5 xs:mb-6 sm:mb-8 flex items-center gap-2 text-sm text-pb-text-secondary">
+      <nav className="mb-4 xxs:mb-5 xs:mb-6 sm:mb-8 flex items-center gap-1.5 xxs:gap-2 text-xs xxs:text-sm text-pb-text-secondary">
         <Link className="hover:text-orange-400 transition-colors" to="/">
           {t("cart.breadcrumb.home")}
         </Link>
@@ -53,10 +53,10 @@ export function CartView() {
       </nav>
 
       {/* Title */}
-      <div className="flex items-end justify-between gap-4 mb-6 xs:mb-8 sm:mb-10">
+      <div className="flex items-end justify-between gap-3 xxs:gap-4 mb-5 xxs:mb-6 xs:mb-8 sm:mb-10">
         <div>
-          <h1 className="text-2xl xs:text-3xl font-bold text-pb-text">{t("cart.title")}</h1>
-          <p className="text-pb-text-secondary mt-1">
+          <h1 className="text-xl xxs:text-2xl xs:text-3xl font-bold text-pb-text">{t("cart.title")}</h1>
+          <p className="text-xs xxs:text-sm text-pb-text-secondary mt-0.5 xxs:mt-1">
             {t("cart.itemsCount", { count: String(itemsCount), plural })}
           </p>
         </div>
@@ -102,9 +102,9 @@ export function CartView() {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-8 xs:gap-10 lg:gap-12">
+      <div className="flex flex-col lg:flex-row gap-5 xxs:gap-6 xs:gap-8 lg:gap-12">
         {/* Items list */}
-        <div className="flex-grow lg:w-2/3 space-y-6">
+        <div className="flex-grow lg:w-2/3 space-y-4 xxs:space-y-5 xs:space-y-6">
           {cart.items.length === 0 ? (
             <div className="rounded-xl border border-pb-border bg-white shadow-sm p-6">
               <p className="text-pb-text-secondary">{t("cart.empty.title")}</p>
