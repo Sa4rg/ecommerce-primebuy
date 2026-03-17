@@ -125,7 +125,10 @@ export const translations = {
         title: "Usar tu última dirección",
         useButton: "Usar esta dirección",
       },
-    },
+      auth: { 
+        requiresLogin: "Debes iniciar sesión para proceder al checkout. Te estamos redireccionando al login...",
+    }
+  },
 
     payment: {
       loading: "Cargando...",
@@ -156,26 +159,33 @@ export const translations = {
         important: "Importante",
         zelle: {
           subtitle: "Realiza tu pago vía Zelle con los siguientes datos:",
-          receiverLabel: "Correo del Receptor",
-          receiverValue: "payments@tienda.com",
+          fields: [
+            { label: "Correo Zelle", value: "waleskvera@gmail.com" }
+          ],
           note: "Incluye el ID del pedido en la nota de la transferencia.",
         },
         zinli: {
-          subtitle: "Realiza tu pago vía Zinli con los siguientes datos:",
-          receiverLabel: "Cuenta / Correo",
-          receiverValue: "payments@tienda.com",
-          note: "Incluye el ID del pedido en la nota.",
+          subtitle: "Zinli estará disponible próximamente.",
+          status: "pending",
+          note: "Mientras tanto, puedes usar Zelle o los métodos en bolívares.",
         },
         pago_movil: {
           subtitle: "Realiza tu Pago Móvil con los siguientes datos:",
-          receiverLabel: "Datos",
-          receiverValue: "Banco 0102, CI..., Tel...",
+          fields: [
+            { label: "C.I.", value: "27894858" },
+            { label: "Teléfono", value: "0412 6216402" },
+            { label: "Banco", value: "Banco Venezuela" }
+          ],
           note: "Incluye el ID del pedido en la referencia.",
         },
         bank_transfer: {
           subtitle: "Realiza tu transferencia con los siguientes datos:",
-          receiverLabel: "Cuenta",
-          receiverValue: "Cuenta: 0102-... Titular: ...",
+          fields: [
+            { label: "C.I.", value: "27894858" },
+            { label: "Número de cuenta", value: "01020391120002095042" },
+            { label: "Tipo de cuenta", value: "Cuenta Corriente" },
+            { label: "Banco", value: "Banco Venezuela" }
+          ],
           note: "Incluye el ID del pedido en la referencia.",
         },
       },
@@ -899,7 +909,7 @@ export const translations = {
         hidePassword: "Ocultar contraseña",
       },
       login: {
-        title: "Bienvenida de vuelta",
+        title: "Bienvenido",
         subtitle: "Inicia sesión en tu cuenta de Prime Buy",
         forgotPassword: "¿Olvidaste tu contraseña?",
         signIn: "Iniciar sesión",
@@ -908,6 +918,7 @@ export const translations = {
         createAccount: "Crear cuenta",
         errorTitle: "Algo salió mal",
         defaultError: "Falló el inicio de sesión",
+        invalidCredentials: "Credenciales inválidas",
       },
       register: {
         title: "Crear cuenta",
@@ -1001,7 +1012,7 @@ export const translations = {
       },
       perks: {
         shipping: "Envío nacional",
-        returns: "30 días de devolución",
+        returns: "120 días de devolución",
       },
       specs: {
         title: "Especificaciones técnicas",
@@ -1225,6 +1236,9 @@ export const translations = {
     },
 
     checkout: {
+      auth: {
+        requiresLogin: "To continue with checkout, you need to sign in. Redirecting you...",
+      },
       title: {
         shippingInfo: "Shipping Information",
         deliveryType: "Delivery Type",
@@ -1294,6 +1308,9 @@ export const translations = {
         failedToLoad: "Failed to load checkout.",
         paymentIdMissing: "No paymentId returned from /api/payments",
       },
+      auth: {
+        requiresLogin: "Para continuar con el checkout necesitas iniciar sesión. Te estamos redirigiendo...",
+      },
       trust: {
         securePayment: "Secure payment",
         returns: "30-day returns",
@@ -1333,26 +1350,33 @@ export const translations = {
         important: "Important",
         zelle: {
           subtitle: "Make your Zelle payment using the following details:",
-          receiverLabel: "Receiver Email",
-          receiverValue: "payments@tienda.com",
+          fields: [
+            { label: "Zelle Email", value: "waleskvera@gmail.com" }
+          ],
           note: "Include the order ID in the transfer note.",
         },
         zinli: {
-          subtitle: "Make your Zinli payment using the following details:",
-          receiverLabel: "Account / Email",
-          receiverValue: "payments@tienda.com",
-          note: "Include the order ID in the note.",
+          subtitle: "Zinli will be available soon.",
+          status: "pending",
+          note: "In the meantime, you can use Zelle or bolivar payment methods.",
         },
         pago_movil: {
           subtitle: "Make your Pago Móvil payment using the following details:",
-          receiverLabel: "Details",
-          receiverValue: "Bank 0102, ID..., Phone...",
+          fields: [
+            { label: "ID Number", value: "27894858" },
+            { label: "Phone", value: "0412 6216402" },
+            { label: "Bank", value: "Banco Venezuela" }
+          ],
           note: "Include the order ID in the reference.",
         },
         bank_transfer: {
           subtitle: "Make your bank transfer using the following details:",
-          receiverLabel: "Account",
-          receiverValue: "Account: 0102-... Holder: ...",
+          fields: [
+            { label: "ID Number", value: "27894858" },
+            { label: "Account Number", value: "01020391120002095042" },
+            { label: "Account Type", value: "Cuenta Corriente" },
+            { label: "Bank", value: "Banco Venezuela" }
+          ],
           note: "Include the order ID in the reference.",
         },
       },
@@ -2070,7 +2094,7 @@ export const translations = {
         hidePassword: "Hide password",
       },
       login: {
-        title: "Welcome Back",
+        title: "Welcome",
         subtitle: "Log in to your Prime Buy account",
         forgotPassword: "Forgot password?",
         signIn: "Sign In",
@@ -2079,6 +2103,7 @@ export const translations = {
         createAccount: "Create account",
         errorTitle: "Something went wrong",
         defaultError: "Login failed",
+        invalidCredentials: "Invalid credentials",
       },
       register: {
         title: "Create account",
@@ -2168,7 +2193,7 @@ export const translations = {
       },
       perks: {
         shipping: "Shipping",
-        returns: "30-day returns",
+        returns: "120-day returns",
       },
       specs: {
         title: "Technical specifications",

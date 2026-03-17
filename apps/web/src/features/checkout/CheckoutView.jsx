@@ -417,7 +417,10 @@ export function CheckoutView() {
                   id={ids.fullName}
                   name="fullName"
                   autoComplete="name"
-                  className="w-full rounded-lg border border-pb-border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  className={[
+                    "w-full rounded-lg border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500",
+                    shippingMethod === "pickup" ? "border-orange-200 border-2" : "border-pb-border"
+                  ].join(" ")}
                   placeholder={t("checkout.placeholders.fullName")}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
@@ -434,7 +437,10 @@ export function CheckoutView() {
                   type="email"
                   inputMode="email"
                   autoComplete="email"
-                  className="w-full rounded-lg border border-pb-border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  className={[
+                    "w-full rounded-lg border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500",
+                    shippingMethod === "pickup" ? "border-orange-200 border-2" : "border-pb-border"
+                  ].join(" ")}
                   placeholder={t("checkout.placeholders.email")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -467,7 +473,10 @@ export function CheckoutView() {
                   type="tel"
                   inputMode="tel"
                   autoComplete="tel"
-                  className="w-full rounded-lg border border-pb-border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500"
+                  className={[
+                    "w-full rounded-lg border bg-pb-surface px-4 py-3 text-pb-text outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-orange-500",
+                    shippingMethod === "pickup" ? "border-orange-200 border-2" : "border-pb-border"
+                  ].join(" ")}
                   placeholder={t("checkout.placeholders.phone")}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -524,7 +533,7 @@ export function CheckoutView() {
             </div>
 
             {!needsAddress && (
-              <p className="mt-3 text-sm text-pb-text-secondary">
+              <p className="mt-3 text-sm text-pb-text-secondary text-black bold">
                 {t("checkout.form.pickupHint")}
               </p>
             )}

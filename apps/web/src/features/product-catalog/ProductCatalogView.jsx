@@ -167,7 +167,7 @@ export function ProductCatalogView() {
         {/* Sidebar */}
         <aside className="w-full lg:w-72 flex-shrink-0">
 
-          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-1 gap-4 xs:gap-5 lg:gap-8">
+          <div className="grid grid-cols-1 xxs:grid-cols-2 lg:grid-cols-1 gap-4 xxs:gap-5 lg:gap-8">
 
             {/* Categories */}
             <div>
@@ -308,7 +308,7 @@ export function ProductCatalogView() {
           {/* Products grid */}
           {status === "success" && pageItems.length > 0 && (
             <>
-              <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 xs:gap-5 lg:gap-5 xl:gap-8">
+              <div className="grid grid-cols-1 xxs:grid-cols-2 lg:grid-cols-3 gap-4 xxs:gap-5 lg:gap-5 xl:gap-8">
 
                 {pageItems.map((p) => (
                   <ProductCard

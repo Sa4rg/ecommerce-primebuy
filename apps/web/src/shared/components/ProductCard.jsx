@@ -137,7 +137,7 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
             }}
           />
 
-          <div className="absolute left-2.5 xs:left-3 top-2.5 xs:top-3 z-20">
+          <div className="absolute left-2.5 xs:left-3 top-2.5 xs:top-3 z-20 hidden xs:block">
             {inStock ? (
               <span className="rounded-full bg-pb-primary px-2 py-1 text-[9px] xs:text-[10px] font-bold uppercase tracking-tight text-white">
                 {t("productCard.stock.available")}
@@ -161,7 +161,7 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
 
               setLocalFav((v) => !v);
             }}
-            className="absolute right-2.5 xs:right-3 top-2.5 xs:top-3 z-20 flex h-8 w-8 xs:h-9 xs:w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-md text-pb-text shadow-sm hover:bg-pb-primary hover:text-white transition-colors"
+            className="absolute right-2.5 xs:right-3 top-2.5 xs:top-3 z-20 hidden xs:flex h-8 w-8 xs:h-9 xs:w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-md text-pb-text shadow-sm hover:bg-pb-primary hover:text-white transition-colors"
             aria-label={t("productCard.favorite")}
             aria-pressed={fav}
             title={t("productCard.favorite")}
@@ -178,7 +178,7 @@ export function ProductCard({ product, isFavorite, onToggleFavorite }) {
               }}
               disabled={isDisabled}
               className={[
-                "absolute bottom-2.5 xs:bottom-3 left-2.5 xs:left-3 right-2.5 xs:right-3 z-20 flex items-center justify-center gap-1.5 xs:gap-2 rounded-2xl py-2 xs:py-2.5 sm:py-3 text-[11px] xs:text-xs sm:text-sm font-semibold",
+                "absolute bottom-2.5 xs:bottom-3 left-2.5 xs:left-3 right-2.5 xs:right-3 z-20 hidden xs:flex items-center justify-center gap-1.5 xs:gap-2 rounded-2xl py-2 xs:py-2.5 sm:py-3 text-[11px] xs:text-xs sm:text-sm font-semibold",
                 "shadow-sm border",
                 // Transition only opacity and transform - NOT colors (avoids ghost states on breakpoint change)
                 "transition-[opacity,transform] duration-200",

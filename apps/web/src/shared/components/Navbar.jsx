@@ -284,6 +284,14 @@ function MobileMenu({ isOpen, onClose, isAuthenticated, role, onLogout, t }) {
                     <span className="material-symbols-outlined">inventory_2</span>
                     {t("navbar.products")}
                   </Link>
+                  <Link
+                    to="/admin/fx"
+                    onClick={onClose}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-pb-accent hover:bg-pb-bg-subtle"
+                  >
+                    <span className="material-symbols-outlined">currency_exchange</span>
+                    FX
+                  </Link>
                 </>
               )}
 

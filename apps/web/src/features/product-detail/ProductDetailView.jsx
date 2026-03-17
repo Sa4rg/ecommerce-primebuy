@@ -5,6 +5,8 @@ import { apiClient } from "../../infrastructure/apiClient";
 import { useCart } from "../../context/CartContext.jsx";
 import { useTranslation } from "../../shared/i18n/useTranslation";
 
+const FAVORITES_STORAGE_KEY = "primebuy:favorites";
+
 /**
  * Fallback placeholder (si el producto no tiene imágenes aún)
  */
@@ -76,7 +78,15 @@ export function ProductDetailView() {
   const gallery = useMemo(() => extractGalleryUrls(product), [product]);
 
   const [activeImg, setActiveImg] = useState(FALLBACK_GALLERY[0]);
-  const [favorited, setFavorited] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState(() => {
+    try {
+      const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr.map(String) : []);
+    } catch {
+      return new Set();
+    }
+  });
 
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
@@ -86,6 +96,30 @@ export function ProductDetailView() {
     // cuando cambia la galería (por carga / cambio de producto), re-selecciona la primera
     if (gallery?.length) setActiveImg(gallery[0]);
   }, [gallery]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(Array.from(favoriteIds)));
+    } catch {}
+  }, [favoriteIds]);
+
+  const isFavorited = useMemo(() => {
+    return product?.id ? favoriteIds.has(String(product.id)) : false;
+  }, [product?.id, favoriteIds]);
+
+  function toggleFavorite() {
+    if (!product?.id) return;
+
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      const key = String(product.id);
+
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+
+      return next;
+    });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -232,12 +266,12 @@ export function ProductDetailView() {
 
               <button
                 type="button"
-                onClick={() => setFavorited((v) => !v)}
+                onClick={toggleFavorite}
                 className="absolute top-4 right-4 p-2 bg-white shadow-md rounded-full text-pb-text hover:bg-orange-500 hover:text-white transition-colors"
                 aria-label="favorite"
                 title="Favorite"
               >
-                <span className="text-lg">{favorited ? "♥" : "♡"}</span>
+                <span className="text-lg">{isFavorited ? "♥" : "♡"}</span>
               </button>
             </div>
           </div>
@@ -261,7 +295,7 @@ export function ProductDetailView() {
 
           <div className="mb-6">
             <span className="text-4xl font-bold text-orange-400">{price}</span>
-            {shortDesc ? <p className="mt-3 text-slate-300 leading-relaxed">{shortDesc}</p> : null}
+            {shortDesc ? <p className="mt-3 text-slate-600 leading-relaxed">{shortDesc}</p> : null}
           </div>
 
           {actionErr && (
@@ -296,12 +330,12 @@ export function ProductDetailView() {
           <div className="mt-8 flex items-center gap-8 border-t border-orange-500/10 pt-8">
             <div className="flex flex-col items-center gap-1">
               <span className="text-slate-400">🚚</span>
-              <span className="text-[10px] uppercase font-bold text-slate-500">{t("productDetail.perks.shipping")}</span>
+              <span className="text-[10px] uppercase font-bold text-slate-600">{t("productDetail.perks.shipping")}</span>
             </div>
 
             <div className="flex flex-col items-center gap-1">
               <span className="text-slate-400">↩</span>
-              <span className="text-[10px] uppercase font-bold text-slate-500">{t("productDetail.perks.returns")}</span>
+              <span className="text-[10px] uppercase font-bold text-slate-600">{t("productDetail.perks.returns")}</span>
             </div>
           </div>
         </div>
@@ -311,10 +345,6 @@ export function ProductDetailView() {
       <section className="py-8 xs:py-10 sm:py-12 border-t border-orange-500/10">
         <div className="mb-6 xs:mb-8 flex items-center justify-between">
           <h2 className="text-xl xs:text-2xl md:text-3xl font-bold text-pb-text">{t("productDetail.specs.title")}</h2>
-
-          <button type="button" className="text-orange-400 font-medium hover:underline flex items-center gap-2">
-            {t("productDetail.specs.downloadPdf")} <span className="opacity-80">⬇</span>
-          </button>
         </div>
 
         {specs.length === 0 ? (

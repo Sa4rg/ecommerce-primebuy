@@ -60,7 +60,14 @@ export function LoginView() {
           return;
         }
 
-        if (mountedRef.current) setErr(message);
+        // Map backend error to i18n key
+        let displayMessage = message;
+        // Detect invalid credentials (can be "Invalid credentials" or "Unauthorized" for login)
+        if (message === "Invalid credentials" || message === "Unauthorized") {
+          displayMessage = t("auth.login.invalidCredentials");
+        }
+
+        if (mountedRef.current) setErr(displayMessage);
       } finally {
       if (mountedRef.current) setLoading(false);
     }

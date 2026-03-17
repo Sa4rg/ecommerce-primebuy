@@ -27,7 +27,7 @@ export function PaymentStatusPage() {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [copiedField, setCopiedField] = useState(null);
 
   const fileInputRef = useRef(null);
   const status = payment?.status;
@@ -43,12 +43,27 @@ export function PaymentStatusPage() {
   // Helper: Get payment instructions via i18n
   function getInstructions(method) {
     if (!method) return null;
+
+    const title = t("payment.instructions.title");
+    const subtitle = t(`payment.instructions.${method}.subtitle`);
+    const note = t(`payment.instructions.${method}.note`);
+    
+    // Check if it's a pending method (like Zinli)
+    const statusKey = `payment.instructions.${method}.status`;
+    const status = t(statusKey);
+    const hasPendingStatus = status !== statusKey && status === "pending";
+
+    // Try to get fields array from i18n
+    const fieldsKey = `payment.instructions.${method}.fields`;
+    const fields = t(fieldsKey);
+    const hasFields = fields !== fieldsKey && Array.isArray(fields);
+
     return {
-      title: t("payment.instructions.title"),
-      subtitle: t(`payment.instructions.${method}.subtitle`),
-      receiverLabel: t(`payment.instructions.${method}.receiverLabel`),
-      receiverValue: t(`payment.instructions.${method}.receiverValue`),
-      note: t(`payment.instructions.${method}.note`),
+      title,
+      subtitle,
+      note,
+      status: hasPendingStatus ? "pending" : null,
+      fields: hasFields ? fields : null,
     };
   }
 
@@ -192,8 +207,8 @@ export function PaymentStatusPage() {
 
   async function copyToClipboard(text) {
     await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
+    setCopiedField(text);
+    setTimeout(() => setCopiedField(null), 1200);
   }
 
   if (!payment) return <p className="p-8 text-pb-text-secondary">{err || t("payment.loading")}</p>;
@@ -277,24 +292,49 @@ export function PaymentStatusPage() {
                   </div>
                 </div>
 
-                <div className="bg-pb-surface rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs text-pb-text-secondary font-bold uppercase">{instructions.receiverLabel}</p>
-                    <p className="text-lg font-mono">{instructions.receiverValue}</p>
+                {/* Pending status (e.g., Zinli) */}
+                {instructions.status === "pending" ? (
+                  <div className="bg-amber-500/20 border border-amber-500/40 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">⏳</span>
+                      <div className="flex-1">
+                        <p className="font-semibold text-amber-900">
+                          {t("payment.methods.zinli")} - {t("payment.instructions.zinli.subtitle")}
+                        </p>
+                        <p className="text-sm text-amber-800 mt-1">
+                          * {t("payment.instructions.important")}: {instructions.note}
+                        </p>
+                      </div>
+                    </div>
                   </div>
+                ) : instructions.fields && instructions.fields.length > 0 ? (
+                  /* Multiple copyable fields */
+                  <div className="space-y-3">
+                    {instructions.fields.map((field, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-pb-surface rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      >
+                        <div className="space-y-1">
+                          <p className="text-xs text-pb-text-secondary font-bold uppercase">{field.label}</p>
+                          <p className="text-lg font-mono">{field.value}</p>
+                        </div>
 
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(instructions.receiverValue)}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-100 rounded-lg text-sm font-bold transition-all border border-pb-border active:scale-95"
-                  >
-                    {copied ? t("payment.instructions.copied") : t("payment.instructions.copy")}
-                  </button>
-                </div>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(field.value)}
+                          className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-100 rounded-lg text-sm font-bold transition-all border border-pb-border active:scale-95"
+                        >
+                          {copiedField === field.value ? t("payment.instructions.copied") : t("payment.instructions.copy")}
+                        </button>
+                      </div>
+                    ))}
 
-                <p className="text-xs text-orange-200/80 italic font-medium">
-                  * {t("payment.instructions.important")}: {instructions.note}
-                </p>
+                    <p className="text-xs text-orange-200/80 italic font-medium">
+                      * {t("payment.instructions.important")}: {instructions.note}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             )}
 
