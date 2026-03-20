@@ -13,6 +13,7 @@ const {
 } = require('../config/env');
 const { generateState } = require('../utils/oauthState');
 const { AppError } = require('../utils/errors');
+const { sanitizeReturnTo } = require('../utils/sanitizeReturnTo');
 
 function getCookieValue(cookieHeader, name) {
   if (!cookieHeader) return null;
@@ -35,9 +36,19 @@ const cookieBaseOptions = {
   path: '/api/auth',
 };
 
-const cookieOptions = {
+const refreshTokenCookieOptions = {
   ...cookieBaseOptions,
   maxAge: REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000,
+};
+
+// Access token cookie options - shorter expiry, different path
+// sameSite='strict' provides CSRF protection for authenticated endpoints
+const accessTokenCookieOptions = {
+  httpOnly: true,
+  sameSite: isProduction ? 'none' : 'strict', // Strict for CSRF protection
+  secure: isProduction,
+  path: '/', // Available for all API endpoints
+  maxAge: 15 * 60 * 1000, // 15 minutes
 };
 
 async function register(req, res, next) {
@@ -88,9 +99,9 @@ async function verifyEmail(req, res, next) {
     // Issue tokens (auto-login after verification)
     const { accessToken, refreshToken } = await authService.issueTokensForUser(user);
     
-    res.cookie('refreshToken', refreshToken, cookieOptions);
+    res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
+    res.cookie('accessToken', accessToken, accessTokenCookieOptions);
     success(res, { 
-      accessToken,
       user: {
         userId: user.userId,
         email: user.email,
@@ -125,8 +136,9 @@ async function login(req, res, next) {
   try {
     const { email, password } = req.body;
     const { accessToken, refreshToken } = await authService.login(email, password);
-    res.cookie('refreshToken', refreshToken, cookieOptions);
-    success(res, { accessToken }, 'Login successful');
+    res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
+    res.cookie('accessToken', accessToken, accessTokenCookieOptions);
+    success(res, {}, 'Login successful');
   } catch (err) {
     try {
       const normalizedEmail = req.body?.email?.trim?.().toLowerCase?.();
@@ -153,8 +165,9 @@ async function refresh(req, res, next) {
   try {
     const refreshToken = req.cookies?.refreshToken || getCookieValue(req.headers.cookie, 'refreshToken');
     const { accessToken, refreshToken: newRefreshToken } = await authService.refresh(refreshToken);
-    res.cookie('refreshToken', newRefreshToken, cookieOptions);
-    success(res, { accessToken }, 'Token refreshed successfully');
+    res.cookie('refreshToken', newRefreshToken, refreshTokenCookieOptions);
+    res.cookie('accessToken', accessToken, accessTokenCookieOptions);
+    success(res, {}, 'Token refreshed successfully');
   } catch (err) {
     next(err);
   }
@@ -165,6 +178,7 @@ async function logout(req, res, next) {
     const refreshToken = req.cookies?.refreshToken || getCookieValue(req.headers.cookie, 'refreshToken');
     await authService.logout(refreshToken);
     res.clearCookie('refreshToken', cookieBaseOptions);
+    res.clearCookie('accessToken', { ...accessTokenCookieOptions, maxAge: undefined });
     success(res, { success: true }, 'Logged out successfully');
   } catch (err) {
     next(err);
@@ -176,6 +190,7 @@ async function logoutAll(req, res, next) {
     const { userId } = req.user;
     await authService.logoutAll(userId);
     res.clearCookie('refreshToken', cookieBaseOptions);
+    res.clearCookie('accessToken', { ...accessTokenCookieOptions, maxAge: undefined });
     success(res, { success: true }, 'Logged out from all sessions');
   } catch (err) {
     next(err);
@@ -199,7 +214,7 @@ async function googleStart(req, res, next) {
       throw new AppError('Google OAuth is not configured', 500);
     }
 
-    const returnTo = req.query.returnTo || '/account';
+    const returnTo = sanitizeReturnTo(req.query.returnTo);
 
     const state = generateState();
 
@@ -254,7 +269,8 @@ async function googleCallback(req, res, next) {
       throw new AppError('Invalid OAuth state', 400);
     }
 
-    const returnTo = returnToEncoded ? decodeURIComponent(returnToEncoded) : '/account';
+    const decodedReturnTo = returnToEncoded ? decodeURIComponent(returnToEncoded) : '/account';
+    const returnTo = sanitizeReturnTo(decodedReturnTo);
 
     // Clear cookie
     res.cookie('google_oauth_state', '', {
@@ -309,10 +325,11 @@ async function googleCallback(req, res, next) {
       name,
     });
 
-    // Set refresh cookie (same as login)
-    res.cookie('refreshToken', refreshToken, cookieOptions);
+    // Set cookies (same as login)
+    res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
+    res.cookie('accessToken', accessToken, accessTokenCookieOptions);
 
-    // Redirect to frontend callback (frontend will call /refresh)
+    // Redirect to frontend callback (frontend will have cookies set)
     const redirectUrl = `${APP_PUBLIC_URL}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`;
     res.redirect(redirectUrl);
   } catch (err) {

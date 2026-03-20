@@ -3,12 +3,18 @@ import { useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "../../../config";
 import { setAccessToken, clearAccessToken } from "../authStorage";
 import { useTranslation } from "../../../shared/i18n/useTranslation";
+import { sanitizeReturnTo } from "../../../shared/utils/sanitizeReturnTo";
+
+// ⚠️ httpOnly Cookies Migration
+// After OAuth callback, backend has already set httpOnly cookies
+// We just need to verify authentication and redirect
 
 export function AuthCallbackView() {
   const { t } = useTranslation();
   const [params] = useSearchParams();
   const error = params.get("error");
-  const returnTo = params.get("returnTo") || "/account";
+  // Sanitize returnTo to prevent Open Redirect attacks (defense in depth)
+  const returnTo = sanitizeReturnTo(params.get("returnTo"));
 
   const [status, setStatus] = useState("loading"); // loading | error
   const [err, setErr] = useState("");
@@ -30,23 +36,22 @@ export function AuthCallbackView() {
       }
 
       try {
-        const res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-          method: "POST",
+        // ✅ Backend already set httpOnly cookies during OAuth callback
+        // Just verify they work by calling /api/me
+        const res = await fetch(`${API_BASE_URL}/api/me`, {
+          method: "GET",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
         });
 
         const body = await res.json().catch(() => null);
 
         if (!res.ok || body?.success === false) {
-          throw new Error(body?.message || `Refresh failed (${res.status})`);
+          throw new Error(body?.message || `Authentication verification failed (${res.status})`);
         }
 
-        const token = body?.data?.accessToken;
-        if (!token) throw new Error("No accessToken in refresh response");
-
-        setAccessToken(token);
+        // ✅ Authentication successful - notify AuthContext
+        setAccessToken("authenticated");
 
         if (!cancelled) {
           window.location.replace(returnTo);

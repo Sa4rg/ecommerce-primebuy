@@ -1,24 +1,19 @@
 // web/src/context/AuthContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { getAccessToken, setAccessToken, clearAccessToken } from "../features/auth/authStorage";
+import { setAccessToken, clearAccessToken } from "../features/auth/authStorage";
 import { login as apiLogin, logout as apiLogout } from "../features/auth/authCommand";
 import { apiClient } from "../infrastructure/apiClient";
-import { API_BASE_URL } from "../config";
 
-function getRoleFromToken(token) {
-  if (!token) return null;
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.role || "customer";
-  } catch {
-    return null;
-  }
+// ⚠️ httpOnly Cookies Migration
+// Tokens are now in httpOnly cookies, not in localStorage or response bodies
+// We verify authentication by calling /api/me instead of checking tokens
+
+function getRoleFromUser(user) {
+  return user?.role || null;
 }
 
 async function fetchMeSafe() {
   try {
-    // Si no existe token, apiClient igual intentará refresh en 401,
-    // pero aquí lo usamos cuando ya creemos estar auth.
     const me = await apiClient.get("/api/me");
     return me || null;
   } catch {
@@ -30,64 +25,20 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [status, setStatus] = useState("checking"); // checking | ready
-  const [token, setToken] = useState(() => getAccessToken() || "");
   const [user, setUser] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function bootstrap() {
-      const existing = getAccessToken();
-
-      // 1) Si ya hay token en storage, marcamos ready y cargamos /api/me
-      if (existing) {
-        if (!cancelled) setToken(existing);
-
-        const me = await fetchMeSafe();
-        if (!cancelled) {
-          setUser(me);
-          setStatus("ready");
-        }
-        return;
-      }
-
-      // 2) Silent refresh para obtener token
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        });
-
-        const body = await res.json().catch(() => null);
-        if (!res.ok || body?.success === false) {
-          throw new Error(body?.message || "Refresh failed");
-        }
-
-        const newToken = body?.data?.accessToken;
-        if (!newToken) throw new Error("No accessToken in refresh response");
-
-        // Single source of truth
-        setAccessToken(newToken);
-
-        if (!cancelled) {
-          setToken(newToken);
-        }
-
-        // 3) Ya con token, cargar perfil
-        const me = await fetchMeSafe();
-        if (!cancelled) {
-          setUser(me);
-          setStatus("ready");
-        }
-      } catch {
-        clearAccessToken();
-        if (!cancelled) {
-          setToken("");
-          setUser(null);
-          setStatus("ready");
-        }
+      // ✅ Try to fetch /api/me (cookies sent automatically)
+      // If cookies exist and are valid, backend returns user
+      // If not, backend returns 401 and apiClient tries refresh automatically
+      const me = await fetchMeSafe();
+      
+      if (!cancelled) {
+        setUser(me);
+        setStatus("ready");
       }
     }
 
@@ -97,43 +48,41 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // ✅ Sync when token changes outside AuthContext (e.g., apiClient refresh)
+  // ✅ Sync when auth state changes (login, logout, refresh)
   useEffect(() => {
     let cancelled = false;
 
-    async function handleTokenChange(event) {
-      const nextToken = event?.detail || "";
-      setToken(nextToken);
+    async function handleAuthStateChange(event) {
+      const { authenticated } = event?.detail || {};
 
-      // si se limpió token -> limpiar user
-      if (!nextToken) {
+      if (!authenticated) {
+        // User logged out
         setUser(null);
         return;
       }
 
-      // si llegó token nuevo (refresh), re-cargar user
+      // User logged in or refreshed - reload user profile
       const me = await fetchMeSafe();
       if (!cancelled) setUser(me);
     }
 
-    window.addEventListener("auth:token", handleTokenChange);
+    window.addEventListener("auth:state", handleAuthStateChange);
     return () => {
       cancelled = true;
-      window.removeEventListener("auth:token", handleTokenChange);
+      window.removeEventListener("auth:state", handleAuthStateChange);
     };
   }, []);
 
-  const role = getRoleFromToken(token);
-  const isAuthenticated = Boolean(token);
+  const role = getRoleFromUser(user);
+  const isAuthenticated = Boolean(user);
 
   async function login(credentials) {
+    // ✅ Backend sets httpOnly cookies automatically
+    // No need to extract or store tokens from response
     const data = await apiLogin(credentials);
 
-    const nextToken = data?.accessToken;
-    if (!nextToken) throw new Error("No accessToken returned from login");
-
-    setAccessToken(nextToken);
-    setToken(nextToken);
+    // Notify authStorage that user is authenticated
+    setAccessToken("authenticated");
 
     // Cargar perfil
     const me = await fetchMeSafe();
@@ -144,12 +93,12 @@ export function AuthProvider({ children }) {
 
   async function logout() {
     try {
+      // ✅ Backend clears httpOnly cookies automatically
       await apiLogout();
     } catch {
       // ignore
     } finally {
       clearAccessToken();
-      setToken("");
       setUser(null);
     }
   }
@@ -157,16 +106,15 @@ export function AuthProvider({ children }) {
   const value = useMemo(
     () => ({
       status,
-      token,
-      user, // ✅ nuevo
+      token: user ? "authenticated" : "", // Legacy compatibility
+      user,
       isAuthenticated,
       role,
       login,
       logout,
-      setToken, // optional
-      setUser,  // optional (por si luego quieres actualizar profile local)
+      setUser,
     }),
-    [status, token, user, isAuthenticated, role]
+    [status, user, isAuthenticated, role]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

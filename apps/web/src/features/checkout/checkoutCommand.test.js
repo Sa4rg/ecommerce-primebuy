@@ -12,8 +12,8 @@ describe("checkoutCommand.createCheckout", () => {
   });
 
   it("POSTs /api/checkout with cartId and returns data", async () => {
-    // (Opcional) si tu apiClient ya usa token desde localStorage:
-    localStorage.setItem("accessToken", "token-123");
+    // ✅ httpOnly cookies: No need to set localStorage
+    // Auth cookies are sent automatically with credentials: 'include'
 
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
@@ -46,9 +46,9 @@ describe("checkoutCommand.createCheckout", () => {
     expect(options.method).toBe("POST");
     expect(options.headers["Content-Type"]).toBe("application/json");
 
-    // si el apiClient agrega Authorization automático, esto debe existir
-    // (si aún no lo agregaste en apiClient, comenta estas 2 líneas por ahora)
-    expect(options.headers.Authorization).toBe("Bearer token-123");
+    // Con httpOnly cookies, no enviamos Authorization header
+    // En su lugar, verificamos que credentials: 'include' esté configurado
+    expect(options.credentials).toBe("include");
 
     expect(JSON.parse(options.body)).toEqual({ cartId: "cart-1" });
   });

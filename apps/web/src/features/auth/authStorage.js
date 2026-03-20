@@ -1,27 +1,32 @@
-const ACCESS_TOKEN_KEY = "accessToken";
+// ⚠️ httpOnly Cookies Migration
+// Tokens are now stored in httpOnly cookies (managed by the backend).
+// This module no longer uses localStorage for security reasons (XSS protection).
+// We keep a notification system for AuthContext to sync auth state changes.
 
-function notify(token) {
+function notify(authenticated) {
   window.dispatchEvent(
-    new CustomEvent("auth:token", { detail: token || "" })
+    new CustomEvent("auth:state", { detail: { authenticated } })
   );
 }
 
 export function getAccessToken() {
-  return localStorage.getItem(ACCESS_TOKEN_KEY) || "";
+  // httpOnly cookies are not accessible from JavaScript
+  // Token is sent automatically by the browser with credentials: 'include'
+  return null;
 }
 
 export function setAccessToken(token) {
-  if (!token) {
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    notify("");
-    return;
+  // No-op: tokens are managed by httpOnly cookies
+  // Notify AuthContext that user is authenticated
+  if (token) {
+    notify(true);
+  } else {
+    notify(false);
   }
-
-  localStorage.setItem(ACCESS_TOKEN_KEY, token);
-  notify(token);
 }
 
 export function clearAccessToken() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  notify("");
+  // No-op: cookies are cleared by backend on logout
+  // Notify AuthContext that user is logged out
+  notify(false);
 }

@@ -5,15 +5,19 @@ import { useAuth } from "../../../context/AuthContext.jsx";
 import { useCart } from "../../../context/CartContext.jsx";
 import { API_BASE_URL } from "../../../config";
 import { useTranslation } from "../../../shared/i18n/useTranslation";
+import { sanitizeReturnTo } from "../../../shared/utils/sanitizeReturnTo";
 
 export function LoginView() {
   const { t } = useTranslation();
   const nav = useNavigate();
   const location = useLocation();
-  const returnTo =
+  
+  // Construct returnTo from location state, then sanitize to prevent Open Redirect
+  const unsafeReturnTo =
     location.state?.from?.pathname
       ? location.state.from.pathname + (location.state.from.search || "")
       : "/account";
+  const returnTo = sanitizeReturnTo(unsafeReturnTo);
 
   const { login } = useAuth();
   const { syncUserCart } = useCart();

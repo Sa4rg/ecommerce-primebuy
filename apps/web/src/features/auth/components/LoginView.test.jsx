@@ -45,10 +45,10 @@ describe("LoginView", () => {
     await user.type(screen.getByPlaceholderText(/••••/), "Password123!");
     await user.click(screen.getByRole("button", { name: /iniciar sesión/i }));
 
+    // ✅ httpOnly cookies: No accessToken in localStorage
+    // Verify successful navigation instead
     await waitFor(() => {
-      expect(localStorage.getItem("accessToken")).toBe("token-123");
+      expect(screen.getByRole("heading", { name: /mi cuenta/i })).toBeInTheDocument();
     });
-
-    expect(screen.getByRole("heading", { name: /mi cuenta/i })).toBeInTheDocument();
   });
 });

@@ -47,5 +47,5 @@ exports.seed = async function(knex) {
   });
 
   console.log(`Admin user created: ${ADMIN_EMAIL}`);
-  console.log(`Password: ${ADMIN_PASSWORD}`);
+  // Password is stored in env var ADMIN_PASSWORD
 };

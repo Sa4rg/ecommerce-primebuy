@@ -2,6 +2,11 @@
  * Authentication Helper for HTTP Integration Tests
  * 
  * Provides utilities for registering and logging in test users.
+ * 
+ * ⚠️ httpOnly Cookies Migration:
+ * After migrating to httpOnly cookies, accessToken is no longer in response body.
+ * This helper extracts the token from Set-Cookie headers for backward compatibility
+ * with existing tests that use Authorization header.
  */
 
 import request from 'supertest';
@@ -11,6 +16,30 @@ function getUsersRepository() {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { repositories } = require('../composition/root');
   return repositories.usersRepository;
+}
+
+/**
+ * Extract accessToken from Set-Cookie headers
+ * @param {Response} res - Supertest response object
+ * @returns {string|null} JWT access token or null if not found
+ */
+function extractAccessTokenFromCookies(res) {
+  const cookies = res.headers['set-cookie'];
+  if (!cookies || !Array.isArray(cookies)) {
+    return null;
+  }
+
+  for (const cookie of cookies) {
+    if (cookie.startsWith('accessToken=')) {
+      // Extract value between 'accessToken=' and first ';'
+      const match = cookie.match(/^accessToken=([^;]+)/);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -38,7 +67,13 @@ async function registerAndLogin(app, prefix = 'test') {
     .post('/api/auth/login')
     .send({ email, password });
 
-  return loginRes.body.data.accessToken;
+  // Extract token from httpOnly cookie (not in body anymore)
+  const token = extractAccessTokenFromCookies(loginRes);
+  if (!token) {
+    throw new Error('Failed to extract accessToken from login response cookies');
+  }
+
+  return token;
 }
 
 /**
@@ -66,13 +101,20 @@ async function registerAndLoginWithEmail(app, prefix = 'test') {
     .post('/api/auth/login')
     .send({ email, password });
 
+  // Extract token from httpOnly cookie (not in body anymore)
+  const token = extractAccessTokenFromCookies(loginRes);
+  if (!token) {
+    throw new Error('Failed to extract accessToken from login response cookies');
+  }
+
   return {
-    token: loginRes.body.data.accessToken,
+    token,
     email
   };
 }
 
 export {
   registerAndLogin,
-  registerAndLoginWithEmail
+  registerAndLoginWithEmail,
+  extractAccessTokenFromCookies
 };

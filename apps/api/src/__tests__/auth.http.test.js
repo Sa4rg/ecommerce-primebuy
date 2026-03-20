@@ -57,7 +57,7 @@ describe('Auth HTTP API', () => {
     });
   });
 
-  it('POST /api/auth/login -> 200 and returns accessToken string', async () => {
+  it('POST /api/auth/login -> 200 and sets accessToken in httpOnly cookie', async () => {
     await registerUser('login@example.com', 'Password123!');
     const res = await request(app)
       .post(`${baseUrl}/login`)
@@ -66,11 +66,14 @@ describe('Auth HTTP API', () => {
     expect(res.body).toMatchObject({
       success: true,
       message: expect.any(String),
-      data: {
-        accessToken: expect.any(String),
-      },
     });
-    expect(typeof res.body.data.accessToken).toBe('string');
+    
+    // Verify accessToken is set in cookie
+    const cookies = res.headers['set-cookie'];
+    expect(cookies).toBeDefined();
+    const cookieString = Array.isArray(cookies) ? cookies.join(';') : cookies;
+    expect(cookieString).toMatch(/accessToken=/);
+    expect(cookieString).toMatch(/HttpOnly/i);
   });
 
   it('POST /api/auth/login wrong password -> 401 "Invalid credentials"', async () => {
@@ -85,30 +88,33 @@ describe('Auth HTTP API', () => {
     });
   });
 
-  it('POST /api/auth/login -> sets refreshToken cookie (HttpOnly) and does NOT expose in JSON', async () => {
+  it('POST /api/auth/login -> sets both accessToken and refreshToken in httpOnly cookies', async () => {
     await registerUser('tokens@example.com', 'Password123!');
     const res = await request(app)
       .post(`${baseUrl}/login`)
       .send({ email: 'tokens@example.com', password: 'Password123!' });
     expect(res.status).toBe(200);
-    expect(res.body.data).toHaveProperty('accessToken');
-    expect(res.body.data.refreshToken).toBeUndefined();
+    
+    // Tokens should NOT be in response body
+    expect(res.body.data?.accessToken).toBeUndefined();
+    expect(res.body.data?.refreshToken).toBeUndefined();
 
     const cookies = res.headers['set-cookie'];
     expect(cookies).toBeDefined();
     const cookieString = Array.isArray(cookies) ? cookies.join(';') : cookies;
     expect(cookieString).toMatch(/refreshToken=/);
+    expect(cookieString).toMatch(/accessToken=/);
     expect(cookieString).toMatch(/HttpOnly/i);
   });
 
-  it('POST /api/auth/refresh -> 200 with new accessToken for valid cookie', async () => {
+  it('POST /api/auth/refresh -> 200 and sets new accessToken in cookie for valid refreshToken', async () => {
     await registerUser('refresh@example.com', 'Password123!');
     const loginRes = await request(app)
       .post(`${baseUrl}/login`)
       .send({ email: 'refresh@example.com', password: 'Password123!' });
 
     const cookies = loginRes.headers['set-cookie'];
-    const cookieA = Array.isArray(cookies) ? cookies[0] : cookies;
+    const cookieA = Array.isArray(cookies) ? cookies.join('; ') : cookies;
 
     const res = await request(app)
       .post(`${baseUrl}/refresh`)
@@ -118,15 +124,14 @@ describe('Auth HTTP API', () => {
     expect(res.body).toMatchObject({
       success: true,
       message: expect.any(String),
-      data: {
-        accessToken: expect.any(String),
-      },
     });
-
+    
+    // Verify both tokens are refreshed in cookies
     const newCookies = res.headers['set-cookie'];
     expect(newCookies).toBeDefined();
     const newCookieString = Array.isArray(newCookies) ? newCookies.join(';') : newCookies;
     expect(newCookieString).toMatch(/refreshToken=/);
+    expect(newCookieString).toMatch(/accessToken=/);
   });
 
   it('POST /api/auth/refresh -> 401 with invalid refreshToken cookie', async () => {
@@ -148,7 +153,7 @@ describe('Auth HTTP API', () => {
       .send({ email: 'rotation@example.com', password: 'Password123!' });
 
     const cookies = loginRes.headers['set-cookie'];
-    const cookieA = Array.isArray(cookies) ? cookies[0] : cookies;
+    const cookieA = Array.isArray(cookies) ? cookies.join('; ') : cookies;
 
     const refreshRes = await request(app)
       .post(`${baseUrl}/refresh`)
@@ -156,7 +161,7 @@ describe('Auth HTTP API', () => {
     expect(refreshRes.status).toBe(200);
 
     const newCookies = refreshRes.headers['set-cookie'];
-    const cookieB = Array.isArray(newCookies) ? newCookies[0] : newCookies;
+    const cookieB = Array.isArray(newCookies) ? newCookies.join('; ') : newCookies;
 
     const reuseRes = await request(app)
       .post(`${baseUrl}/refresh`)
@@ -173,14 +178,14 @@ describe('Auth HTTP API', () => {
     expect(validRes.status).toBe(200);
   });
 
-  it('POST /api/auth/logout -> 200 and clears refreshToken cookie', async () => {
+  it('POST /api/auth/logout -> 200 and clears both accessToken and refreshToken cookies', async () => {
     await registerUser('logout@example.com', 'Password123!');
     const loginRes = await request(app)
       .post(`${baseUrl}/login`)
       .send({ email: 'logout@example.com', password: 'Password123!' });
 
     const cookies = loginRes.headers['set-cookie'];
-    const cookieA = Array.isArray(cookies) ? cookies[0] : cookies;
+    const cookieA = Array.isArray(cookies) ? cookies.join('; ') : cookies;
 
     const res = await request(app)
       .post(`${baseUrl}/logout`)
@@ -196,6 +201,7 @@ describe('Auth HTTP API', () => {
     expect(clearedCookies).toBeDefined();
     const clearedCookieString = Array.isArray(clearedCookies) ? clearedCookies.join(';') : clearedCookies;
     expect(clearedCookieString).toMatch(/refreshToken=/);
+    expect(clearedCookieString).toMatch(/accessToken=/);
     const hasMaxAgeZero = /Max-Age=0/i.test(clearedCookieString);
     const hasExpiredDate = /Expires=Thu, 01 Jan 1970/i.test(clearedCookieString);
     expect(hasMaxAgeZero || hasExpiredDate).toBe(true);
@@ -208,7 +214,7 @@ describe('Auth HTTP API', () => {
       .send({ email: 'revoked@example.com', password: 'Password123!' });
 
     const cookies = loginRes.headers['set-cookie'];
-    const cookieA = Array.isArray(cookies) ? cookies[0] : cookies;
+    const cookieA = Array.isArray(cookies) ? cookies.join('; ') : cookies;
 
     await request(app)
       .post(`${baseUrl}/logout`)
@@ -232,14 +238,13 @@ describe('Auth HTTP API', () => {
       .post(`${baseUrl}/login`)
       .send({ email: 'logoutall@example.com', password: 'Password123!' });
 
-    const { accessToken } = loginRes.body.data;
     const cookies = loginRes.headers['set-cookie'];
-    const cookieA = Array.isArray(cookies) ? cookies[0] : cookies;
+    const cookieA = Array.isArray(cookies) ? cookies.join('; ') : cookies;
 
-    // Call logout-all with Bearer token
+    // Call logout-all with cookie (accessToken is in cookie)
     const logoutAllRes = await request(app)
       .post(`${baseUrl}/logout-all`)
-      .set('Authorization', `Bearer ${accessToken}`);
+      .set('Cookie', cookieA);
 
     // Expect 200 with success response
     expect(logoutAllRes.status).toBe(200);

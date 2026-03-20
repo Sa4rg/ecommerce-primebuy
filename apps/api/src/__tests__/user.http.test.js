@@ -3,6 +3,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import app from '../app.js';
 import { completeCheckout } from '../test_helpers/checkoutHelper.js';
+import { extractAccessTokenFromCookies } from '../test_helpers/authHelper.js';
 
 // Lazy load using require (root.js is CommonJS)
 function getUsersRepository() {
@@ -45,7 +46,8 @@ describe('User routes (/api/me)', () => {
       .post('/api/auth/login')
       .send({ email, password });
 
-    authToken = loginRes.body.data.accessToken;
+    // Extract token from httpOnly cookie
+    authToken = extractAccessTokenFromCookies(loginRes);
 
     // 1️⃣ Create a cart
     const cartRes = await request(app).post('/api/cart');
@@ -140,7 +142,8 @@ describe('User routes (/api/me)', () => {
         .post('/api/auth/login')
         .send({ email, password });
 
-      const newToken = loginRes.body.data.accessToken;
+      // Extract token from httpOnly cookie
+      const newToken = extractAccessTokenFromCookies(loginRes);
 
       const res = await request(app)
         .get('/api/me/payments')
@@ -190,7 +193,8 @@ describe('User routes (/api/me)', () => {
         .post('/api/auth/login')
         .send({ email, password });
 
-      const newToken = loginRes.body.data.accessToken;
+      // Extract token from httpOnly cookie
+      const newToken = extractAccessTokenFromCookies(loginRes);
 
       const res = await request(app)
         .get('/api/me/orders')

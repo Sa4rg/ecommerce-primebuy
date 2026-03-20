@@ -1,5 +1,7 @@
 const { success } = require("../utils/response");
 const { uploadBuffer, deleteByPublicId } = require("../services/cloudinary.service");
+const { validateImageMagicBytes } = require("../utils/validateImageMagicBytes");
+const { AppError } = require("../utils/errors");
 
 /**
  * POST /api/uploads/products
@@ -15,12 +17,24 @@ async function uploadProductImages(req, res, next) {
 
     const out = { cover: null, gallery: [] };
 
+    // Validate cover image magic bytes (defense in depth)
     if (coverFile?.buffer) {
+      const validation = validateImageMagicBytes(coverFile.buffer);
+      if (!validation.isValid) {
+        throw new AppError("Invalid image file (cover). Only real JPEG, PNG, WEBP allowed", 400);
+      }
       out.cover = await uploadBuffer(coverFile.buffer, { folder: "products" });
     }
 
+    // Validate gallery images magic bytes
     for (const f of galleryFiles) {
       if (!f?.buffer) continue;
+      
+      const validation = validateImageMagicBytes(f.buffer);
+      if (!validation.isValid) {
+        throw new AppError("Invalid image file (gallery). Only real JPEG, PNG, WEBP allowed", 400);
+      }
+      
       const uploaded = await uploadBuffer(f.buffer, { folder: "products" });
       out.gallery.push(uploaded);
     }
@@ -44,6 +58,12 @@ async function uploadPaymentProof(req, res, next) {
 
     if (!proofFile?.buffer) {
       return res.status(400).json({ success: false, message: "No file provided" });
+    }
+
+    // Validate magic bytes (defense in depth - MIME already validated by Multer)
+    const validation = validateImageMagicBytes(proofFile.buffer);
+    if (!validation.isValid) {
+      throw new AppError("Invalid image file. Only real JPEG, PNG, WEBP allowed", 400);
     }
 
     const uploaded = await uploadBuffer(proofFile.buffer, { folder: "payments" });

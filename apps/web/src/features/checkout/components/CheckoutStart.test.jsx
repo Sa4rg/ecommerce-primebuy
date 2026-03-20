@@ -20,7 +20,7 @@ describe("CheckoutStart", () => {
     vi.restoreAllMocks();
     mockNavigate.mockClear();
     localStorage.clear();
-    localStorage.setItem("accessToken", "token-123");
+    // ✅ httpOnly cookies: No need to set accessToken in localStorage
     localStorage.setItem("cartId", "cart-1");
   });
 
@@ -71,7 +71,8 @@ describe("CheckoutStart", () => {
 
     expect(url).toContain("/api/checkout");
     expect(options.method).toBe("POST");
-    expect(options.headers.Authorization).toBe("Bearer token-123");
+    // Con httpOnly cookies, no enviamos Authorization header
+    expect(options.credentials).toBe("include");
     expect(JSON.parse(options.body)).toEqual({ cartId: "cart-1" });
 
     // Verify navigation to checkout view

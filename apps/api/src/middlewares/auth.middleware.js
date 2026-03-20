@@ -4,31 +4,36 @@ const { JWT_SECRET } = require('../config/env');
 
 function requireAuth(req, res, next) {
   try {
-    const authHeader = req.headers.authorization;
+    // Try to get token from cookie first (httpOnly - secure)
+    let token = req.cookies?.accessToken;
 
-    // 1) Header must exist
-    if (!authHeader) {
+    // Fallback to Authorization header (for backward compatibility or mobile apps)
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader) {
+        const [scheme, headerToken] = authHeader.split(' ');
+        if (scheme === 'Bearer' && headerToken) {
+          token = headerToken;
+        }
+      }
+    }
+
+    // Token must exist
+    if (!token) {
       throw new AppError('Unauthorized', 401);
     }
 
-    // 2) Must follow "Bearer <token>"
-    const [scheme, token] = authHeader.split(' ');
-
-    if (scheme !== 'Bearer' || !token) {
-      throw new AppError('Unauthorized', 401);
-    }
-
-    // 3) Verify token
+    // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // 4) Attach user context to request
+    // Attach user context to request
     req.user = {
       userId: decoded.sub,
       role: decoded.role,
       email: decoded.email || null, 
     };
 
-    // 5) Continue
+    // Continue
     next();
   } catch (err) {
     // JWT errors or custom AppError → 401

@@ -1,9 +1,12 @@
 import { API_BASE_URL } from "../config";
-import { getAccessToken, setAccessToken, clearAccessToken } from "../features/auth/authStorage";
+import { clearAccessToken } from "../features/auth/authStorage";
 
 let isRefreshing = false;
 let refreshPromise = null;
 
+// ⚠️ httpOnly Cookies Migration
+// Tokens are now in httpOnly cookies, sent automatically with credentials: 'include'
+// We no longer need to manually manage Authorization headers or extract tokens from responses
 async function refreshAccessToken() {
   if (isRefreshing && refreshPromise) return refreshPromise;
 
@@ -25,11 +28,9 @@ async function refreshAccessToken() {
         throw new Error(msg);
       }
 
-      const newToken = body?.data?.accessToken;
-      if (!newToken) throw new Error("Refresh did not return accessToken");
-
-      setAccessToken(newToken);
-      return newToken;
+      // ✅ No need to extract or store accessToken - it's in httpOnly cookie
+      // Backend sets new cookies automatically on successful refresh
+      return true;
     })
     .finally(() => {
       isRefreshing = false;
@@ -40,7 +41,8 @@ async function refreshAccessToken() {
 }
 
 async function request(path, options = {}, retry = true) {
-  const token = getAccessToken();
+  // ⚠️ httpOnly Cookies Migration
+  // No need to manually add Authorization header - cookies are sent automatically
 
   const mergedHeaders = {
     ...(options.headers || {}),
@@ -53,12 +55,7 @@ async function request(path, options = {}, retry = true) {
     mergedHeaders["Content-Type"] = "application/json";
   }
 
-  // Authorization si no viene ya
-  const hasAuth = mergedHeaders.Authorization || mergedHeaders.authorization;
-  if (!hasAuth && token) {
-    mergedHeaders.Authorization = `Bearer ${token}`;
-  }
-
+  // ✅ credentials: 'include' ensures cookies (accessToken + refreshToken) are sent automatically
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: mergedHeaders,
