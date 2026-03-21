@@ -6,6 +6,96 @@ Este proyecto representa un sistema e-commerce profesional con arquitectura esca
 
 ---
 
+> ## 📊 🎯 **PRESENTACIÓN DEL PROYECTO** 🎯 📊
+> 
+> ### 🔴 **SLIDES DE PRESENTACIÓN DISPONIBLES →** [**`SLIDES.pdf`**](SLIDES.pdf) **← ABRIR AQUÍ**
+> 
+> **Documentación visual completa del proyecto (6 páginas)** con arquitectura, features, stack tecnológico y flujos de negocio.
+> 
+> 📥 **Archivo**: [`SLIDES.pdf`](SLIDES.pdf) (raíz del proyecto)
+
+---
+
+> ## 💌 ❤️ **MENSAJE PERSONAL PARA LOS EVALUADORES** ❤️ 💌
+> 
+> ### 📝 **He escrito un mensaje personal para ustedes →** [**`MENSAJE_PERSONAL.md`**](MENSAJE_PERSONAL.md) **← LEER AQUÍ**
+> 
+> **Un mensaje sincero sobre mi experiencia**, el aprendizaje con IA, mis desafíos y mi visión del futuro del desarrollo de software.
+> 
+> 📄 **Archivo**: [`MENSAJE_PERSONAL.md`](MENSAJE_PERSONAL.md) (raíz del proyecto)
+
+---
+
+> ## 🧪 **INSTRUCCIONES PARA EVALUADORES** 🧪
+> 
+> ### ⚠️ **IMPORTANTE**: Cómo Probar el Proyecto Completo
+> 
+> Para evaluar **todas las funcionalidades** (especialmente el panel de administración), necesitarán crear un usuario admin:
+> 
+> #### 🔑 **Opción 1: Crear Admin con Seed**
+> 
+> ```bash
+> # Después de instalar el proyecto
+> pnpm --filter api db:seed
+> ```
+> 
+> Esto creará un usuario admin con credenciales:
+> - **Email**: `admin@primebuy.com`
+> - **Contraseña**: `Admin123!`
+> 
+> #### 🔑 **Opción 2: Usar Admin Temporal (Actual en Producción)**
+> 
+> Si prefieren probar directamente en [primebuyinc.com](https://primebuyinc.com):
+> - **Email**: `admin@primebuy.com`
+> - **Contraseña**: `Admin123!`
+> 
+> _(Este admin será eliminado después de la evaluación)_
+> 
+> ---
+> 
+> ### ✅ **Qué Probar con el Usuario Admin:**
+> 
+> 1. **Panel de Pagos**:
+>    - Ver pagos pendientes/aprobados/rechazados
+>    - Aprobar/rechazar pagos de prueba
+>    - Envío automático de emails de notificación
+> 
+> 2. **Gestión de Órdenes**:
+>    - Ver detalles completos de cada pedido
+>    - Actualizar estados de envío (procesando → enviado → entregado)
+>    - Ver cómo el cliente visualiza estos cambios en tiempo real
+> 
+> 3. **Gestión de Catálogo**:
+>    - Crear/editar/eliminar productos
+>    - Subir imágenes a Cloudinary
+>    - Actualizar precios en USD y VES
+> 
+> 4. **Configuración de Tasa de Cambio**:
+>    - Modificar tasa USD/VES desde el admin panel
+>    - Ver actualización en tiempo real en el catálogo
+> 
+> ---
+> 
+> ### 👤 **Qué Probar como Usuario Regular:**
+> 
+> 1. **Registro y Login** (o usar Google OAuth)
+> 2. **Agregar productos al carrito**
+> 3. **Proceso de Checkout** (información de envío + selección de método de pago)
+> 4. **Subir comprobante de pago** (pueden usar cualquier imagen y referencia de prueba)
+> 5. **Ver estado de la orden** en "Mis Pedidos"
+> 6. **Recibir emails** de confirmación (si configuran `RESEND_API_KEY`)
+> 
+> ---
+> 
+> ### 💡 **Nota Importante:**
+> 
+> Los **pagos son manuales** por el contexto venezolano (falta de confianza en pagos automatizados). El flujo es:
+> 1. Cliente sube comprobante → 2. Admin revisa → 3. Admin aprueba/rechaza → 4. Orden se crea o se cancela
+> 
+> ¡Gracias por tomarse el tiempo de evaluar este proyecto! ❤️
+
+---
+
 ## 📋 Descripción General
 
 PrimeBuy es un monorepo que implementa un sistema completo de comercio electrónico para el mercado venezolano, con soporte multi-moneda (USD/VES) y métodos de pago locales.
@@ -79,7 +169,7 @@ El proyecto puede correr completamente **sin Docker** usando repositorios en mem
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/carlitosbenju/ecommerce-backend-carlitos.git
+git clone https://github.com/Sa4rg/ecommerce-primebuy.git
 cd ecommerce-backend-carlitos
 
 # 2. Instalar dependencias
@@ -355,6 +445,8 @@ VITE_WHATSAPP_SUPPORT=584126216402
 
 ## 📚 Documentación Adicional
 
+- **🎯 [SLIDES.pdf](SLIDES.pdf)**: 📊 **Presentación del proyecto** (6 páginas) - Visión general, arquitectura y features
+- **💌 [MENSAJE_PERSONAL.md](MENSAJE_PERSONAL.md)**: ❤️ **Mensaje personal de la autora** - Experiencia, aprendizajes y reflexiones
 - **[AGENTS.md](AGENTS.md)**: Reglas arquitectónicas y guías para desarrollo con IA
 - **[apps/api/README.md](apps/api/README.md)**: Documentación detallada del backend
 - **[apps/web/README.md](apps/web/README.md)**: Documentación detallada del frontend
@@ -394,7 +486,7 @@ Todos los derechos reservados. Prohibida la copia o distribución no autorizada.
 
 ## 👤 Autor
 
-**Carlos Benjumea**  
+**Sara Arguello**  
 Proyecto desarrollado como trabajo de grado / portfolio profesional / proyecto real para cliente.
 
 **Demo en vivo:** [primebuyinc.com](https://primebuyinc.com)
