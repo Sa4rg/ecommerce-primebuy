@@ -1,4 +1,4 @@
-const rateLimit = require("express-rate-limit");
+const { rateLimit, ipKeyGenerator } = require("express-rate-limit");
 
 /**
  * Rate limiter for login endpoint
@@ -17,10 +17,11 @@ const loginRateLimiter = rateLimit({
   legacyHeaders: false, // Disable `X-RateLimit-*` headers
   
   // Rate limit by email + IP combination
+  // Uses ipKeyGenerator to properly handle IPv6 addresses
   keyGenerator: (req) => {
     const email = req.body?.email || "unknown";
-    const ip = req.ip || req.connection.remoteAddress;
-    return `login:${email}:${ip}`;
+    const normalizedIp = ipKeyGenerator(req);
+    return `login:${email}:${normalizedIp}`;
   },
   
   // Custom handler for rate limit exceeded
@@ -51,9 +52,10 @@ const registerRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   
+  // Uses ipKeyGenerator to properly handle IPv6 addresses
   keyGenerator: (req) => {
-    const ip = req.ip || req.connection.remoteAddress;
-    return `register:${ip}`;
+    const normalizedIp = ipKeyGenerator(req);
+    return `register:${normalizedIp}`;
   },
   
   handler: (req, res) => {

@@ -16,5 +16,10 @@
   },
   "dependencies": {
     "resend": "^6.9.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "minimatch": ">=9.0.7"
+    }
   }
 }

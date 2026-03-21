@@ -43,7 +43,22 @@ app.use(
           },
         }
       : {
-          contentSecurityPolicy: false,
+          contentSecurityPolicy: {
+            directives: {
+              defaultSrc: ["'self'"],
+              baseUri: ["'self'"],
+              formAction: ["'self'"],
+              frameAncestors: ["'self'"],
+              objectSrc: ["'none'"],
+              scriptSrc: ["'self'"],
+              scriptSrcAttr: ["'none'"],
+              styleSrc: ["'self'", "'unsafe-inline'", 'https:'],
+              imgSrc: ["'self'", 'data:', 'https:'],
+              fontSrc: ["'self'", 'data:', 'https:'],
+              connectSrc: ["'self'", 'https:'],
+            },
+            reportOnly: true, // Don't block in dev, only report
+          },
         }
   )
 );
