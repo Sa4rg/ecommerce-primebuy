@@ -41,13 +41,15 @@ This repository contains the **frontend web application**.
 - **Cart persistence**: Local storage and server-side sync.
 - **Responsive UI**: Optimized for mobile, tablet, and desktop.
 
-### Backend (separate repo)
+### Backend
 - **Node.js & Express**: Server-side runtime and framework.
-- **PostgreSQL**: Relational database for data integrity.
-- **JWT auth**: Secure authentication system.
+- **MySQL**: Relational database for data integrity.
+- **JWT auth**: Secure authentication system (httpOnly cookies).
 - **Checkout & payments system**: Logic for processing transactions.
 - **Order management**: API endpoints for order handling.
 - **Admin APIs**: Secure routes for administrative tasks.
+
+See [apps/api/README.md](../api/README.md) for backend documentation.
 
 ---
 

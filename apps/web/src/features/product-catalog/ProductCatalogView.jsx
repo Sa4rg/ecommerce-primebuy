@@ -273,8 +273,17 @@ export function ProductCatalogView() {
             <div className="flex gap-3">
 
               <button
-                onClick={() => setFavoritesOnly((v) => !v)}
-                className="rounded-xl border px-4 py-2 text-sm font-semibold hover:bg-pb-bg-subtle"
+                onClick={() => {
+                  setFavoritesOnly((v) => !v);
+                  setPage(1);
+                }}
+                className={[
+                  "rounded-xl border px-4 py-2 text-sm font-semibold transition-colors",
+                  favoritesOnly
+                    ? "border-pb-primary bg-pb-primary/10 text-pb-primary"
+                    : "border-pb-border text-pb-text hover:bg-pb-bg-subtle",
+                ].join(" ")}
+                aria-pressed={favoritesOnly}
               >
                 {t("productCatalog.controls.favorites")}
               </button>
