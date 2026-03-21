@@ -30,6 +30,9 @@ const RESET_CODE_EXPIRES_MINUTES = parseInt(process.env.RESET_CODE_EXPIRES_MINUT
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM = process.env.RESEND_FROM || 'onboarding@resend.dev';
 
+// Admin notifications
+const ADMIN_NOTIFICATION_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'cyaimport.c.a@gmail.com';
+
 // App URL (frontend)
 const APP_PUBLIC_URL = process.env.APP_PUBLIC_URL || 'http://localhost:5173';
 
@@ -124,6 +127,7 @@ module.exports = {
   RESET_CODE_EXPIRES_MINUTES,
   RESEND_API_KEY,
   RESEND_FROM,
+  ADMIN_NOTIFICATION_EMAIL,
   APP_PUBLIC_URL,
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,

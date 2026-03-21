@@ -180,6 +180,21 @@ function createPaymentsService(deps = {}) {
           paymentMethod: payment.method,
         }).catch(err => console.error('[NOTIFICATION] Failed to send payment submitted:', err.message));
       }
+
+      // Send notification to admin (non-blocking)
+      notificationService.notifyAdminPaymentSubmitted({
+        paymentId: payment.paymentId,
+        checkoutId: payment.checkoutId,
+        cartId: checkout.cartId,
+        amount: payment.amount,
+        currency: payment.currency,
+        paymentMethod: payment.method,
+        proofReference: proof.reference,
+        customerName: checkout?.customer?.fullName || checkout?.customer?.name || null,
+        customerEmail: checkout?.customer?.email || 'No disponible',
+        customerPhone: checkout?.customer?.phone || null,
+        submittedAt: payment.updatedAt,
+      }).catch(err => console.error('[NOTIFICATION] Failed to send admin payment notification:', err.message));
     }
 
     return payment;

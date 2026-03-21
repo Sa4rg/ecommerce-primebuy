@@ -10,6 +10,7 @@ const { v4: uuidv4 } = require('uuid');
 // Notification types
 const NOTIFICATION_TYPES = {
   PAYMENT_SUBMITTED: 'payment_submitted',
+  ADMIN_PAYMENT_SUBMITTED: 'admin_payment_submitted',
   ORDER_CONFIRMED: 'order_confirmed',
   ORDER_PROCESSING: 'order_processing',
   ORDER_SHIPPED: 'order_shipped',
@@ -33,6 +34,99 @@ const EMAIL_TEMPLATES = {
         <p style="color: #6b7280; font-size: 14px;">Tiempo estimado de verificación: 1-24 horas hábiles.</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
         <p style="color: #9ca3af; font-size: 12px;">Este es un correo automático de Prime Buy. No respondas a este mensaje.</p>
+      </div>
+    `,
+  },
+
+  [NOTIFICATION_TYPES.ADMIN_PAYMENT_SUBMITTED]: {
+    subject: '🔔 Nuevo pago pendiente de revisión - PrimeBuy',
+    html: (data) => `
+      <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto;">
+        <div style="background: #2563eb; color: white; padding: 24px; border-radius: 8px 8px 0 0;">
+          <h2 style="margin: 0; font-size: 24px;">⚠️ Nuevo Pago Registrado</h2>
+          <p style="margin: 8px 0 0; opacity: 0.9;">Se ha registrado un nuevo comprobante de pago que requiere revisión</p>
+        </div>
+        
+        <div style="background: #f9fafb; padding: 24px; border-left: 4px solid #f59e0b;">
+          <h3 style="margin: 0 0 16px; color: #1f2937;">📋 Información del Pago</h3>
+          
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #4b5563;">ID Pago:</td>
+              <td style="padding: 8px 0; color: #1f2937;">${data.paymentId}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #4b5563;">ID Checkout:</td>
+              <td style="padding: 8px 0; color: #1f2937;">${data.checkoutId}</td>
+            </tr>
+            ${data.cartId ? `
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #4b5563;">ID Carrito:</td>
+              <td style="padding: 8px 0; color: #1f2937;">${data.cartId}</td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Estado:</td>
+              <td style="padding: 8px 0;"><span style="background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 12px; font-weight: 600;">PENDIENTE</span></td>
+            </tr>
+            <tr>
+              <td colspan="2" style="padding: 16px 0 8px; font-weight: bold; color: #1f2937; font-size: 16px;">💰 Detalles Financieros</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Monto:</td>
+              <td style="padding: 8px 0; color: #1f2937; font-size: 18px; font-weight: bold;">${data.amount} ${data.currency}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Método de Pago:</td>
+              <td style="padding: 8px 0; color: #1f2937;">${data.paymentMethod}</td>
+            </tr>
+            ${data.proofReference ? `
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Referencia:</td>
+              <td style="padding: 8px 0; color: #1f2937;">${data.proofReference}</td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td colspan="2" style="padding: 16px 0 8px; font-weight: bold; color: #1f2937; font-size: 16px;">👤 Información del Cliente</td>
+            </tr>
+            ${data.customerName ? `
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Nombre:</td>
+              <td style="padding: 8px 0; color: #1f2937;">${data.customerName}</td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Email:</td>
+              <td style="padding: 8px 0; color: #1f2937;">${data.customerEmail}</td>
+            </tr>
+            ${data.customerPhone ? `
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Teléfono:</td>
+              <td style="padding: 8px 0; color: #1f2937;">${data.customerPhone}</td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td colspan="2" style="padding: 16px 0 8px; font-weight: bold; color: #4b5563;">🕐 Fecha y Hora</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; color: #4b5563;">Registrado:</td>
+              <td style="padding: 8px 0; color: #1f2937;">${data.submittedAt || new Date().toISOString()}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="background: white; padding: 24px; border-radius: 0 0 8px 8px;">
+          <h3 style="color: #dc2626; margin: 0 0 12px;">⚡ Acción Requerida</h3>
+          <p style="margin: 0; color: #4b5563;">Por favor, revisa el comprobante de pago y procede a <strong>confirmar</strong> o <strong>rechazar</strong> el pago desde el panel de administración.</p>
+          <div style="margin: 20px 0; padding: 16px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+            <p style="margin: 0; color: #92400e; font-size: 14px;">⏱️ <strong>Tiempo de respuesta recomendado:</strong> 1-24 horas hábiles</p>
+          </div>
+        </div>
+
+        <div style="text-align: center; padding: 16px; color: #9ca3af; font-size: 12px;">
+          <p style="margin: 0;">Este es un correo automático del sistema PrimeBuy</p>
+          <p style="margin: 4px 0 0;">🔒 Información confidencial - Solo para uso interno</p>
+        </div>
       </div>
     `,
   },
@@ -138,6 +232,7 @@ const EMAIL_TEMPLATES = {
 function createNotificationService({
   notificationLogsRepository,
   emailService,
+  adminEmail = 'cyaimport.c.a@gmail.com',
   idGenerator = uuidv4,
   nowProvider = () => new Date(),
 }) {
@@ -222,6 +317,41 @@ function createNotificationService({
     });
   }
 
+  async function notifyAdminPaymentSubmitted({
+    paymentId,
+    checkoutId,
+    cartId,
+    amount,
+    currency,
+    paymentMethod,
+    proofReference,
+    customerName,
+    customerEmail,
+    customerPhone,
+    submittedAt,
+  }) {
+    return sendNotification({
+      userId: null, // Admin notification, no specific user
+      email: adminEmail,
+      type: NOTIFICATION_TYPES.ADMIN_PAYMENT_SUBMITTED,
+      data: {
+        paymentId,
+        checkoutId,
+        cartId,
+        amount,
+        currency,
+        paymentMethod,
+        proofReference,
+        customerName,
+        customerEmail,
+        customerPhone,
+        submittedAt,
+      },
+      relatedEntityId: paymentId,
+      relatedEntityType: 'payment',
+    });
+  }
+
   async function notifyOrderConfirmed({ userId, email, orderId, total, currency, items }) {
     return sendNotification({
       userId,
@@ -292,6 +422,7 @@ function createNotificationService({
     
     // Convenience methods
     notifyPaymentSubmitted,
+    notifyAdminPaymentSubmitted,
     notifyOrderConfirmed,
     notifyOrderProcessing,
     notifyOrderShipped,

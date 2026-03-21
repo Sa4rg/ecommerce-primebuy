@@ -107,9 +107,12 @@ const emailVerificationService = createEmailVerificationService({
   emailService,
 });
 
+const { ADMIN_NOTIFICATION_EMAIL } = require('../config/env');
+
 const notificationService = createNotificationService({
   notificationLogsRepository,
   emailService,
+  adminEmail: ADMIN_NOTIFICATION_EMAIL,
 });
 
 // Lazy injection of notificationService
