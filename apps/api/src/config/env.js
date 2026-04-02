@@ -41,6 +41,9 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || '';
 
+// Voiceflow Integration
+const VOICEFLOW_API_KEY = process.env.VOICEFLOW_API_KEY || '';
+
 // Fail fast in production if JWT_SECRET is missing
 if (NODE_ENV === 'production' && !JWT_SECRET) {
   throw new Error(
@@ -62,6 +65,14 @@ if (NODE_ENV === 'production' && !process.env.RESET_CODE_PEPPER) {
   throw new Error(
     'FATAL: RESET_CODE_PEPPER environment variable is required in production. ' +
     'Set it to a long random secret for password reset code hashing security.'
+  );
+}
+
+// Fail fast in production if VOICEFLOW_API_KEY is missing
+if (NODE_ENV === 'production' && !VOICEFLOW_API_KEY) {
+  throw new Error(
+    'FATAL: VOICEFLOW_API_KEY environment variable is required in production. ' +
+    'Set it to your Voiceflow API key for chatbot integration.'
   );
 }
 
@@ -132,4 +143,5 @@ module.exports = {
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
   GOOGLE_REDIRECT_URI,
+  VOICEFLOW_API_KEY,
 };

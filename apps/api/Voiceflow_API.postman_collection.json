@@ -1,0 +1,139 @@
+{
+  "info": {
+    "name": "Voiceflow API Integration",
+    "description": "API endpoints for Voiceflow chatbot integration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "value",
+        "value": "VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1",
+        "type": "string"
+      },
+      {
+        "key": "key",
+        "value": "X-Voiceflow-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Search Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/voiceflow/products/search?q=laptop",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "voiceflow", "products", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "laptop",
+                  "description": "Search term (case-insensitive)"
+                }
+              ]
+            },
+            "description": "Search for products by name across name, nameES, and nameEN fields."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/voiceflow/products/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "voiceflow", "products", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "Product ID"
+                }
+              ]
+            },
+            "description": "Get detailed product information including price in USD and VES."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Order Lookup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"email\": \"cliente@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/voiceflow/orders/lookup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "voiceflow", "orders", "lookup"]
+            },
+            "description": "Look up an order by orderId with email validation. Returns sanitized order data without sensitive information."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Test - No API Key",
+      "item": [
+        {
+          "name": "Search Products (No Auth)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/voiceflow/products/search?q=laptop",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "voiceflow", "products", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "laptop"
+                }
+              ]
+            },
+            "description": "Test without API key - should return 401 Unauthorized"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

@@ -12,5 +12,6 @@ router.use('/uploads', require('./uploads.routes'));
 router.use('/me', require('./user.routes'));
 router.use('/fx', require('./fx.routes'));
 router.use('/admin', require('./admin.routes'));
+router.use('/voiceflow', require('./voiceflow.routes'));
 
 module.exports = router;

@@ -34,6 +34,7 @@ const { createPasswordResetService } = require("../services/passwordReset.servic
 const { createFxService } = require("../services/fx.service");
 const { createEmailVerificationService } = require("../services/emailVerification.service");
 const { createNotificationService } = require("../services/notification.service");
+const { createVoiceflowService } = require("../services/voiceflow.service");
 const emailService = require("../services/email.service");
 
 // ============================================================================
@@ -115,6 +116,12 @@ const notificationService = createNotificationService({
   adminEmail: ADMIN_NOTIFICATION_EMAIL,
 });
 
+const voiceflowService = createVoiceflowService({
+  productsService,
+  ordersService,
+  fxService,
+});
+
 // Lazy injection of notificationService
 paymentsService.setNotificationService(notificationService);
 ordersService.setNotificationService(notificationService);
@@ -134,6 +141,7 @@ module.exports = {
     fxService,
     emailVerificationService,
     notificationService,
+    voiceflowService,
   },
   // Exposed for testing purposes only
   repositories: {
