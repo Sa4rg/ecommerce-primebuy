@@ -268,7 +268,7 @@ function createVoiceflowService(deps = {}) {
     // Get submitted payments (user uploaded proof, waiting admin confirmation)
     // We exclude 'pending' (reached payment screen but didn't submit proof)
     // because exchange rates change daily and it could cause pricing errors
-    const allPayments = await paymentsService.getAllPayments();
+    const allPayments = await paymentsService.listPayments();
     const submittedPayments = allPayments.filter(payment => {
       // Only 'submitted' status (proof uploaded, waiting admin confirmation)
       // NOT 'pending' (incomplete payment, should go through checkout again)
