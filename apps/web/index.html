@@ -28,12 +28,20 @@
             versionID: 'production',
             voice: {
               url: "https://runtime-api.voiceflow.com"
+            },
+            render: {
+              mode: 'overlay',
+              position: 'bottom-right'
+            },
+            autostart: false,
+            assistant: {
+              stylesheet: 'https://cdn.voiceflow.com/widget/bundle.mjs.css'
             }
           });
         };
         v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; 
         v.type = "text/javascript";
-        t.parentNode.insertBefore(v, s);
+        s.parentNode.insertBefore(v, s);
       })(document, 'script');
     </script>
   </body>
