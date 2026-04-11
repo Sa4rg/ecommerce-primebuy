@@ -314,15 +314,29 @@ function createVoiceflowService(deps = {}) {
     const activeStatuses = ['pending', 'processing', 'shipped', 'paid'];
     const activeOrders = orders.filter(o => activeStatuses.includes(o.status));
 
-    const formattedOrders = activeOrders.map(order => ({
-      orderId: order.orderId,
-      status: order.status,
-      statusES: _translateOrderStatus(order.status),
-      totalUSD: order.totals.amountPaid,
-      createdAt: order.createdAt,
-      itemsCount: order.items.length,
-      type: 'order',
-    }));
+    const formattedOrders = activeOrders.map(order => {
+      const formattedOrder = {
+        orderId: order.orderId,
+        status: order.status,
+        statusES: _translateOrderStatus(order.status),
+        totalUSD: order.totals.amountPaid,
+        createdAt: order.createdAt,
+        itemsCount: order.items.length,
+        type: 'order',
+      };
+
+      // Add shipping info if order is shipped
+      if (order.status === 'shipped' && order.shipping) {
+        formattedOrder.shipping = {
+          method: order.shipping.method,
+          carrier: order.shipping.carrier?.name || null,
+          trackingNumber: order.shipping.carrier?.trackingNumber || null,
+          dispatchedAt: order.shipping.dispatchedAt,
+        };
+      }
+
+      return formattedOrder;
+    });
 
     // Format submitted payments (proof uploaded, waiting admin confirmation)
     const formattedSubmittedPayments = submittedPayments.map(payment => ({
