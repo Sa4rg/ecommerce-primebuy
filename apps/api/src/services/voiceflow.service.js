@@ -325,8 +325,15 @@ function createVoiceflowService(deps = {}) {
         type: 'order',
       };
 
-      // Add shipping info if order is shipped
-      if (order.status === 'shipped' && order.shipping) {
+      // Add shipping info if it exists (regardless of order status)
+      // Include shipping data for chatbot if:
+      // 1. Order has shipping info
+      // 2. Method is not pickup OR has tracking number
+      if (order.shipping) {
+        const hasTracking = order.shipping.carrier?.trackingNumber;
+        const isPickup = order.shipping.method === 'pickup';
+        
+        // Always include shipping object so chatbot can check method and tracking
         formattedOrder.shipping = {
           method: order.shipping.method,
           carrier: order.shipping.carrier?.name || null,
