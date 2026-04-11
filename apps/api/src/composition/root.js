@@ -119,6 +119,8 @@ const notificationService = createNotificationService({
 const voiceflowService = createVoiceflowService({
   productsService,
   ordersService,
+  checkoutService,
+  paymentsService,
   fxService,
 });
 

@@ -11,6 +11,8 @@ const { AppError, NotFoundError } = require('../utils/errors');
 function createVoiceflowService(deps = {}) {
   const productsService = deps.productsService;
   const ordersService = deps.ordersService;
+  const checkoutService = deps.checkoutService;
+  const paymentsService = deps.paymentsService;
   const fxService = deps.fxService;
 
   if (!productsService) {
@@ -18,6 +20,12 @@ function createVoiceflowService(deps = {}) {
   }
   if (!ordersService) {
     throw new Error('ordersService is required');
+  }
+  if (!checkoutService) {
+    throw new Error('checkoutService is required');
+  }
+  if (!paymentsService) {
+    throw new Error('paymentsService is required');
   }
   if (!fxService) {
     throw new Error('fxService is required');
@@ -254,10 +262,26 @@ function createVoiceflowService(deps = {}) {
     const normalizedEmail = (email || '').trim().toLowerCase();
     const normalizedPhone = (phone_last4 || '').trim();
 
-    // Get all orders for this email
+    // Get all orders for this email (already confirmed by admin)
     const orders = await ordersService.getOrdersByCustomerEmail(normalizedEmail);
 
-    if (orders.length === 0) {
+    // Get submitted payments (user uploaded proof, waiting admin confirmation)
+    // We exclude 'pending' (reached payment screen but didn't submit proof)
+    // because exchange rates change daily and it could cause pricing errors
+    const allPayments = await paymentsService.getAllPayments();
+    const submittedPayments = allPayments.filter(payment => {
+      // Only 'submitted' status (proof uploaded, waiting admin confirmation)
+      // NOT 'pending' (incomplete payment, should go through checkout again)
+      if (payment.status !== 'submitted') return false;
+      
+      // Must have checkout with matching email
+      if (!payment.checkout || !payment.checkout.customerEmail) return false;
+      
+      return payment.checkout.customerEmail.toLowerCase() === normalizedEmail;
+    });
+
+    // Combine for verification: need at least one order OR one submitted payment
+    if (orders.length === 0 && submittedPayments.length === 0) {
       return {
         success: false,
         found: false,
@@ -266,13 +290,18 @@ function createVoiceflowService(deps = {}) {
       };
     }
 
-    // Verify phone_last4 matches at least one order
-    const phoneMatches = orders.some(order => {
-      const customerPhone = (order.customer.phone || '').replace(/\D/g, ''); // Remove non-digits
+    // Verify phone_last4 matches at least one order or checkout
+    const phoneMatchesOrder = orders.some(order => {
+      const customerPhone = (order.customer.phone || '').replace(/\D/g, '');
       return customerPhone.endsWith(normalizedPhone);
     });
 
-    if (!phoneMatches) {
+    const phoneMatchesPayment = submittedPayments.some(payment => {
+      const customerPhone = (payment.checkout?.customerPhone || '').replace(/\D/g, '');
+      return customerPhone.endsWith(normalizedPhone);
+    });
+
+    if (!phoneMatchesOrder && !phoneMatchesPayment) {
       return {
         success: false,
         found: false,
@@ -281,11 +310,36 @@ function createVoiceflowService(deps = {}) {
       };
     }
 
-    // Filter only active orders (exclude delivered and cancelled)
+    // Format confirmed orders (exclude delivered and cancelled)
     const activeStatuses = ['pending', 'processing', 'shipped', 'paid'];
     const activeOrders = orders.filter(o => activeStatuses.includes(o.status));
 
-    if (activeOrders.length === 0) {
+    const formattedOrders = activeOrders.map(order => ({
+      orderId: order.orderId,
+      status: order.status,
+      statusES: _translateOrderStatus(order.status),
+      totalUSD: order.totals.amountPaid,
+      createdAt: order.createdAt,
+      itemsCount: order.items.length,
+      type: 'order',
+    }));
+
+    // Format submitted payments (proof uploaded, waiting admin confirmation)
+    const formattedSubmittedPayments = submittedPayments.map(payment => ({
+      paymentId: payment.paymentId,
+      status: payment.status,
+      statusES: 'Pago enviado (esperando confirmación)',
+      totalUSD: payment.amountUSD,
+      createdAt: payment.createdAt,
+      itemsCount: payment.checkout?.items?.length || 0,
+      type: 'submitted_payment',
+    }));
+
+    // Combine and sort by creation date (most recent first)
+    const allItems = [...formattedOrders, ...formattedSubmittedPayments]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    if (allItems.length === 0) {
       return {
         success: true,
         found: false,
@@ -294,26 +348,26 @@ function createVoiceflowService(deps = {}) {
       };
     }
 
-    // Format orders for chatbot response (sanitized)
-    const formattedOrders = activeOrders.map(order => ({
-      orderId: order.orderId,
-      status: order.status,
-      statusES: _translateOrderStatus(order.status),
-      totalUSD: order.totals.amountPaid,
-      createdAt: order.createdAt,
-      itemsCount: order.items.length,
-    }));
-
-    const message = activeOrders.length === 1
-      ? `Tienes 1 pedido activo (Orden #${activeOrders[0].orderId.substring(0, 8)})`
-      : `Tienes ${activeOrders.length} pedidos activos`;
+    // Build user-friendly message
+    let message = '';
+    if (formattedOrders.length > 0 && formattedSubmittedPayments.length > 0) {
+      message = `Tienes ${formattedOrders.length} pedido(s) confirmado(s) y ${formattedSubmittedPayments.length} pago(s) esperando confirmación del admin`;
+    } else if (formattedOrders.length > 0) {
+      message = formattedOrders.length === 1
+        ? `Tienes 1 pedido activo (Orden #${formattedOrders[0].orderId.substring(0, 8)})`
+        : `Tienes ${formattedOrders.length} pedidos activos`;
+    } else {
+      message = formattedSubmittedPayments.length === 1
+        ? 'Tienes 1 pago esperando confirmación del admin'
+        : `Tienes ${formattedSubmittedPayments.length} pagos esperando confirmación del admin`;
+    }
 
     return {
       success: true,
       found: true,
       message,
       data: {
-        orders: formattedOrders,
+        orders: allItems,
       },
     };
   }
