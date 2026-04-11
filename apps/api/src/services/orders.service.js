@@ -434,6 +434,17 @@ function createOrdersService(deps = {}) {
     return await ordersRepository.findByUserId(userId);
   }
 
+  async function getOrdersByCustomerEmail(email) {
+    if (typeof ordersRepository.findByCustomerEmail === 'function') {
+      return await ordersRepository.findByCustomerEmail(email);
+    }
+    // Fallback for in-memory or simple adapters
+    const allOrders = await ordersRepository.findAll();
+    return allOrders.filter(o => 
+      (o.customer.email || '').toLowerCase() === email.toLowerCase()
+    );
+  }
+
   function setNotificationService(service) {
     notificationService = service;
   }
@@ -443,6 +454,7 @@ function createOrdersService(deps = {}) {
     getOrderById,
     getOrderByPaymentId,
     getOrdersByUserId,
+    getOrdersByCustomerEmail,
     processOrder,
     completeOrder,
     cancelOrder,

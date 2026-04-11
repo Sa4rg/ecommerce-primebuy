@@ -11,7 +11,7 @@ All endpoints require the `X-Voiceflow-API-Key` header for authentication.
 
 **Header Required:**
 ```
-X-Voiceflow-API-Key: VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1
+X-Voiceflow-API-Key:
 ```
 
 ---
@@ -31,14 +31,14 @@ GET /api/voiceflow/products/search?q={searchTerm}
 **Using cURL:**
 ```bash
 curl -X GET "http://localhost:3000/api/voiceflow/products/search?q=laptop" \
-  -H "X-Voiceflow-API-Key: VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1"
+  -H "X-Voiceflow-API-Key:
 ```
 
 **Using Postman:**
 - Method: `GET`
 - URL: `http://localhost:3000/api/voiceflow/products/search?q=laptop`
 - Headers:
-  - `X-Voiceflow-API-Key`: `VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1`
+  - `X-Voiceflow-API-Key`:
 
 #### Success Response (Products Found)
 ```json
@@ -109,14 +109,14 @@ GET /api/voiceflow/products/:id
 **Using cURL:**
 ```bash
 curl -X GET "http://localhost:3000/api/voiceflow/products/1" \
-  -H "X-Voiceflow-API-Key: VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1"
+  -H "X-Voiceflow-API-Key: 
 ```
 
 **Using Postman:**
 - Method: `GET`
 - URL: `http://localhost:3000/api/voiceflow/products/1`
 - Headers:
-  - `X-Voiceflow-API-Key`: `VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1`
+  - `X-Voiceflow-API-Key`: 
 
 #### Success Response
 ```json
@@ -167,7 +167,7 @@ POST /api/voiceflow/orders/lookup
 **Using cURL:**
 ```bash
 curl -X POST "http://localhost:3000/api/voiceflow/orders/lookup" \
-  -H "X-Voiceflow-API-Key: VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1" \
+  -H "X-Voiceflow-API-Key:
   -H "Content-Type: application/json" \
   -d '{
     "orderId": "550e8400-e29b-41d4-a716-446655440000",
@@ -179,7 +179,7 @@ curl -X POST "http://localhost:3000/api/voiceflow/orders/lookup" \
 - Method: `POST`
 - URL: `http://localhost:3000/api/voiceflow/orders/lookup`
 - Headers:
-  - `X-Voiceflow-API-Key`: `VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1`
+  - `X-Voiceflow-API-Key`: 
   - `Content-Type`: `application/json`
 - Body (raw JSON):
 ```json
@@ -352,7 +352,7 @@ When deployed to production (Render):
 
 Required in `.env`:
 ```bash
-VOICEFLOW_API_KEY=VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1
+VOICEFLOW_API_KEY=
 ```
 
 This key is automatically validated in production environments.

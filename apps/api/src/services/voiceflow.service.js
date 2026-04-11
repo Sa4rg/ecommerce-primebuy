@@ -241,10 +241,104 @@ function createVoiceflowService(deps = {}) {
     return statusMap[status] || status;
   }
 
+  /**
+   * Lookup user orders by email + phone_last4 verification
+   * Returns all active orders for user after identity verification
+   * 
+   * @param {string} email - Customer email
+   * @param {string} phone_last4 - Last 4 digits of customer phone
+   * @returns {Promise<Object>} Chatbot-friendly response with orders list
+   */
+  async function lookupOrdersByVerification(email, phone_last4) {
+    // Normalize inputs
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const normalizedPhone = (phone_last4 || '').trim();
+
+    // Get all orders for this email
+    const orders = await ordersService.getOrdersByCustomerEmail(normalizedEmail);
+
+    if (orders.length === 0) {
+      return {
+        success: false,
+        found: false,
+        message: 'No pude verificar tu identidad. Por favor verifica tus datos.',
+        errorCode: 'VERIFICATION_FAILED',
+      };
+    }
+
+    // Verify phone_last4 matches at least one order
+    const phoneMatches = orders.some(order => {
+      const customerPhone = (order.customer.phone || '').replace(/\D/g, ''); // Remove non-digits
+      return customerPhone.endsWith(normalizedPhone);
+    });
+
+    if (!phoneMatches) {
+      return {
+        success: false,
+        found: false,
+        message: 'No pude verificar tu identidad. Por favor verifica tus datos.',
+        errorCode: 'VERIFICATION_FAILED',
+      };
+    }
+
+    // Filter only active orders (exclude delivered and cancelled)
+    const activeStatuses = ['pending', 'processing', 'shipped', 'paid'];
+    const activeOrders = orders.filter(o => activeStatuses.includes(o.status));
+
+    if (activeOrders.length === 0) {
+      return {
+        success: true,
+        found: false,
+        message: 'No tienes pedidos activos en este momento.',
+        data: { orders: [] },
+      };
+    }
+
+    // Format orders for chatbot response (sanitized)
+    const formattedOrders = activeOrders.map(order => ({
+      orderId: order.orderId,
+      status: order.status,
+      statusES: _translateOrderStatus(order.status),
+      totalUSD: order.totals.amountPaid,
+      createdAt: order.createdAt,
+      itemsCount: order.items.length,
+    }));
+
+    const message = activeOrders.length === 1
+      ? `Tienes 1 pedido activo (Orden #${activeOrders[0].orderId.substring(0, 8)})`
+      : `Tienes ${activeOrders.length} pedidos activos`;
+
+    return {
+      success: true,
+      found: true,
+      message,
+      data: {
+        orders: formattedOrders,
+      },
+    };
+  }
+
+  /**
+   * Translate order status to Spanish
+   * @private
+   */
+  function _translateOrderStatus(status) {
+    const translations = {
+      pending: 'Pendiente',
+      paid: 'Pagada',
+      processing: 'En proceso',
+      shipped: 'Enviado',
+      delivered: 'Entregado',
+      cancelled: 'Cancelado',
+    };
+    return translations[status] || status;
+  }
+
   return {
     searchProducts,
     getProduct,
     lookupOrder,
+    lookupOrdersByVerification,
   };
 }
 

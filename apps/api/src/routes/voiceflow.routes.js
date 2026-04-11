@@ -14,6 +14,7 @@ const { validate } = require('../middlewares/validate.middleware');
 
 const {
   lookupOrderBodySchema,
+  lookupOrderByVerificationBodySchema,
   productSearchQuerySchema,
   productIdParamSchema,
 } = require('../schemas/voiceflow.schemas');
@@ -34,11 +35,17 @@ router.get(
   voiceflowController.getProduct
 );
 
-// Order endpoint
+// Order endpoints
 router.post(
   '/orders/lookup',
   validate({ body: lookupOrderBodySchema }),
   voiceflowController.lookupOrder
+);
+
+router.post(
+  '/orders/lookup-by-verification',
+  validate({ body: lookupOrderByVerificationBodySchema }),
+  voiceflowController.lookupOrderByVerification
 );
 
 module.exports = router;

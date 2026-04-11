@@ -75,8 +75,25 @@ async function lookupOrder(req, res, next) {
   }
 }
 
+/**
+ * POST /api/voiceflow/orders/lookup-by-verification
+ * Lookup user orders by email + phone_last4 verification
+ */
+async function lookupOrderByVerification(req, res, next) {
+  try {
+    const { email, phone_last4 } = req.body;
+    const result = await voiceflowService.lookupOrdersByVerification(email, phone_last4);
+
+    const statusCode = result.success ? 200 : 403;
+    return res.status(statusCode).json(result);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   searchProducts,
   getProduct,
   lookupOrder,
+  lookupOrderByVerification,
 };

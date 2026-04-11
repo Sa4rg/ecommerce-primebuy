@@ -405,6 +405,26 @@ class MySQLOrdersRepository {
       createdAt: mysqlDatetimeToISO(row.created_at),
     };
   }
+
+  /**
+   * Find all orders by customer email
+   * @param {string} email
+   * @returns {Promise<Object[]>}
+   */
+  async findByCustomerEmail(email) {
+    const orderRows = await db(this.ordersTable + ' as o')
+      .join(this.customerTable + ' as c', 'c.order_id', 'o.order_id')
+      .whereRaw('LOWER(c.email) = ?', [email.toLowerCase()])
+      .select('o.order_id')
+      .orderBy('o.created_at', 'desc');
+
+    const orders = [];
+    for (const row of orderRows) {
+      const order = await this.findById(row.order_id);
+      if (order) orders.push(order);
+    }
+    return orders;
+  }
 }
 
 module.exports = { MySQLOrdersRepository };

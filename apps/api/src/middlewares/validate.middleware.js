@@ -21,6 +21,13 @@ function validate(schemas, options = {}) {
 
       next();
     } catch (err) {
+      // If it's a Zod error, extract first error message for user feedback
+      if (err instanceof ZodError && err.errors && err.errors.length > 0) {
+        const firstError = err.errors[0];
+        const errorMessage = firstError.message || message;
+        return fail(res, errorMessage, 400);
+      }
+      
       return fail(res, message, 400);
     }
   };
