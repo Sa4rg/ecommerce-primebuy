@@ -7,6 +7,6 @@ describe("App routing", () => {
   it("renders home page on /", async () => {
     renderWithProviders(<App />, { route: "/" });
     // Home page shows hero heading
-    expect(await screen.findByRole("heading", { name: /tecnología premium|premium tech/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /primebuy/i })).toBeInTheDocument();
   });
 })

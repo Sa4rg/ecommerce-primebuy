@@ -29,8 +29,15 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ["Inter", "system-ui", "sans-serif"],
-        sans: ["Inter", "system-ui", "sans-serif"],
+        display: ["Poppins", "system-ui", "sans-serif"],
+        sans: ["Poppins", "system-ui", "sans-serif"],
+      },
+      fontWeight: {
+        normal: '400',
+        medium: '500',
+        semibold: '600',
+        bold: '700',
+        extrabold: '800',
       },
     },
   },

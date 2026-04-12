@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "../../shared/i18n/useTranslation.js";
-import heroCameraImg from "../../assets/hero-camera.png";
 
 export function HomePage() {
   const { t, language } = useTranslation();
@@ -11,45 +10,49 @@ export function HomePage() {
       {/* Hero Section */}
       <section className="relative py-4 md:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="group relative overflow-hidden rounded-3xl shadow-xl border border-pb-border hover:shadow-2xl transition-shadow duration-500">
+          <div className="group relative overflow-hidden rounded-3xl shadow-xl border border-pb-border hover:shadow-2xl transition-shadow duration-500 bg-pb-bg-subtle">
             {/* Decorative gradient glow */}
             <div className="absolute -inset-1 bg-gradient-to-r from-pb-primary/20 via-transparent to-pb-accent/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
             
-            <div className="relative h-[300px] xs:h-[360px] sm:h-[400px] md:h-[600px] w-full overflow-hidden">
-              <img
-                alt={language === "en" ? "Premium electronics and tech" : "Electrónica y tecnología premium"}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                src={heroCameraImg}
-              />
-              {/* Overlay with gradient - darkens on hover */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10 group-hover:from-black/80 group-hover:via-black/40 transition-all duration-500 flex flex-col items-center justify-center text-center p-4 xs:p-6">
-                <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-6xl font-light text-white mb-4 xs:mb-6 drop-shadow-lg">
-                  {language === "en" 
-                    ? "Premium Tech, Delivered" 
-                    : "Tecnología Premium, Entregada"
-                  }
+            <div className="relative h-[300px] xs:h-[360px] sm:h-[400px] md:h-[500px] w-full flex flex-col items-start justify-center px-6 xs:px-10 sm:px-16 md:px-20">
+              {/* Title with decorative line */}
+              <div className="mb-6 xs:mb-8">
+                <h1 className="text-4xl xs:text-5xl sm:text-6xl md:text-7xl font-extrabold text-pb-text mb-2">
+                  PrimeBuy
                 </h1>
-                <p className="text-sm xs:text-base sm:text-lg md:text-xl text-white/90 mb-6 xs:mb-8 max-w-2xl">
-                  {language === "en"
-                    ? "Discover our curated selection of electronics and gadgets"
-                    : "Descubre nuestra selección curada de electrónicos y gadgets"
-                  }
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link
-                    to="/products"
-                    className="bg-white hover:bg-pb-primary hover:text-white text-slate-900 px-8 py-3 rounded-lg text-sm font-bold uppercase tracking-wider transition-all duration-300 shadow-lg hover:shadow-pb-primary/30 hover:scale-105"
-                  >
-                    {language === "en" ? "Shop Now" : "Comprar Ahora"}
-                  </Link>
-                  <Link
-                    to="/support/faq"
-                    className="inline-flex items-center text-white border-b border-white hover:text-pb-primary hover:border-pb-primary transition-all py-1 font-medium"
-                  >
-                    {language === "en" ? "Learn More" : "Más Información"}
-                    <span className="material-symbols-outlined ml-2 text-sm">arrow_forward</span>
-                  </Link>
-                </div>
+                <div className="h-1 w-32 xs:w-40 sm:w-48 bg-pb-primary rounded-full" />
+              </div>
+
+              {/* Subtitle */}
+              <h2 className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-bold text-pb-text mb-3 xs:mb-4 max-w-2xl uppercase leading-tight">
+                {language === "en" 
+                  ? "Your Premium Destination for Cutting-Edge Electronics." 
+                  : "Tu Destino Premium para Electrónica de Vanguardia."
+                }
+              </h2>
+
+              {/* Description */}
+              <p className="text-sm xs:text-base sm:text-lg text-pb-text-secondary mb-6 xs:mb-8 max-w-xl">
+                {language === "en"
+                  ? "Quality, innovation and trust in every purchase."
+                  : "Calidad, innovación y confianza en cada compra."
+                }
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col xxs:flex-row gap-3 xs:gap-4 w-full xxs:w-auto">
+                <Link
+                  to="/products"
+                  className="bg-pb-primary hover:bg-pb-primary-hover text-white px-6 xs:px-8 py-3 xs:py-3.5 rounded-lg text-sm xs:text-base font-bold uppercase tracking-wide transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 text-center"
+                >
+                  {language === "en" ? "Shop Now" : "Comprar Ahora"}
+                </Link>
+                <Link
+                  to="/support/faq"
+                  className="bg-white hover:bg-pb-surface-2 text-pb-text border-2 border-pb-text px-6 xs:px-8 py-3 xs:py-3.5 rounded-lg text-sm xs:text-base font-semibold uppercase tracking-wide transition-all duration-300 text-center"
+                >
+                  {language === "en" ? "Learn More" : "Más Información"}
+                </Link>
               </div>
             </div>
           </div>
@@ -147,7 +150,7 @@ export function HomePage() {
             to="/products"
             className="inline-flex items-center gap-2 bg-pb-primary hover:bg-orange-600 text-white px-6 xs:px-8 py-2.5 xs:py-3 rounded-lg font-semibold text-sm xs:text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-pb-primary/30 hover:scale-105"
           >
-            {language === "en" ? "View All Products" : "Ver Todos los Productos"}
+            {language === "en" ? "View All Products" : "Ver todos los productos"}
             <span className="material-symbols-outlined text-lg">arrow_forward</span>
           </Link>
         </div>
