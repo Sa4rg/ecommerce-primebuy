@@ -33,7 +33,8 @@ function createVoiceflowService(deps = {}) {
 
   /**
    * Search products by name (case-insensitive)
-   * Searches across name, nameES, and nameEN fields
+   * Searches across name, nameES, nameEN, and category fields
+   * with smart normalization and synonym support
    * 
    * @param {string} query - Search term
    * @returns {Promise<Object>} Chatbot-friendly response with products and prices in VES
@@ -50,15 +51,32 @@ function createVoiceflowService(deps = {}) {
     const searchTerm = query.trim().toLowerCase();
     const allProducts = await productsService.getProducts();
 
-    // Filter products by name match
+    // Normalize search term (remove accents, handle plurals)
+    const normalizedSearch = _normalizeSearchTerm(searchTerm);
+
+    // Expand search with synonyms
+    const searchTerms = _expandWithSynonyms(normalizedSearch);
+
+    // Filter products by name or category match
     const matches = allProducts.filter(product => {
       const name = (product.name || '').toLowerCase();
       const nameES = (product.nameES || '').toLowerCase();
       const nameEN = (product.nameEN || '').toLowerCase();
+      const category = (product.category || '').toLowerCase();
 
-      return name.includes(searchTerm) || 
-             nameES.includes(searchTerm) || 
-             nameEN.includes(searchTerm);
+      // Normalize product fields
+      const normalizedName = _normalizeSearchTerm(name);
+      const normalizedNameES = _normalizeSearchTerm(nameES);
+      const normalizedNameEN = _normalizeSearchTerm(nameEN);
+      const normalizedCategory = _normalizeSearchTerm(category);
+
+      // Check if any search term matches
+      return searchTerms.some(term => 
+        normalizedName.includes(term) || 
+        normalizedNameES.includes(term) || 
+        normalizedNameEN.includes(term) ||
+        normalizedCategory.includes(term)
+      );
     });
 
     if (matches.length === 0) {
@@ -407,6 +425,47 @@ function createVoiceflowService(deps = {}) {
       cancelled: 'Cancelado',
     };
     return translations[status] || status;
+  }
+
+  /**
+   * Normalize search term: remove accents, handle common plurals
+   * @private
+   */
+  function _normalizeSearchTerm(term) {
+    // Remove accents
+    const normalized = term
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+
+    // Handle common Spanish plurals: "relojes" -> "reloj"
+    return normalized
+      .replace(/([aeiou])s$/, '$1')  // casas -> casa, relojes -> reloje
+      .replace(/es$/, '');            // endoscopios -> endoscopio
+  }
+
+  /**
+   * Expand search term with synonyms for better matching
+   * @private
+   */
+  function _expandWithSynonyms(normalizedTerm) {
+    // Synonym dictionary: maps common terms to product-specific terms
+    const synonyms = {
+      'reloj': ['reloj', 'smartwatch', 'watch'],
+      'reloje': ['reloj', 'smartwatch', 'watch'], // plural normalized
+      'camara': ['camara', 'endoscopio', 'camera'],
+      'led': ['led', 'luz', 'light', 'iluminacion'],
+      'luz': ['led', 'luz', 'light', 'iluminacion'],
+      'iluminacion': ['led', 'luz', 'light', 'iluminacion'],
+      'juguete': ['juguete', 'toy', 'juego'],
+      'juego': ['juguete', 'toy', 'juego'],
+    };
+
+    // Return original term + synonyms if found
+    const expandedTerms = synonyms[normalizedTerm] || [normalizedTerm];
+    
+    return expandedTerms;
   }
 
   return {
