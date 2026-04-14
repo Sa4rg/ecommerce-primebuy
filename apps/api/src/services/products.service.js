@@ -1,6 +1,7 @@
 // apps/api/src/services/products.service.js
 const { AppError, NotFoundError } = require("../utils/errors");
 const { InMemoryProductsRepository } = require("../repositories/products/products.memory.repository");
+const { sendLowStockAlert } = require("../infrastructure/lambda/inventoryAlerts");
 
 function toProductReadModel(product) {
   if (typeof product.priceUSD !== "number" || product.priceUSD <= 0) {
@@ -94,6 +95,7 @@ function aggregateQuantities(items) {
 
 function createProductsService(deps = {}) {
   const productsRepository = deps.productsRepository || new InMemoryProductsRepository();
+  const notifyLowStock = deps.notifyLowStock || sendLowStockAlert;
 
   async function getProducts() {
     const products = await productsRepository.findAll();
@@ -178,6 +180,20 @@ function createProductsService(deps = {}) {
       const p = await productsRepository.findById(productId);
       const nextStock = Number(p.stock || 0) - qty;
       await productsRepository.update(productId, { ...p, stock: nextStock });
+
+      // 🔔 Check if stock is low and send alert
+      if (nextStock <= 1) {
+        try {
+          await notifyLowStock({
+            productId: p.id,
+            productName: p.nameES || p.nameEN || p.name,
+            currentStock: nextStock,
+          });
+        } catch (error) {
+          // Log error but don't stop the process
+          console.error(`[Products Service] Failed to send low stock alert for product ${p.id}:`, error.message);
+        }
+      }
     }
 
     return true;

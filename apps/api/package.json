@@ -25,6 +25,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-lambda": "^3.1030.0",
     "@sendgrid/mail": "^8.1.6",
     "argon2": "^0.44.0",
     "cloudinary": "^2.9.0",
