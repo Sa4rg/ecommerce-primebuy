@@ -61,14 +61,7 @@ jobs:
   # ========================================
   backend-integration-tests:
     name: Backend Integration Tests
-    runs-on: ubuntu-latest  # Máquina virtual Linux en la nube
-
-  # ========================================
-  # JOB 2: Backend Integration Tests (con MySQL)
-  # ========================================
-  backend-integration-tests:
-    name: Backend Integration Tests
-    runs-on: ubuntu-latest  # Máquina virtual Linux en la nube
+    runs-on: ubuntu-latest
 
     # Servicios auxiliares (MySQL como contenedor)
     services:
