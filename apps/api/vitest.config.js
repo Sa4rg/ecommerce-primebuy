@@ -6,6 +6,7 @@ export default defineConfig({
     globals: true,
     exclude: [
       '**/*.int.test.js',
+      '**/*.http.test.js',
       '**/node_modules/**'
     ],
   },

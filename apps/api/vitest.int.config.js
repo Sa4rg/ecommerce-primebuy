@@ -4,7 +4,10 @@ module.exports = defineConfig({
   test: {
     environment: "node",
     globals: true,
-    include: ["src/**/*.int.test.js"],
+    include: [
+      "src/**/*.int.test.js",
+      "src/**/*.http.test.js"
+    ],
     // opcional: integration tests suelen tardar más
     testTimeout: 20000,
     hookTimeout: 20000,
