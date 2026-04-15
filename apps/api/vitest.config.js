@@ -6,7 +6,7 @@ export default defineConfig({
     globals: true,
     exclude: [
       '**/*.int.test.js',
-      '**/*.http.test.js',
+      '**/*.http.test.js',  // HTTP tests need MySQL
       '**/node_modules/**'
     ],
   },

@@ -6,7 +6,7 @@ module.exports = defineConfig({
     globals: true,
     include: [
       "src/**/*.int.test.js",
-      "src/**/*.http.test.js"
+      "src/**/*.http.test.js"  // HTTP tests run with MySQL
     ],
     // opcional: integration tests suelen tardar más
     testTimeout: 20000,

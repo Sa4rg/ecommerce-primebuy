@@ -122,6 +122,20 @@ jobs:
           done
           echo "MySQL is ready!"
 
+      - name: Run database migrations
+        working-directory: apps/api
+        env:
+          NODE_ENV: test
+          DB_PROVIDER: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: ecommerce
+          DB_PASSWORD: ecommerce
+          DB_NAME: ecommerce_test
+        run: |
+          npx knex migrate:latest --knexfile knexfile.js
+          echo "Database migrations completed"
+
       - name: Run backend integration tests
         working-directory: apps/api
         env:
@@ -136,6 +150,8 @@ jobs:
           JWT_SECRET: test-secret-key-for-ci
           REFRESH_TOKEN_PEPPER: test-refresh-token-pepper-for-ci
           RESET_CODE_PEPPER: test-reset-code-pepper-for-ci
+          RESEND_API_KEY: test-not-real-api-key
+          VOICEFLOW_API_KEY: test-not-real-api-key
         run: pnpm test:db
 
   # ========================================
