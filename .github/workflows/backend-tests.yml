@@ -1,0 +1,234 @@
+# GitHub Actions Workflow - CI/CD Pipeline
+# Ejecuta todos los tests automáticamente en cada push o PR
+
+name: CI/CD Pipeline
+
+# Trigger: ¿Cuándo se ejecuta?
+on:
+  push:
+    branches: [ main ]  # Cada push a main
+  pull_request:
+    branches: [ main ]  # Cada PR hacia main
+
+# Jobs: Trabajos paralelos
+jobs:
+  # ========================================
+  # JOB 1: Backend Unit Tests (sin MySQL)
+  # ========================================
+  backend-unit-tests:
+    name: Backend Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run backend unit tests
+        working-directory: apps/api
+        env:
+          NODE_ENV: test
+        run: pnpm test
+
+  # ========================================
+  # JOB 2: Backend Integration Tests (con MySQL)
+  # ========================================
+  backend-integration-tests:
+    name: Backend Integration Tests
+    runs-on: ubuntu-latest  # Máquina virtual Linux en la nube
+
+  # ========================================
+  # JOB 2: Backend Integration Tests (con MySQL)
+  # ========================================
+  backend-integration-tests:
+    name: Backend Integration Tests
+    runs-on: ubuntu-latest  # Máquina virtual Linux en la nube
+
+    # Servicios auxiliares (MySQL como contenedor)
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: ecommerce_test
+          MYSQL_USER: ecommerce
+          MYSQL_PASSWORD: ecommerce
+          MYSQL_ROOT_PASSWORD: root_ecommerce
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u ecommerce -pecommerce"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Wait for MySQL
+        run: |
+          until mysqladmin ping -h 127.0.0.1 -u ecommerce -pecommerce --silent; do
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+          echo "MySQL is ready!"
+
+      - name: Run backend integration tests
+        working-directory: apps/api
+        env:
+          NODE_ENV: test
+          DB_PROVIDER: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: ecommerce
+          DB_PASSWORD: ecommerce
+          DB_NAME: ecommerce_test
+          DB_INTEGRATION: 1
+          JWT_SECRET: test-secret-key-for-ci
+          REFRESH_TOKEN_PEPPER: test-refresh-token-pepper-for-ci
+          RESET_CODE_PEPPER: test-reset-code-pepper-for-ci
+        run: pnpm test:db
+
+  # ========================================
+  # JOB 3: Frontend Tests
+  # ========================================
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run frontend tests
+        working-directory: apps/web
+        run: pnpm test:run
+
+  # ========================================
+  # JOB 4: Frontend Build Verification
+  # ========================================
+  frontend-build:
+    name: Frontend Build Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        working-directory: apps/web
+        run: pnpm build
+
+      - name: Upload build artifacts (optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: apps/web/dist/
+          retention-days: 7
