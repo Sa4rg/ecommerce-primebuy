@@ -54,6 +54,9 @@ jobs:
         working-directory: apps/api
         env:
           NODE_ENV: test
+          JWT_SECRET: test-secret-key-for-ci
+          REFRESH_TOKEN_PEPPER: test-refresh-token-pepper-for-ci
+          RESET_CODE_PEPPER: test-reset-code-pepper-for-ci
         run: pnpm test
 
   # ========================================
