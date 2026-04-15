@@ -16,4 +16,4 @@ WORKDIR /app/apps/api
 ENV NODE_ENV=production
 EXPOSE 3000
 
-CMD ["pnpm", "start"]
+CMD ["pnpm", "start:prod"]

@@ -80,6 +80,9 @@ describe("GET /api/me/last-shipping-address", () => {
       data: expect.any(Object),
     });
 
+    // Wait 1100ms to ensure different created_at timestamps (MySQL DATETIME has second precision)
+    await new Promise(resolve => setTimeout(resolve, 1100));
+
     // 2) Create second order with SAME user but pickup
     const second = await createConfirmedUsdOrder(app, {
       userToken: first.userToken,
