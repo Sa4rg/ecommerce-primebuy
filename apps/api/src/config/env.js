@@ -2,16 +2,27 @@
 const path = require('path');
 const fs = require('fs');
 
+// Orden de prioridad (último sobrescribe al primero):
+// 1. .env (base/defaults)
+// 2. .env.${NODE_ENV} (environment-specific)  
+// 3. .env.local (local overrides, no debe commitearse) - CON OVERRIDE
+
+// 1. Cargar .env (base)
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+
+// 2. Cargar .env.${NODE_ENV} (si existe)
 const nodeEnv = process.env.NODE_ENV || 'development';
 const envFile = path.resolve(__dirname, '../../', `.env.${nodeEnv}`);
-
-// Si existe .env.test o .env.local, lo carga
 if (fs.existsSync(envFile)) {
-  require('dotenv').config({ path: envFile });
+  require('dotenv').config({ path: envFile, override: true }); // override: true ensures .env.${NODE_ENV} takes precedence over .env
 }
 
-// Siempre carga .env como fallback para variables no definidas
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+// 3. Cargar .env.local (si existe) - SOBRESCRIBE TODO LO ANTERIOR
+const envLocal = path.resolve(__dirname, '../../.env.local');
+if (fs.existsSync(envLocal)) {
+  require('dotenv').config({ path: envLocal, override: true }); // 🔑 override: true
+  console.log('[env] Loaded .env.local (local overrides)');
+}
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN;

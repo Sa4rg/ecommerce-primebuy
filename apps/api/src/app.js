@@ -10,6 +10,9 @@ const { pingDb } = require('./utils/dbHealth');
 const { NODE_ENV, FRONTEND_ORIGIN } = require('./config/env');
 
 const app = express();
+
+// Sentry is initialized in server.js BEFORE this file is imported
+// This ensures proper Express instrumentation in Sentry v10+
 const isProduction = NODE_ENV === 'production';
 
 // Trust first proxy in production
@@ -115,6 +118,12 @@ app.get('/ready', async (req, res) => {
 // API routes
 app.use('/api', limiter, require('./routes/index'));
 
+// Sentry error handler MUST be registered AFTER all controllers/routes
+// and BEFORE any other error middleware
+const Sentry = require('./instrument');
+Sentry.setupExpressErrorHandler(app);
+
+// Custom error middleware (must be after Sentry error handler)
 app.use(require('./middlewares/error.middleware'));
 
 module.exports = app;
