@@ -14,7 +14,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const nodeEnv = process.env.NODE_ENV || 'development';
 const envFile = path.resolve(__dirname, '../../', `.env.${nodeEnv}`);
 if (fs.existsSync(envFile)) {
-  require('dotenv').config({ path: envFile });
+  require('dotenv').config({ path: envFile, override: true }); // override: true ensures .env.${NODE_ENV} takes precedence over .env
 }
 
 // 3. Cargar .env.local (si existe) - SOBRESCRIBE TODO LO ANTERIOR

@@ -41,8 +41,9 @@ if (process.env.NODE_ENV === "production" || process.env.SENTRY_ENABLED) {
       // Release tracking (optional but recommended)
       release: process.env.RENDER_GIT_COMMIT || undefined,
 
-      // Send default PII data (IP addresses, etc)
-      sendDefaultPii: true,
+      // Only send default PII data when explicitly enabled
+      // In production, this should be controlled via environment variable to ensure GDPR compliance
+      sendDefaultPii: process.env.SENTRY_SEND_DEFAULT_PII === "true",
     });
 
     console.log("[Sentry] Initialized successfully");
