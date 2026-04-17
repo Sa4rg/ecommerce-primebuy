@@ -1,3 +1,7 @@
+// CRITICAL: Import instrument.js FIRST, before anything else
+// This ensures Sentry can properly instrument Express and other modules
+require('./instrument');
+
 const env = require('./config/env');
 const app = require('./app');
 const db = require('./db/knex');

@@ -14,4 +14,9 @@ router.use('/fx', require('./fx.routes'));
 router.use('/admin', require('./admin.routes'));
 router.use('/voiceflow', require('./voiceflow.routes'));
 
+// Sentry test routes (only available in development/staging)
+if (process.env.NODE_ENV !== 'production') {
+  router.use('/sentry-test', require('./sentry-test.routes'));
+}
+
 module.exports = router;
