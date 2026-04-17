@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { orderService } from "../orderService";
 import { useTranslation } from "../../../shared/i18n/useTranslation.js";
+import { OrderDetailSkeleton } from "../../../shared/components/Skeleton.jsx";
 import { WHATSAPP_SUPPORT } from "../../../config.js";
 
 // --- Helpers ---
@@ -417,7 +418,7 @@ export function OrderDetailPage() {
   if (status === "loading") {
     return (
       <div className="mx-auto max-w-5xl px-4 py-10">
-        <p className="text-pb-text-secondary">{t("orderDetail.loading")}</p>
+        <OrderDetailSkeleton />
       </div>
     );
   }

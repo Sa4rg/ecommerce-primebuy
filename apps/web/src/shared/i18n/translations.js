@@ -666,6 +666,13 @@ export const translations = {
         sortPriceDesc: "Precio: Mayor a Menor",
         sortStockDesc: "Stock: Mayor a Menor",
       },
+      errors: {
+        loadFailed: "No se pudieron cargar los productos",
+      },
+      empty: {
+        noProducts: "No se encontraron productos",
+        noFavorites: "No tienes productos favoritos",
+      },
       states: {
         loading: "Cargando productos...",
         errorTitle: "Error",
@@ -1850,6 +1857,13 @@ export const translations = {
         sortPriceAsc: "Price: Low to High",
         sortPriceDesc: "Price: High to Low",
         sortStockDesc: "Stock: High to Low",
+      },
+      errors: {
+        loadFailed: "Could not load products",
+      },
+      empty: {
+        noProducts: "No products found",
+        noFavorites: "You have no favorite products",
       },
       states: {
         loading: "Loading products...",

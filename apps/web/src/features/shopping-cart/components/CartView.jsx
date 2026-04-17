@@ -4,6 +4,7 @@ import { CartItem } from "./CartItem";
 import { CartSummary } from "./CartSummary";
 import { CartError } from "./CartError";
 import { CartSessionExpired } from "./CartSessionExpired";
+import { CartItemSkeleton, CartSummarySkeleton } from "../../../shared/components/Skeleton.jsx";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "../../../shared/i18n/useTranslation.js";
 
@@ -22,8 +23,37 @@ export function CartView() {
 
   if (!cart) {
     return (
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <p className="text-pb-text-secondary">{t("cart.loading")}</p>
+      <section className="mx-auto max-w-7xl px-3 xxs:px-4 sm:px-6 lg:px-8 py-4 xxs:py-6 xs:py-8 sm:py-10">
+        {/* Breadcrumb */}
+        <nav className="mb-4 xxs:mb-5 xs:mb-6 sm:mb-8 flex items-center gap-1.5 xxs:gap-2 text-xs xxs:text-sm text-pb-text-secondary">
+          <Link className="hover:text-orange-400 transition-colors" to="/">
+            {t("cart.breadcrumb.home")}
+          </Link>
+          <span className="opacity-50">›</span>
+          <Link className="hover:text-orange-400 transition-colors" to="/products">
+            {t("cart.breadcrumb.catalog")}
+          </Link>
+          <span className="opacity-50">›</span>
+          <span className="text-pb-text font-medium">{t("cart.breadcrumb.cart")}</span>
+        </nav>
+
+        {/* Title skeleton area */}
+        <div className="mb-5 xxs:mb-6 xs:mb-8 sm:mb-10">
+          <h1 className="text-xl xxs:text-2xl xs:text-3xl font-bold text-pb-text">{t("cart.title")}</h1>
+          <p className="text-xs xxs:text-sm text-pb-text-secondary mt-0.5 xxs:mt-1">{t("cart.loading")}</p>
+        </div>
+
+        {/* Skeleton content */}
+        <div className="flex flex-col lg:flex-row gap-5 xxs:gap-6 xs:gap-8 lg:gap-12">
+          <div className="flex-grow lg:w-2/3 space-y-4 xxs:space-y-5 xs:space-y-6">
+            <CartItemSkeleton />
+            <CartItemSkeleton />
+            <CartItemSkeleton />
+          </div>
+          <div className="lg:w-1/3">
+            <CartSummarySkeleton />
+          </div>
+        </div>
       </section>
     );
   }

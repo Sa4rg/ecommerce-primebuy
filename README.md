@@ -102,17 +102,22 @@ PrimeBuy es un monorepo que implementa un sistema completo de comercio electrón
 
 **Características principales:**
 - Sistema de compras completo: Catálogo → Carrito → Checkout → Pago → Orden
-- Autenticación segura con JWT + httpOnly cookies
-- Panel administrativo para gestión de pagos y órdenes
-- Notificaciones transaccionales por email
+- Autenticación segura con JWT + httpOnly cookies + Google OAuth
+- Panel administrativo para gestión de pagos, órdenes y productos
+- Notificaciones transaccionales por email (Resend)
 - Multi-moneda con integración BCV (USD/VES)
 - Sistema de pagos manuales (Zelle, Zinli, Pago Móvil, Transferencia)
+- CI/CD con GitHub Actions (tests automáticos + branch protection)
+- Monitoreo con Sentry (error tracking & performance)
+- AWS Lambda para alertas de bajo stock
 - Arquitectura limpia con patrón Repository y Dependency Injection
 
 **Estado actual:**
 - ✅ En producción: [primebuyinc.com](https://primebuyinc.com)
 - ✅ Proyecto real con cliente real
-- ✅ Cobertura de tests: 80%+ (341 tests)
+- ✅ 341 tests automatizados (80%+ coverage)
+- ✅ CI/CD pipeline activo con 4 jobs paralelos
+- ✅ Error monitoring con Sentry
 
 ---
 
@@ -124,12 +129,15 @@ PrimeBuy es un monorepo que implementa un sistema completo de comercio electrón
 - **Base de Datos**: MySQL 8.0
 - **Query Builder**: Knex.js
 - **Autenticación**: JWT + argon2 (password hashing)
-- **Testing**: Vitest + Supertest
-- **Emails**: Resend
+- **Testing**: Vitest + Supertest (341 tests, 80%+ coverage)
+- **CI/CD**: GitHub Actions (automated testing pipeline)
+- **Monitoring**: Sentry (error tracking & performance)
+- **Serverless**: AWS Lambda (low stock notifications)
+- **Emails**: Resend (transactional emails)
 - **OAuth**: Google OAuth 2.0
-- **Almacenamiento**: Cloudinary (imágenes)
-- **Seguridad**: Helmet, Rate Limiting, CORS
-- **Patrón de Arquitectura**: Repository Pattern + DI
+- **Storage**: Cloudinary (image management)
+- **Security**: Helmet, Rate Limiting, CORS
+- **Architecture**: Repository Pattern + Dependency Injection
 
 ### Frontend (React + Vite)
 - **UI Library**: React 19
@@ -140,18 +148,22 @@ PrimeBuy es un monorepo que implementa un sistema completo de comercio electrón
 - **Testing**: Vitest + Testing Library
 
 ### Infraestructura
-- **Backend**: Render
-- **Base de Datos**: Railway (MySQL)
-- **Frontend**: Vercel
-- **Emails**: Resend
-- **Imágenes**: Cloudinary
-- **Desarrollo Local**: Docker Compose (MySQL)
+- **Backend API**: Render (auto-deploy desde GitHub)
+- **Base de Datos**: Railway (MySQL 8.0)
+- **Frontend**: Vercel (deploy automático)
+- **Emails**: Resend (transactional emails)
+- **Storage**: Cloudinary (image management & CDN)
+- **Serverless**: AWS Lambda (low stock notifications)
+- **Monitoring**: Sentry (error tracking & performance)
+- **Desarrollo Local**: Docker Compose (MySQL container)
 
 ### Herramientas de Desarrollo
-- **Package Manager**: pnpm (workspaces)
-- **Linting**: ESLint
-- **Version Control**: Git + GitHub
-- **CI/CD**: Integración continua con tests automáticos
+- **Package Manager**: pnpm workspaces (monorepo)
+- **Testing**: Vitest + Supertest + Testing Library
+- **CI/CD**: GitHub Actions (4 parallel jobs: lint, test, security, deploy)
+- **Linting**: ESLint (strict rules)
+- **Version Control**: Git + GitHub (branch protection enabled)
+- **Error Tracking**: Sentry integration (development + production)
 
 ---
 
@@ -335,15 +347,18 @@ ecommerce-backend-carlitos/
   - Rate limiting (anti brute-force)
   - CSRF protection
   - Helmet (security headers)
-- ✅ **Testing exhaustivo**: 341 tests (80%+ coverage)
-- ✅ **Emails transaccionales**: Notificaciones automáticas
-- ✅ **Gestión de inventario**: Control de stock en tiempo real
+- ✅ **Testing exhaustivo**: 341 tests automatizados (80%+ coverage)
+- ✅ **CI/CD Pipeline**: GitHub Actions con 4 jobs paralelos (lint, tests, security)
+- ✅ **Error Monitoring**: Sentry para tracking de errores en producción
+- ✅ **Serverless Automation**: AWS Lambda para notificaciones de bajo stock
+- ✅ **Emails transaccionales**: Notificaciones automáticas vía Resend
+- ✅ **Gestión de inventario**: Control de stock en tiempo real con alertas
 
 ---
 
 ## 🧪 Testing
 
-El proyecto sigue **TDD estricto** con cobertura de 80%+:
+El proyecto sigue **TDD estricto** con cobertura de 80%+ y **CI/CD automático**:
 
 ```bash
 # Backend - Tests unitarios (rápidos, sin DB)
@@ -363,11 +378,14 @@ pnpm --filter api test:coverage
 - ✅ 47/47 archivos de test (backend)
 - ✅ 341/341 tests pasando
 - ✅ ~80% coverage en lógica crítica
+- ✅ CI/CD pipeline con GitHub Actions (4 jobs paralelos)
+- ✅ Branch protection: requiere todos los tests en ✅ para mergear
 
 **Estrategia de testing:**
 - **Unit tests**: Servicios con stubs (Vitest)
 - **Integration tests**: HTTP endpoints (Supertest)
 - **Frontend tests**: Componentes (Testing Library)
+- **CI Pipeline**: Lint → Test → Security → Deploy (automático)
 
 ---
 
@@ -496,14 +514,20 @@ Proyecto desarrollado como trabajo de grado / portfolio profesional / proyecto r
 ## 🚀 Estado del Proyecto
 
 **Versión actual:** 1.0.0 (En producción)  
-**Última actualización:** Marzo 2026
+**Última actualización:** Abril 2026
+
+**Implementado recientemente:**
+- ✅ CI/CD con GitHub Actions (tests automáticos en cada push)
+- ✅ Monitoreo con Sentry (error tracking & performance)
+- ✅ AWS Lambda para alertas de bajo inventario
+- ✅ Panel administrativo completo (pagos, órdenes, productos)
 
 **Próximas funcionalidades planificadas:**
-- [ ] Optimización de performance del catálogo
-- [ ] Skeleton loaders en carga de datos
-- [ ] Panel admin completo de gestión de productos
+- [ ] Optimización de performance del catálogo con lazy loading
 - [ ] Sistema de reviews y rating de productos
-- [ ] Dashboard analítico para administradores
+- [ ] Dashboard analítico para administradores con métricas
+- [ ] Automatización CI/CD: Deploy automático a staging en PRs
+- [ ] Automatización CI/CD: Rollback automático si tests de smoke fallan
 
 ---
 

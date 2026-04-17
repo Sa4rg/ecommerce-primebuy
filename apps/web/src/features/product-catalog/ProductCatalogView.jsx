@@ -2,6 +2,7 @@
 import { useSearchParams, Link } from "react-router-dom";
 import { fetchProducts } from "../../api/products";
 import { ProductCard } from "../../shared/components/ProductCard.jsx";
+import { ProductsGridSkeleton } from "../../shared/components/Skeleton.jsx";
 import { useTranslation } from "../../shared/i18n/useTranslation.js";
 import { PRODUCT_CATEGORIES, productMatchesCategory } from "../../shared/constants/productCategories.js";
 import { normalizeString } from "../../shared/utils/normalizeString.js";
@@ -313,6 +314,36 @@ export function ProductCatalogView() {
 
             </div>
           </div>
+
+          {/* Loading state */}
+          {status === "loading" && (
+            <ProductsGridSkeleton 
+              count={PAGE_SIZE} 
+              gridClassName="grid grid-cols-1 xxs:grid-cols-2 lg:grid-cols-3 gap-4 xxs:gap-5 lg:gap-5 xl:gap-8"
+            />
+          )}
+
+          {/* Error state */}
+          {status === "error" && (
+            <div className="text-center py-12">
+              <p className="text-lg text-red-600 font-semibold">
+                {t("productCatalog.errors.loadFailed")}
+              </p>
+              <p className="text-sm text-pb-muted mt-2">{error}</p>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {status === "success" && pageItems.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-lg text-pb-muted font-semibold">
+                {favoritesOnly 
+                  ? t("productCatalog.empty.noFavorites")
+                  : t("productCatalog.empty.noProducts")
+                }
+              </p>
+            </div>
+          )}
 
           {/* Products grid */}
           {status === "success" && pageItems.length > 0 && (
