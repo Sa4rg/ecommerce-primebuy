@@ -5,6 +5,7 @@ import { accountService } from "../accountService.js";
 import { useCart } from "../../../context/CartContext.jsx";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { useTranslation } from "../../../shared/i18n/useTranslation.js";
+import { OrderCardSkeleton, PaymentCardSkeleton } from "../../../shared/components/Skeleton.jsx";
 import { formatShortId } from "../../../shared/utils/formatId.js";
 import { WHATSAPP_SUPPORT } from "../../../config.js";
 
@@ -274,7 +275,23 @@ export function AccountPage() {
       </div>
 
       {/* States */}
-      {loading && <p className="text-pb-muted">{t("account.states.loading")}</p>}
+      {loading && (
+        <div className="space-y-4">
+          {tab === "orders" ? (
+            <>
+              <OrderCardSkeleton />
+              <OrderCardSkeleton />
+              <OrderCardSkeleton />
+            </>
+          ) : (
+            <>
+              <PaymentCardSkeleton />
+              <PaymentCardSkeleton />
+              <PaymentCardSkeleton />
+            </>
+          )}
+        </div>
+      )}
       {err && (
         <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700">
           {err}
