@@ -16,7 +16,7 @@ const argon2 = require('argon2');
 const app = require('../app');
 const knex = require('../db/knex');
 
-const VOICEFLOW_API_KEY = process.env.VOICEFLOW_API_KEY || 'VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1';
+const VOICEFLOW_API_KEY = process.env.VOICEFLOW_API_KEY || '';
 
 describe('POST /api/voiceflow/orders/lookup-by-verification', () => {
   let userId;

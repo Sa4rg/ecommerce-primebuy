@@ -146,7 +146,7 @@ Solo se devuelven órdenes con estados **activos**:
 - **Method:** POST
 - **URL:** `https://tu-api.com/api/voiceflow/orders/lookup-by-verification`
 - **Headers:**
-  - `X-Voiceflow-API-Key`: `VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1`
+  - `X-Voiceflow-API-Key`: ``
   - `Content-Type`: `application/json`
 - **Body:**
   ```json
@@ -223,7 +223,7 @@ pnpm test voiceflow.orders-verification.http.test.js
 
 # 3. Test manual con curl
 curl -X POST http://localhost:3000/api/voiceflow/orders/lookup-by-verification \
-  -H "X-Voiceflow-API-Key: VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1" \
+  -H "X-Voiceflow-API-Key: " \
   -H "Content-Type: application/json" \
   -d '{
     "email": "customer@test.com",

@@ -8,6 +8,7 @@ import { useCart } from "../../../context/CartContext.jsx";
 import { getCheckoutById } from "../../checkout/checkoutQuery";
 import { useTranslation } from "../../../shared/i18n/useTranslation.js";
 import { formatShortId } from "../../../shared/utils/formatId.js";
+import { trackPurchase } from "../../../infrastructure/metaPixel";
 
 function unwrapApiResponse(res) {
   return res?.data?.data ?? res?.data ?? res;
@@ -157,6 +158,13 @@ export function PaymentStatusPage() {
       const updatedRes = await paymentService.submitPayment({ paymentId, reference, proofUrl });
       const updated = unwrapApiResponse(updatedRes);
       setPayment(updated);
+
+      if (updated?.status === "submitted" || updated?.status === "confirmed") {
+        trackPurchase({
+          value: updated?.amountUSD ?? checkout?.totals?.totalUSD ?? checkout?.subtotalUSD ?? 0,
+          paymentId,
+        });
+      }
 
       if ((updated?.status === "submitted" || updated?.status === "confirmed") && !didCreateNewCartRef.current) {
         didCreateNewCartRef.current = true;
