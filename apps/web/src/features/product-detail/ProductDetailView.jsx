@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { apiClient } from "../../infrastructure/apiClient";
 import { useCart } from "../../context/CartContext.jsx";
 import { useTranslation } from "../../shared/i18n/useTranslation";
+import { trackViewContent, trackAddToCart } from "../../infrastructure/metaPixel";
 
 const FAVORITES_STORAGE_KEY = "primebuy:favorites";
 
@@ -135,6 +136,7 @@ export function ProductDetailView() {
 
         const p = data?.data ?? data;
         setProduct(p);
+        trackViewContent(p);
 
         setStatus("success");
       } catch (e) {
@@ -170,6 +172,7 @@ export function ProductDetailView() {
     try {
       setAdding(true);
       await cart.addItem({ productId: product.id, quantity: 1 });
+      trackAddToCart(product);
 
       setAdded(true);
       window.setTimeout(() => setAdded(false), 1200);

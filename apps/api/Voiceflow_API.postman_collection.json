@@ -9,7 +9,7 @@
     "apikey": [
       {
         "key": "value",
-        "value": "VF.DM.69ceb8e36fa98681edde7e2a.Vf443jmL3kF0XHW1",
+        "value": "X-Voiceflow-API-Key",
         "type": "string"
       },
       {

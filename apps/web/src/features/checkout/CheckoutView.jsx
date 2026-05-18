@@ -11,6 +11,7 @@ import { accountService } from "../account/accountService";
 
 // i18n
 import { useTranslation } from "../../shared/i18n/useTranslation.js";
+import { trackInitiateCheckout } from "../../infrastructure/metaPixel";
 
 // Payments
 import { paymentService } from "../payment/paymentService";
@@ -282,6 +283,7 @@ export function CheckoutView() {
     if (!canContinue) return setError(t("checkout.errors.incomplete"));
 
     setSaving(true);
+    trackInitiateCheckout({ subtotalUSD, numItems: items.length });
     try {
       await updateCheckoutCustomer(checkoutId, {
         name: fullName.trim(),

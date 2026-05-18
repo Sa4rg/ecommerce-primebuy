@@ -34,7 +34,7 @@ const REFRESH_TOKEN_EXPIRES_IN_DAYS = parseInt(process.env.REFRESH_TOKEN_EXPIRES
 const REFRESH_TOKEN_PEPPER = process.env.REFRESH_TOKEN_PEPPER || '';
 
 // Password reset
-const RESET_CODE_PEPPER = process.env.RESET_CODE_PEPPER || '9b2af6de8f7c0a2c17456d953ba4ea7f4f17b7f6d6d2a8cc2a2b170eb819f6d1';
+const RESET_CODE_PEPPER = process.env.RESET_CODE_PEPPER || '';
 const RESET_CODE_EXPIRES_MINUTES = parseInt(process.env.RESET_CODE_EXPIRES_MINUTES, 10) || 15;
 
 // Resend
