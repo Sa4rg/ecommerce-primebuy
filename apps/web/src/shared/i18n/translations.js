@@ -44,6 +44,7 @@ export const translations = {
       legal: {
         terms: "Términos y Condiciones",
         privacy: "Privacidad",
+        cookies: "Política de Cookies",
       },
     },
 
@@ -1239,6 +1240,7 @@ export const translations = {
       legal: {
         terms: "Terms & Conditions",
         privacy: "Privacy",
+        cookies: "Cookies Policy",
       },
     },
 
