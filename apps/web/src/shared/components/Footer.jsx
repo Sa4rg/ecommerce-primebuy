@@ -159,10 +159,11 @@ export function Footer() {
 
           <div className="flex items-center gap-6">
             <FooterLink to="/terms">{t("footer.legal.terms")}</FooterLink>
+            <FooterLink to="/cookies">{t("footer.legal.cookies")}</FooterLink>
             <FooterLink to="/privacy">{t("footer.legal.privacy")}</FooterLink>
           </div>
         </div>
       </div>
     </footer>
   );
-}
+} 

@@ -5,6 +5,8 @@ import { apiClient } from "../../infrastructure/apiClient";
 import { useCart } from "../../context/CartContext.jsx";
 import { useTranslation } from "../../shared/i18n/useTranslation";
 import { trackViewContent, trackAddToCart } from "../../infrastructure/metaPixel";
+import { useAgeVerification } from "../../shared/age-verification/AgeVerificationContext.jsx";
+import { productMatchesCategory } from "../../shared/constants/productCategories.js";
 
 const FAVORITES_STORAGE_KEY = "primebuy:favorites";
 
@@ -71,6 +73,7 @@ export function ProductDetailView() {
   const { id } = useParams();
   const cart = useCart();
   const { language, t } = useTranslation();
+  const { isMinor } = useAgeVerification();
 
   const [status, setStatus] = useState("idle"); // loading | success | error
   const [error, setError] = useState("");
@@ -211,6 +214,19 @@ export function ProductDetailView() {
   }
 
   if (!product) return null;
+
+  if (isMinor && productMatchesCategory(product, "adult-toys")) {
+  return (
+    <div className="w-full text-center py-20">
+      <p className="text-lg text-slate-500 font-semibold">
+        {language === "en" ? "This product isn't available." : "Este producto no está disponible."}
+      </p>
+      <Link className="text-orange-400 hover:underline mt-4 inline-block" to="/">
+        {t("productDetail.states.backToCatalog")}
+      </Link>
+    </div>
+  );
+}
 
   return (
     <div className="w-full">
