@@ -36,10 +36,20 @@ export function ConsentProvider({ children }) {
         setConsent(updated);
     }
 
+    function savePreferences(partialPreferences) {
+        const updated = saveConsent({
+            necessary: true,
+            ...partialPreferences
+        });
+        setConsent(updated);
+        applyConsentSideEffects(updated);
+    }
+
     const value = {
         consent,
         acceptAll,
         rejectAll,
+        savePreferences,
     };
 
     return (

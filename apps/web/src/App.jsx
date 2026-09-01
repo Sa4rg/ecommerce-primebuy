@@ -24,6 +24,7 @@ import { AuthCallbackView } from "./features/auth/components/AuthCallbackView.js
 import { VerifyEmailView } from "./features/auth/components/VerifyEmailView.jsx";
 import { TermsPage } from "./features/legal/components/TermsPage.jsx";
 import { PrivacyPage } from "./features/legal/components/PrivacyPage.jsx";
+import { CookiePolicyPage } from "./features/legal/components/CookiePolicyPage.jsx";
 import { FaqPage } from "./features/support/components/FaqPage.jsx";
 import { ShippingPage } from "./features/support/components/ShippingPage.jsx";
 import { ReturnsPage } from "./features/support/components/ReturnsPage.jsx";
@@ -111,6 +112,7 @@ function App() {
 
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/cookies" element={<CookiePolicyPage />} />
 
       <Route path="/support/faq" element={<FaqPage />} />
       <Route path="/support/shipping" element={<ShippingPage />} />
