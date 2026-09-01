@@ -6,6 +6,7 @@ import { ProductsGridSkeleton } from "../../shared/components/Skeleton.jsx";
 import { useTranslation } from "../../shared/i18n/useTranslation.js";
 import { PRODUCT_CATEGORIES, productMatchesCategory } from "../../shared/constants/productCategories.js";
 import { normalizeString } from "../../shared/utils/normalizeString.js";
+import { useAgeVerification } from "../../shared/age-verification/AgeVerificationContext.jsx";
 
 const PAGE_SIZE = 9;
 const FAVORITES_STORAGE_KEY = "primebuy:favorites";
@@ -28,6 +29,7 @@ function clampNumber(value, fallback) {
 
 export function ProductCatalogView() {
   const { t } = useTranslation();
+  const { isMinor } = useAgeVerification();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [products, setProducts] = useState([]);
@@ -39,6 +41,7 @@ export function ProductCatalogView() {
   const [category, setCategory] = useState(() => {
     const urlCategory = searchParams.get("category");
     const validSlugs = PRODUCT_CATEGORIES.map((c) => c.slug);
+    if (isMinor && urlCategory === "adult-toys") return "all";
     return urlCategory && validSlugs.includes(urlCategory) ? urlCategory : "all";
   });
 
@@ -57,6 +60,16 @@ export function ProductCatalogView() {
 
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [page, setPage] = useState(1);
+
+  const visibleProducts = useMemo(() => {
+    if (!isMinor) return products;
+    return products.filter((p) => !productMatchesCategory(p, "adult-toys"));
+  }, [products, isMinor]);
+
+  const visibleCategories = useMemo(
+    () => (isMinor ? PRODUCT_CATEGORIES.filter((c) => c.slug !== "adult-toys") : PRODUCT_CATEGORIES),
+    [isMinor]
+  );
 
   useEffect(() => {
     setQ(searchParams.get("q") || "");
@@ -109,7 +122,7 @@ export function ProductCatalogView() {
   const filtered = useMemo(() => {
     const normalizedQuery = normalizeString(q.trim());
 
-    let list = products;
+    let list = visibleProducts;
 
     if (category !== "all") {
       list = list.filter((p) => productMatchesCategory(p, category));
@@ -136,7 +149,7 @@ export function ProductCatalogView() {
     }
 
     return sortProducts(list, sort);
-  }, [products, q, sort, category, minPrice, maxPrice, favoritesOnly, favoriteIds]);
+  }, [visibleProducts, q, sort, category, minPrice, maxPrice, favoritesOnly, favoriteIds]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -178,7 +191,7 @@ export function ProductCatalogView() {
               </h3>
 
               <ul className="space-y-3">
-                {PRODUCT_CATEGORIES.map((c) => (
+                {visibleCategories.map((c) => (
                   <li key={c.slug}>
                     <button
                       type="button"
@@ -196,8 +209,8 @@ export function ProductCatalogView() {
 
                       <span className="text-xs rounded-full px-2.5 py-0.5 font-bold bg-pb-border/50">
                         {c.slug === "all"
-                          ? products.length
-                          : products.filter((p) =>
+                          ? visibleProducts.length
+                          : visibleProducts.filter((p) =>
                               productMatchesCategory(p, c.slug)
                             ).length}
                       </span>
@@ -266,7 +279,7 @@ export function ProductCatalogView() {
               <p className="text-sm text-pb-muted">
                 {t("productCatalog.header.showing", {
                   showing: filtered.length,
-                  total: products.length,
+                  total: visibleProducts.length,
                 })}
               </p>
             </div>

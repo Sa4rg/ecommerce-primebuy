@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import { useTranslation } from "../i18n/useTranslation.js";
 import PrimeBuyLogo from "../../assets/primebuy-logo-whitefont.png";
 import { PRODUCT_CATEGORIES } from "../constants/productCategories.js";
+import { useAgeVerification } from "../age-verification/AgeVerificationContext.jsx";
 
 function cx(...xs) {
   return xs.filter(Boolean).join(" ");
@@ -334,8 +335,10 @@ function MobileMenu({ isOpen, onClose, isAuthenticated, role, onLogout, t }) {
   );
 }
 
-function HomeCategorySubnav({ t }) {
-  const items = PRODUCT_CATEGORIES.filter((c) => c.slug !== "all");
+function HomeCategorySubnav({ t, isMinor }) {
+  const items = PRODUCT_CATEGORIES
+  .filter((c) => c.slug !== "all")
+  .filter((c) => !isMinor || c.slug !== "adult-toys") 
 
   return (
     <div className="border-t border-pb-border-light bg-white/70 backdrop-blur-md">
@@ -371,6 +374,7 @@ export function Navbar() {
   const { isAuthenticated, role, logout } = useAuth();
   const { startNewCart, initializeCart, status, cart } = useCart();
   const { t, language, setLanguage } = useTranslation();
+  const { isMinor } = useAgeVerification();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [q, setQ] = useState(searchParams.get("q") || "");
@@ -551,7 +555,7 @@ export function Navbar() {
         </div>
       </header>
 
-      {location.pathname === "/" && <HomeCategorySubnav t={t} />}
+      {location.pathname === "/" && <HomeCategorySubnav t={t} isMinor={isMinor} />}
 
       <MobileMenu
         isOpen={mobileMenuOpen}
