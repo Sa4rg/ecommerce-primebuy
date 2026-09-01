@@ -5,55 +5,8 @@
 Este proyecto representa un sistema e-commerce profesional con arquitectura escalable, siguiendo principios de Clean Architecture y desarrollo orientado a pruebas (TDD).
 
 ---
-
-> ## 📊 🎯 **PRESENTACIÓN DEL PROYECTO** 🎯 📊
 > 
-> ### 🔴 **SLIDES DE PRESENTACIÓN DISPONIBLES →** [**`SLIDES.pdf`**](SLIDES.pdf) **← ABRIR AQUÍ**
-> 
-> **Documentación visual completa del proyecto (6 páginas)** con arquitectura, features, stack tecnológico y flujos de negocio.
-> 
-> 📥 **Archivo**: [`SLIDES.pdf`](SLIDES.pdf) (raíz del proyecto)
-
----
-
-> ## 💌 ❤️ **MENSAJE PERSONAL PARA LOS EVALUADORES** ❤️ 💌
-> 
-> ### 📝 **He escrito un mensaje personal para ustedes →** [**`MENSAJE_PERSONAL.md`**](MENSAJE_PERSONAL.md) **← LEER AQUÍ**
-> 
-> **Un mensaje sincero sobre mi experiencia**, el aprendizaje con IA, mis desafíos y mi visión del futuro del desarrollo de software.
-> 
-> 📄 **Archivo**: [`MENSAJE_PERSONAL.md`](MENSAJE_PERSONAL.md) (raíz del proyecto)
-
----
-
-> ## 🧪 **INSTRUCCIONES PARA EVALUADORES** 🧪
-> 
-> ### ⚠️ **IMPORTANTE**: Cómo Probar el Proyecto Completo
-> 
-> Para evaluar **todas las funcionalidades** (especialmente el panel de administración), necesitarán crear un usuario admin:
-> 
-> #### 🔑 **Opción 1: Crear Admin con Seed**
-> 
-> ```bash
-> # Después de instalar el proyecto
-> pnpm --filter api db:seed
-> ```
-> 
-> Esto creará un usuario admin con credenciales:
-> - **Email**: `admin@primebuy.com`
-> - **Contraseña**: `Admin123!`
-> 
-> #### 🔑 **Opción 2: Usar Admin Temporal (Actual en Producción)**
-> 
-> Si prefieren probar directamente en [primebuyinc.com](https://primebuyinc.com):
-> - **Email**: `admin@primebuy.com`
-> - **Contraseña**: `Admin123!`
-> 
-> _(Este admin será eliminado después de la evaluación)_
-> 
-> ---
-> 
-> ### ✅ **Qué Probar con el Usuario Admin:**
+> ### ✅ **Qué acciones tiene el Usuario Admin:**
 > 
 > 1. **Panel de Pagos**:
 >    - Ver pagos pendientes/aprobados/rechazados
@@ -76,7 +29,7 @@ Este proyecto representa un sistema e-commerce profesional con arquitectura esca
 > 
 > ---
 > 
-> ### 👤 **Qué Probar como Usuario Regular:**
+> ### 👤 **Qué acciones tiene el Usuario Regular:**
 > 
 > 1. **Registro y Login** (o usar Google OAuth)
 > 2. **Agregar productos al carrito**
